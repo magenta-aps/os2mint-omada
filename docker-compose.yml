@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  omada:
+    build:
+      context: .
+    environment:
+      # Authentication server
+      AUTH_SERVER: "http://keycloak:8080/auth"
+
+      # OS2mo
+      MO_URL: "http://mo:80"
+      CLIENT_ID: "dipex"
+      CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      AUTH_REALM: "mo"
+
+      # LoRa
+      LORA_URL: "http://mox:80"
+      LORA_CLIENT_ID: "dipex"
+      LORA_CLIENT_SECRET: "a091ed82-6e82-4efc-a8f0-001e2b127853"
+      LORA_AUTH_REALM: "lora"
+
+      # IT-system users will be inserted into
+      IT_SYSTEM_UUID: "011adaaa-3dc9-43e9-a87f-0da1a03e5c0a"
+      IT_SYSTEM_USER_KEY: "OMADA_AD_GUID"
+      IT_SYSTEM_NAME: "Omada"
+
+      # Omada OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
+      ODATA_URL: "http://omada.example.org/OData/DataObjects/Identity?viewid=12345"
+    ports:
+      - "9000:80"
+
+networks:
+  default:
+    external: true
+    name: os2mo_default

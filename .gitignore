@@ -62,3 +62,6 @@ cover/
 # Translations
 *.mo
 *.pot
+
+# Local overrides
+docker-compose.override.yml
