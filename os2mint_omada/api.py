@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -30,28 +31,30 @@ async def import_it_users() -> str:
         organisation_uuid=root_org,
     )
     assert it_system_uuid == settings.it_system_uuid
-    address_classes = await mo.ensure_address_classes(root_org=root_org)
+    address_classes = asyncio.create_task(mo.ensure_address_classes(root_org=root_org))
 
     # Get user information from MO and Omada
-    mo_it_bindings = await mo.get_it_bindings(it_system=it_system_uuid)
-    mo_user_addresses = await mo.get_user_addresses()
-    mo_engagements = await mo.get_engagements()
-    omada_it_users = await omada.get_it_users(odata_url=settings.odata_url)
+    mo_it_bindings = asyncio.create_task(mo.get_it_bindings(it_system=it_system_uuid))
+    mo_user_addresses = asyncio.create_task(mo.get_user_addresses())
+    mo_engagements = asyncio.create_task(mo.get_engagements())
+    omada_it_users = asyncio.create_task(
+        omada.get_it_users(odata_url=settings.odata_url)
+    )
 
     # Omada and MO users are linked through the 'TJENESTENR' field. However 'TJENESTENR'
     # is not set on the MO users directly, but on their engagement as the 'user_key',
     # so we need to link through that.
     service_number_to_person = {  # 'TJENESTENR' -> Person UUID
-        e["user_key"]: UUID(e["person"]["uuid"]) for e in mo_engagements
+        e["user_key"]: UUID(e["person"]["uuid"]) for e in await mo_engagements
     }
 
     # Synchronise updated objects to MO
     updated_objects = sync.get_updated_mo_objects(
-        mo_it_bindings=mo_it_bindings,
-        omada_it_users=omada_it_users,
-        mo_user_addresses=mo_user_addresses,
+        mo_it_bindings=await mo_it_bindings,
+        omada_it_users=await omada_it_users,
+        mo_user_addresses=await mo_user_addresses,
         service_number_to_person=service_number_to_person,
-        address_classes=address_classes,
+        address_class_uuids=await address_classes,
         it_system_uuid=it_system_uuid,
     )
     async with model_client.context():

@@ -192,6 +192,20 @@ def mock_mo_addresses(respx_mock: MockRouter) -> None:
                 "engagement": None,
                 "validity": {"from": "2019-03-22T00:00:00+01:00", "to": None},
             },
+            {  # Another phone for the same person
+                "uuid": "a9828e40-10de-4697-8963-0384733efb02",
+                "address_type": {
+                    "uuid": "37c3e0bf-dc13-4191-aefe-d2204672c4fe",
+                    "user_key": "PhoneEmployee",
+                },
+                "value": "+45 11 22 33 44",
+                "value2": None,
+                "visibility": None,
+                "person": {"uuid": "aa5df095-82ca-46e2-8d92-049c35469de1"},
+                "org_unit": None,
+                "engagement": None,
+                "validity": {"from": "1999-12-13T00:00:00+01:00", "to": None},
+            },
         ]
     )
 
@@ -279,39 +293,60 @@ async def test_get_engagements(mock_mo_engagements: None) -> None:
 async def test_get_user_addresses(mock_mo_addresses: None) -> None:
     expected = {
         UUID("aa5df095-82ca-46e2-8d92-049c35469de1"): {
-            "EmailEmployee": Address(
-                uuid=UUID("8c2ccf09-b549-4ff1-9154-f7abf2abd450"),
-                address_type=AddressType(
-                    uuid=UUID("da873fbb-053e-479b-950f-d34b93b88f85")
+            "EmailEmployee": [
+                Address(
+                    uuid=UUID("8c2ccf09-b549-4ff1-9154-f7abf2abd450"),
+                    address_type=AddressType(
+                        uuid=UUID("da873fbb-053e-479b-950f-d34b93b88f85")
+                    ),
+                    value="the value",
+                    value2="the second value",
+                    visibility=Visibility(
+                        uuid=UUID("58bdf4fc-75bd-469c-9c8d-663349ab55bc")
+                    ),
+                    person=PersonRef(uuid=UUID("aa5df095-82ca-46e2-8d92-049c35469de1")),
+                    org_unit=OrgUnitRef(uuid="f34fa693-37a3-443b-ad63-3d3a48956097"),
+                    engagement=EngagementRef(
+                        uuid=UUID("e0481c44-4fad-43ad-be01-100bf58629a2")
+                    ),
+                    validity=Validity(
+                        from_date="1965-04-04T00:00:00+01:00",
+                        to_date="1999-12-02T00:00:00+01:00",
+                    ),
+                )
+            ],
+            "PhoneEmployee": [
+                Address(
+                    uuid=UUID("8a57c6b7-e082-4e2d-820b-65d83f4af536"),
+                    address_type=AddressType(
+                        uuid=UUID("37c3e0bf-dc13-4191-aefe-d2204672c4fe")
+                    ),
+                    value="+45 12 34 56 78",
+                    value2=None,
+                    visibility=None,
+                    person=PersonRef(uuid=UUID("aa5df095-82ca-46e2-8d92-049c35469de1")),
+                    org_unit=None,
+                    engagement=None,
+                    validity=Validity(
+                        from_date="2019-03-22T00:00:00+01:00", to_date=None
+                    ),
                 ),
-                value="the value",
-                value2="the second value",
-                visibility=Visibility(
-                    uuid=UUID("58bdf4fc-75bd-469c-9c8d-663349ab55bc")
+                Address(
+                    uuid=UUID("a9828e40-10de-4697-8963-0384733efb02"),
+                    address_type=AddressType(
+                        uuid=UUID("37c3e0bf-dc13-4191-aefe-d2204672c4fe")
+                    ),
+                    value="+45 11 22 33 44",
+                    value2=None,
+                    visibility=None,
+                    person=PersonRef(uuid=UUID("aa5df095-82ca-46e2-8d92-049c35469de1")),
+                    org_unit=None,
+                    engagement=None,
+                    validity=Validity(
+                        from_date="1999-12-13T00:00:00+01:00", to_date=None
+                    ),
                 ),
-                person=PersonRef(uuid=UUID("aa5df095-82ca-46e2-8d92-049c35469de1")),
-                org_unit=OrgUnitRef(uuid="f34fa693-37a3-443b-ad63-3d3a48956097"),
-                engagement=EngagementRef(
-                    uuid=UUID("e0481c44-4fad-43ad-be01-100bf58629a2")
-                ),
-                validity=Validity(
-                    from_date="1965-04-04T00:00:00+01:00",
-                    to_date="1999-12-02T00:00:00+01:00",
-                ),
-            ),
-            "PhoneEmployee": Address(
-                uuid=UUID("8a57c6b7-e082-4e2d-820b-65d83f4af536"),
-                address_type=AddressType(
-                    uuid=UUID("37c3e0bf-dc13-4191-aefe-d2204672c4fe")
-                ),
-                value="+45 12 34 56 78",
-                value2=None,
-                visibility=None,
-                person=PersonRef(uuid=UUID("aa5df095-82ca-46e2-8d92-049c35469de1")),
-                org_unit=None,
-                engagement=None,
-                validity=Validity(from_date="2019-03-22T00:00:00+01:00", to_date=None),
-            ),
+            ],
         }
     }
     assert await mo.get_user_addresses() == expected

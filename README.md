@@ -4,7 +4,9 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 # OS2mint: Omada
-TODO.
+OS2mo integration for Omada. Synchronises Omada IT users to MO through the IT system defined by the `IT_SYSTEM_*`
+environment variables. The integration requires MO to be initialised with the IT system and address classes
+`EmailEmployee`, `PhoneEmployee`, `MobilePhoneEmployee`, and `InstitutionPhoneEmployee`.
 
 
 ## Usage

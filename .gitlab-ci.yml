@@ -103,7 +103,7 @@ Autopub:
     # Setup git
     - mkdir -p ~/.ssh
     - cat .gitlab/gitlab-known-hosts >> ~/.ssh/known_hosts
-    - git clone https://$AUTOPUB_USER:$AUTOPUB_TOKEN@git.magenta.dk/rammearkitektur/ra-data-models.git
+    - git clone https://$AUTOPUB_USER:$AUTOPUB_TOKEN@git.magenta.dk/rammearkitektur/os2mint/os2mint-omada.git
     - cd ra-data-models
     - git checkout master
     - git config --global user.name "MagentaBot"

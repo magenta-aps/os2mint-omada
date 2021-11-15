@@ -1,14 +1,15 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import itertools
 import unittest
 from dataclasses import dataclass
 from dataclasses import field
-from dataclasses import InitVar
 from datetime import date
 from datetime import datetime
 from typing import ClassVar
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -50,37 +51,20 @@ class TestUser:
     name: str
 
     mo_uuid: UUID = field(default_factory=uuid4)
-    mo_addresses: Dict[str, Address] = field(default_factory=dict)
+    mo_addresses: Dict[str, List[Address]] = field(default_factory=dict)
     mo_it_system_binding: Optional[ITSystemBinding] = None
     omada_it_user: Optional[OmadaITUser] = None
-
-    # Init vars
-    create_mo_it_system_binding: InitVar[bool] = False
-    omada_it_user_fields: InitVar[Optional[Dict[str, str]]] = None
-    mo_address_fields: InitVar[Optional[Dict[str, str]]] = None
 
     address_classes: ClassVar[Dict[str, UUID]] = {
         "EmailEmployee": uuid4(),
         "PhoneEmployee": uuid4(),
         "MobilePhoneEmployee": uuid4(),
         "InstitutionPhoneEmployee": uuid4(),
+        "UnrelatedAddressEmployee": uuid4(),
     }
 
-    def __post_init__(
-        self,
-        create_mo_it_system_binding: bool,
-        omada_it_user_fields: Optional[Dict[str, str]],
-        mo_address_fields: Optional[Dict[str, str]],
-    ) -> None:
-        if create_mo_it_system_binding:
-            self.mo_it_system_binding = self.get_mo_it_system_binding()
-        if omada_it_user_fields is not None:
-            self.omada_it_user = self.get_omada_it_user(omada_it_user_fields)
-        if mo_address_fields is not None:
-            self.mo_addresses = self.get_mo_addresses(mo_address_fields)
-
     @property
-    def c_objectguid_i_ad(self) -> UUID:
+    def ad_guid(self) -> UUID:
         return uuid5(self.mo_uuid, "C_OBJECTGUID_I_AD")
 
     def get_mo_it_system_binding(
@@ -90,44 +74,41 @@ class TestUser:
     ) -> ITSystemBinding:
         return ITSystemBinding(
             uuid=uuid5(self.mo_uuid, "ITSystemBinding"),
-            user_key=str(self.c_objectguid_i_ad),
+            user_key=str(self.ad_guid),
             itsystem=ITSystemRef(uuid=IT_SYSTEM_UUID),
             person=PersonRef(uuid=self.mo_uuid),
-            validity=Validity(
-                from_date=from_date,
-                to_date=to_date,
-            ),
+            validity=Validity(from_date=from_date, to_date=to_date),
         )
 
-    def get_omada_it_user(self, omada_it_user_fields: Dict[str, str]) -> OmadaITUser:
+    def get_omada_it_user(self, **kwargs: str) -> OmadaITUser:
         return OmadaITUser(
-            C_TJENESTENR=f"#{self.name}",
-            C_OBJECTGUID_I_AD=self.c_objectguid_i_ad,
-            C_LOGIN=omada_it_user_fields.get("C_LOGIN", ""),
-            EMAIL=omada_it_user_fields.get("EMAIL", ""),
-            C_DIREKTE_TLF=omada_it_user_fields.get("C_DIREKTE_TLF", ""),
-            CELLPHONE=omada_it_user_fields.get("CELLPHONE", ""),
-            C_INST_PHONE=omada_it_user_fields.get("C_INST_PHONE", ""),
+            service_number=f"#{self.name}",
+            ad_guid=self.ad_guid,
+            login=kwargs.get("C_LOGIN", ""),
+            email=kwargs.get("EMAIL", ""),
+            phone_direct=kwargs.get("C_DIREKTE_TLF", ""),
+            phone_cell=kwargs.get("CELLPHONE", ""),
+            phone_institution=kwargs.get("C_INST_PHONE", ""),
         )
 
     def get_mo_addresses(
         self,
-        mo_address_fields: Dict[str, str],
         from_date: Union[date, str] = date(1991, 2, 3),
         to_date: Optional[Union[date, str]] = None,
-    ) -> Dict[str, Address]:
+        **kwargs: List[str],
+    ) -> Dict[str, List[Address]]:
         return {
-            user_key: Address(
-                uuid=uuid5(self.mo_uuid, f"Address-{user_key}"),
-                address_type=AddressType(uuid=self.address_classes[user_key]),
-                value=value,
-                person=PersonRef(uuid=self.mo_uuid),
-                validity=Validity(
-                    from_date=from_date,
-                    to_date=to_date,
-                ),
-            )
-            for user_key, value in mo_address_fields.items()
+            user_key: [
+                Address(
+                    uuid=uuid5(self.mo_uuid, f"Address-{user_key}"),
+                    address_type=AddressType(uuid=self.address_classes[user_key]),
+                    value=value,
+                    person=PersonRef(uuid=self.mo_uuid),
+                    validity=Validity(from_date=from_date, to_date=to_date),
+                )
+                for value in values
+            ]
+            for user_key, values in kwargs.items()
         }
 
     @property
@@ -143,76 +124,75 @@ class TestUser:
 @pytest.fixture
 def carol_create() -> TestUser:
     # Exists only in Omada => should create
-    return TestUser(
-        name="Carol Create",
-        create_mo_it_system_binding=False,
-        omada_it_user_fields={
-            "EMAIL": "carol@example.org",
-            "C_DIREKTE_TLF": "+45 12 34 56 78",
-        },
-        mo_address_fields=None,
+    user = TestUser(name="Carol Create")
+    user.omada_it_user = user.get_omada_it_user(
+        EMAIL="carol@example.org",
+        C_DIREKTE_TLF="+45 12 34 56 78",
     )
+    user.mo_addresses = user.get_mo_addresses(
+        UnrelatedAddressEmployee=["Can't touch this!", "or this!"],
+    )
+    return user
 
 
 @pytest.fixture
 def dave_delete() -> TestUser:
     # Exists only in MO => should delete
-    return TestUser(
-        name="Dave Delete",
-        create_mo_it_system_binding=True,
-        omada_it_user_fields=None,
-        mo_address_fields={
-            "PhoneEmployee": "delete",
-            "InstitutionPhoneEmployee": "me",
-        },
+    user = TestUser(name="Dave Delete")
+    user.mo_it_system_binding = user.get_mo_it_system_binding()
+    user.mo_addresses = user.get_mo_addresses(
+        PhoneEmployee=["delete"],
+        InstitutionPhoneEmployee=["me", "please"],
+        UnrelatedAddressEmployee=["but not me", "or me"],
     )
+    return user
 
 
 @pytest.fixture
 def eve_exist() -> TestUser:
-    # Exists in both with up-to-date date => should do nothing
-    return TestUser(
-        name="Eve Exist",
-        create_mo_it_system_binding=True,
-        omada_it_user_fields={
-            "EMAIL": "eve@example.org",
-            "CELLPHONE": "+45 00 00 00 01",
-        },
-        mo_address_fields={
-            "EmailEmployee": "eve@example.org",
-            "MobilePhoneEmployee": "+45 00 00 00 01",
-        },
+    # Exists in both with up-to-date date data => should do nothing
+    user = TestUser(name="Eve Exist")
+    user.mo_it_system_binding = user.get_mo_it_system_binding()
+    user.omada_it_user = user.get_omada_it_user(
+        EMAIL="eve@example.org",
+        CELLPHONE="+45 00 00 00 01",
     )
+    user.mo_addresses = user.get_mo_addresses(
+        EmailEmployee=["eve@example.org"],
+        MobilePhoneEmployee=["+45 00 00 00 01"],
+        UnrelatedAddressEmployee=["whatever", "dude"],
+    )
+    return user
 
 
 @pytest.fixture
 def erin_exist() -> TestUser:
     # Exists in both with no relevance to Omada => should do nothing
-    return TestUser(
-        name="Erin Exist",
-        create_mo_it_system_binding=False,
-        omada_it_user_fields=None,
-        mo_address_fields=None,
+    user = TestUser(name="Erin Exist")
+    user.mo_addresses = user.get_mo_addresses(
+        UnrelatedAddressEmployee=["Can't touch this!"],
     )
+    return user
 
 
 @pytest.fixture
 def oscar_update() -> TestUser:
     # Exists in both, but outdated in MO => should update MO
-    return TestUser(
-        name="Oscar Update",
-        create_mo_it_system_binding=True,
-        omada_it_user_fields={
-            "EMAIL": "oscar@example.org",
-            "CELLPHONE": "+45 11 22 33 44",
-            "C_DIREKTE_TLF": "+45 66 77 88 99",
-        },
-        mo_address_fields={
-            "EmailEmployee": "WRONG-OSCAR@example.org",
-            "MobilePhoneEmployee": "+45 11 22 33 44",
-            "InstitutionPhoneEmployee": "+45 55 55 55 55",
-        },
+    user = TestUser(name="Oscar Update")
+    user.mo_it_system_binding = user.get_mo_it_system_binding()
+    user.omada_it_user = user.get_omada_it_user(
+        EMAIL="oscar@example.org",
+        CELLPHONE="+45 11 22 33 44",
+        C_DIREKTE_TLF="+45 66 77 88 99",
     )
+    user.mo_addresses = user.get_mo_addresses(
+        EmailEmployee=["WRONG-OSCAR@example.org", "EXTRA-OSCAR@example.org"],
+        MobilePhoneEmployee=["+45 11 22 33 44", "+1 111 1111 1111"],
+        InstitutionPhoneEmployee=["+45 55 55 55 55"],
+        UnrelatedAddressEmployee=["Can't touch this!"],
+    )
+
+    return user
 
 
 @pytest.fixture
@@ -241,42 +221,31 @@ def mo_it_bindings(
 
 
 @pytest.fixture
-def omada_it_users(test_users: Tuple[TestUser, ...]) -> Dict[str, OmadaITUser]:
+def omada_it_users(test_users: Tuple[TestUser, ...]) -> List[OmadaITUser]:
     """
-    Returns: Dictionary mapping 'TJENESTENR' service numbers to Omada IT user objects.
+    Returns: Dictionary mapping ' service numbers to Omada IT user objects.
     """
-    return {
-        user.omada_it_user.C_TJENESTENR: user.omada_it_user
-        for user in test_users
-        if user.omada_it_user is not None
-    }
+    return [user.omada_it_user for user in test_users if user.omada_it_user is not None]
 
 
 @pytest.fixture
 def mo_user_addresses(
     test_users: Tuple[TestUser, ...]
-) -> Dict[UUID, Dict[str, Address]]:
+) -> Dict[UUID, Dict[str, List[Address]]]:
     """
-    Returns: Dictionary mapping user person UUIDs to a dictionary of MO Addresses
-             indexed by user_key.
+    Returns: Dictionary mapping person UUIDs to a dictionary of lists of their MO
+     adresses, indexed by its user key.
     """
-    return {
-        user.mo_uuid: {
-            address_user_key: address
-            for address_user_key, address in user.mo_addresses.items()
-        }
-        for user in test_users
-        if user.mo_addresses
-    }
+    return {user.mo_uuid: user.mo_addresses for user in test_users if user.mo_addresses}
 
 
 @pytest.fixture
 def service_number_to_person(test_users: Tuple[TestUser, ...]) -> Dict[str, UUID]:
     """
-    Returns: Dictionary mapping Omada 'TJENESTENR' to MO person UUIDs.
+    Returns: Dictionary mapping Omada service numbers to MO person UUIDs.
     """
     return {
-        user.omada_it_user.C_TJENESTENR: user.mo_uuid
+        user.omada_it_user.service_number: user.mo_uuid
         for user in test_users
         if user.omada_it_user is not None
     }
@@ -298,22 +267,22 @@ def test_get_updated_mo_objects(
     eve_exist: TestUser,
     oscar_update: TestUser,
     mo_it_bindings: Dict[UUID, ITSystemBinding],
-    omada_it_users: Dict[str, OmadaITUser],
-    mo_user_addresses: Dict[UUID, Dict[str, Address]],
+    omada_it_users: List[OmadaITUser],
+    mo_user_addresses: Dict[UUID, Dict[str, List[Address]]],
     service_number_to_person: Dict[str, UUID],
     it_system_uuid: UUID,
     address_classes: Dict[str, UUID],
 ) -> None:
-    with patch("os2mint_omada.sync.update") as update_mock:
+    with patch("os2mint_omada.sync._updated_mo_objects") as update_mock:
         updated_objects = sync.get_updated_mo_objects(
             mo_it_bindings=mo_it_bindings,
             omada_it_users=omada_it_users,
             mo_user_addresses=mo_user_addresses,
             service_number_to_person=service_number_to_person,
-            address_classes=address_classes,
+            address_class_uuids=address_classes,
             it_system_uuid=it_system_uuid,
         )
-        list(updated_objects)  # force execution of lazy 'yield from update(...)'
+        list(updated_objects)  # force execution of lazy 'yield from'
 
     expected_call_users = [
         carol_create.sync_user,
@@ -321,7 +290,7 @@ def test_get_updated_mo_objects(
         eve_exist.sync_user,
         oscar_update.sync_user,
     ]
-    actual_call_users = [ca.kwargs["user"] for ca in update_mock.call_args_list]
+    actual_call_users = [c.kwargs["user"] for c in update_mock.call_args_list]
     unittest.TestCase().assertCountEqual(actual_call_users, expected_call_users)
 
 
@@ -332,7 +301,7 @@ def test_update_carol_create(
     address_classes: Dict[str, UUID],
 ) -> None:
     # Exists only in Omada => should create
-    actual_binding, actual_address_1, actual_address_2 = sync.update(
+    actual_binding, actual_address_1, actual_address_2 = sync._updated_mo_objects(
         user=carol_create.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
@@ -347,15 +316,15 @@ def test_update_carol_create(
     assert isinstance(actual_address_1, Address)
     assert isinstance(actual_address_2, Address)
     expected_addresses = carol_create.get_mo_addresses(
-        mo_address_fields={
-            "EmailEmployee": "carol@example.org",
-            "PhoneEmployee": "+45 12 34 56 78",
-        },
+        EmailEmployee=["carol@example.org"],
+        PhoneEmployee=["+45 12 34 56 78"],
         from_date=frozen_datetime.date(),
     )
-
     actual = [without_uuid(actual_address_1), without_uuid(actual_address_2)]
-    expected = [without_uuid(a) for a in expected_addresses.values()]
+    expected = [
+        without_uuid(a)
+        for a in itertools.chain.from_iterable(expected_addresses.values())
+    ]
     assert actual == expected
 
 
@@ -366,7 +335,12 @@ def test_update_dave_delete(
     address_classes: Dict[str, UUID],
 ) -> None:
     # Exists only in MO => should delete
-    actual_binding, actual_address_1, actual_address_2 = sync.update(
+    (
+        actual_binding,
+        actual_address_1,
+        actual_address_2,
+        actual_address_3,
+    ) = sync._updated_mo_objects(
         user=dave_delete.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
@@ -379,14 +353,16 @@ def test_update_dave_delete(
 
     assert isinstance(actual_address_1, Address)
     assert isinstance(actual_address_2, Address)
+    assert isinstance(actual_address_3, Address)
     expected_addresses = dave_delete.get_mo_addresses(
-        mo_address_fields={
-            "PhoneEmployee": "delete",
-            "InstitutionPhoneEmployee": "me",
-        },
+        PhoneEmployee=["delete"],
+        InstitutionPhoneEmployee=["me", "please"],
         to_date=frozen_datetime.date(),
     )
-    assert [actual_address_1, actual_address_2] == list(expected_addresses.values())
+    assert [
+        [actual_address_1],
+        [actual_address_3, actual_address_2],
+    ] == list(expected_addresses.values())
 
 
 def test_update_eve_exist(
@@ -396,7 +372,7 @@ def test_update_eve_exist(
     address_classes: Dict[str, UUID],
 ) -> None:
     # Exists in both with up-to-date date => should do nothing
-    updated_objects = sync.update(
+    updated_objects = sync._updated_mo_objects(
         user=eve_exist.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
@@ -410,7 +386,13 @@ def test_update_oscar_update(
     it_system_uuid: UUID,
     address_classes: Dict[str, UUID],
 ) -> None:
-    actual_address_1, actual_address_2, actual_address_3 = sync.update(
+    (
+        actual_address_1,
+        actual_address_2,
+        actual_address_3,
+        actual_address_4,
+        actual_address_5,
+    ) = sync._updated_mo_objects(
         user=oscar_update.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
@@ -418,28 +400,32 @@ def test_update_oscar_update(
     assert isinstance(actual_address_1, Address)
     assert isinstance(actual_address_2, Address)
     assert isinstance(actual_address_3, Address)
-
-    expected_update = oscar_update.get_mo_addresses(
-        mo_address_fields={
-            "EmailEmployee": "oscar@example.org",
-        },
-        from_date=frozen_datetime.date(),
-    )["EmailEmployee"]
-    assert actual_address_1 == expected_update
+    assert isinstance(actual_address_4, Address)
+    assert isinstance(actual_address_5, Address)
 
     expected_create = oscar_update.get_mo_addresses(
-        mo_address_fields={
-            "PhoneEmployee": "+45 66 77 88 99",
-        },
+        PhoneEmployee=["+45 66 77 88 99"],
         from_date=frozen_datetime.date(),
-    )["PhoneEmployee"]
+    )
     # Strip UUIDs as they are (very) unlikely to be equal on create
-    assert without_uuid(actual_address_2) == without_uuid(expected_create)
+    assert [without_uuid(actual_address_3)] == [
+        without_uuid(a) for a in itertools.chain.from_iterable(expected_create.values())
+    ]
+
+    expected_update = oscar_update.get_mo_addresses(
+        EmailEmployee=["oscar@example.org"],
+        from_date=frozen_datetime.date(),
+    )
+    assert [[actual_address_2]] == list(expected_update.values())
 
     expected_delete = oscar_update.get_mo_addresses(
-        mo_address_fields={
-            "InstitutionPhoneEmployee": "+45 55 55 55 55",
-        },
+        EmailEmployee=["EXTRA-OSCAR@example.org"],
+        MobilePhoneEmployee=["+1 111 1111 1111"],
+        InstitutionPhoneEmployee=["+45 55 55 55 55"],
         to_date=frozen_datetime.date(),
-    )["InstitutionPhoneEmployee"]
-    assert actual_address_3 == expected_delete
+    )
+    assert [
+        [actual_address_1],
+        [actual_address_4],
+        [actual_address_5],
+    ] == list(expected_delete.values())

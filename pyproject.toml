@@ -6,7 +6,7 @@ authors = ["Magenta <info@magenta.dk>"]
 license = "MPL-2.0"
 readme = "README.md"
 homepage = "https://magenta.dk/"
-repository = "https://git.magenta.dk/os2mint/os2mint-omada"
+repository = "https://git.magenta.dk/rammearkitektur/os2mint/os2mint-omada"
 keywords = ["os2mo", "os2mint", "omada"]
 
 [tool.poetry.dependencies]

@@ -46,8 +46,8 @@ def mock_omada_it_users(respx_mock: MockRouter) -> None:
 
 @pytest.mark.asyncio
 async def test_get_it_users(mock_omada_it_users: None) -> None:
-    expected = {
-        "00185": OmadaITUser(
+    expected = [
+        OmadaITUser(
             C_TJENESTENR="00185",
             C_OBJECTGUID_I_AD="9ff2beb8-2283-410f-babc-70d3ec2afa0c",
             EMAIL="KristofferMoller.Jensen@silkeborg.dk",
@@ -56,7 +56,7 @@ async def test_get_it_users(mock_omada_it_users: None) -> None:
             C_INST_PHONE="",
             C_LOGIN="",
         ),
-        "00187": OmadaITUser(
+        OmadaITUser(
             C_TJENESTENR="00187",
             C_OBJECTGUID_I_AD="1106d3a6-a624-43b5-bdb8-66b746a2a60d",
             EMAIL="Gitte.Willumsen@silkeborg.dk",
@@ -65,7 +65,7 @@ async def test_get_it_users(mock_omada_it_users: None) -> None:
             C_INST_PHONE="89701000",
             C_LOGIN="DR00187",
         ),
-    }
+    ]
     actual = await omada.get_it_users(settings.odata_url)
 
     assert actual == expected

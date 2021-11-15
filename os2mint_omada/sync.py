@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -14,12 +14,13 @@ from ramodels.mo.details import ITSystemBinding
 
 from os2mint_omada.omada import OmadaITUser
 from os2mint_omada.util import as_terminated
+from os2mint_omada.util import midnight
 
-address_user_key_to_omada_attr = {
-    "EmailEmployee": "EMAIL",
-    "PhoneEmployee": "C_DIREKTE_TLF",
-    "MobilePhoneEmployee": "CELLPHONE",
-    "InstitutionPhoneEmployee": "C_INST_PHONE",
+ADDRESS_USER_KEY_TO_OMADA_ATTR = {
+    "EmailEmployee": "email",
+    "PhoneEmployee": "phone_direct",
+    "MobilePhoneEmployee": "phone_cell",
+    "InstitutionPhoneEmployee": "phone_institution",
 }
 
 
@@ -27,16 +28,16 @@ address_user_key_to_omada_attr = {
 class User:
     omada_it_user: Optional[OmadaITUser]
     mo_it_system_binding: Optional[ITSystemBinding]
-    mo_addresses: Dict[str, Address]
+    mo_addresses: Dict[str, List[Address]]
     mo_person_uuid: UUID
 
 
-def update(
+def _updated_mo_objects(
     user: User, it_system_uuid: UUID, address_class_uuids: Dict[str, UUID]
 ) -> Iterator[MOBase]:
     """
-    Given a list of Omada IT users and MO objects, yield new or updated MO objects such
-    that they correspond to the Omada ones.
+    Given a User containing linked Omada and MO data, yield new or updated MO objects,
+    such that they correspond to the Omada data.
 
     Args:
         user: Object containing Omada and MO data for a single user.
@@ -45,106 +46,123 @@ def update(
 
     Yields: New or updated MO objects.
     """
-    now = datetime.utcnow().date()  # time must be midnight when writing
+    yield from _updated_binding(user=user, it_system_uuid=it_system_uuid)
+    yield from _updated_addresses(user=user, address_class_uuids=address_class_uuids)
 
-    # CREATE/UPDATE if user exists in Omada.
-    # We cannot update bindings -- only addresses -- since the only data stored in the
-    # bindings is the user_key, which is exactly the field we use to map the objects.
-    if user.omada_it_user:
-        if not user.mo_it_system_binding:
-            yield ITSystemBinding.from_simplified_fields(
-                uuid=None,  # new binding
-                user_key=str(user.omada_it_user.C_OBJECTGUID_I_AD),  # account name
-                itsystem_uuid=it_system_uuid,
-                person_uuid=user.mo_person_uuid,
-                from_date=now.isoformat(),
-                to_date=None,  # infinity
+
+def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
+    """
+    Yield a new or updated (i.e. expired) MO IT System binding for the given user. The
+    binding will always either be created or deleted, never updated, since it only
+    contains the user_key, which is exactly the field we use to map the objects.
+
+    Args:
+        user: Object containing Omada and MO data for a single user.
+        it_system_uuid: UUID of the IT system users are inserted into in MO.
+
+    Yields: Updated MO IT System binding.
+    """
+    # Create binding if user exists in Omada, but not in MO
+    if user.omada_it_user and not user.mo_it_system_binding:
+        yield ITSystemBinding.from_simplified_fields(
+            uuid=None,  # new binding
+            user_key=str(user.omada_it_user.ad_guid),  # account name
+            itsystem_uuid=it_system_uuid,
+            person_uuid=user.mo_person_uuid,
+            from_date=midnight().isoformat(),
+            to_date=None,  # infinity
+        )
+        return
+
+    # Delete binding if user exists in MO, but not in Omada
+    if not user.omada_it_user and user.mo_it_system_binding:
+        yield as_terminated(user.mo_it_system_binding)
+
+
+def _updated_addresses(
+    user: User, address_class_uuids: Dict[str, UUID]
+) -> Iterator[MOBase]:
+    """
+    Yield new or updated MO addresses for the given user.
+
+    Args:
+        user: Object containing Omada and MO data for a single user.
+        address_class_uuids: Mapping of address class user keys into their UUIDS.
+
+    Yields: Updated MO addresses.
+    """
+    for user_key, omada_attribute_name in ADDRESS_USER_KEY_TO_OMADA_ATTR.items():
+        # Terminate excess addresses for the user_key, since omada is authoritative for
+        # all adresses of these types, and we want at most one.
+        try:
+            mo_address, *excess_mo_addresses = user.mo_addresses[user_key]
+            for address in excess_mo_addresses:
+                yield as_terminated(address)
+        except KeyError:
+            mo_address = None
+
+        # Create or update MO address if Omada attribute was added or changed. Omada
+        # returns empty strings for non-existent attributes, which is falsy.
+        omada_attribute = getattr(user.omada_it_user, omada_attribute_name, None)
+        if omada_attribute and (not mo_address or mo_address.value != omada_attribute):
+            attributes = dict(
+                value=omada_attribute,
+                validity=Validity(from_date=midnight().isoformat(), to_date=None),
             )
-
-        for user_key, omada_attribute_name in address_user_key_to_omada_attr.items():
-            # Omada returns empty strings for non-existent attributes, which is falsy
-            omada_attribute = getattr(user.omada_it_user, omada_attribute_name)
-            mo_address = user.mo_addresses.get(user_key)
-
-            # Create address if missing
-            if omada_attribute and not mo_address:
-                yield Address.from_simplified_fields(
+            if not mo_address:
+                address = dict(
                     uuid=None,  # new address
-                    address_type_uuid=address_class_uuids[user_key],
-                    value=omada_attribute,
-                    person_uuid=user.mo_person_uuid,
-                    from_date=now.isoformat(),
-                    to_date=None,  # infinity
+                    address_type=dict(uuid=address_class_uuids[user_key]),
+                    person=dict(uuid=user.mo_person_uuid),
+                    **attributes
                 )
+            else:
+                address = mo_address.copy(update=attributes)
+            yield Address.parse_obj(address)
 
-            # Update address if Omada attribute has changed
-            if omada_attribute and mo_address:
-                if omada_attribute != mo_address.value:
-                    yield mo_address.copy(
-                        update=dict(
-                            value=omada_attribute,
-                            validity=Validity(from_date=now, to_date=None),
-                        )
-                    )
-
-            # Delete address if Omada attribute was removed
-            if not omada_attribute and mo_address:
-                yield as_terminated(mo_address, from_date=now)
-
-    # DELETE if user does not exist in Omada, but in MO
-    elif not user.omada_it_user and user.mo_it_system_binding:
-        yield as_terminated(user.mo_it_system_binding, from_date=now)
-
-        for address in user.mo_addresses.values():
-            yield as_terminated(address, from_date=now)
+        # Delete MO address if Omada attribute was removed
+        if not omada_attribute and mo_address:
+            yield as_terminated(mo_address)
 
 
 def get_updated_mo_objects(
     mo_it_bindings: Dict[UUID, ITSystemBinding],
-    omada_it_users: Dict[str, OmadaITUser],
-    mo_user_addresses: Dict[UUID, Dict[str, Address]],
+    omada_it_users: List[OmadaITUser],
+    mo_user_addresses: Dict[UUID, Dict[str, List[Address]]],
     service_number_to_person: Dict[str, UUID],
-    address_classes: Dict[str, UUID],
+    address_class_uuids: Dict[str, UUID],
     it_system_uuid: UUID,
 ) -> Iterator[MOBase]:
     """
-    Given Omada and MO data, yield new or updated MO objects that needs to be send to
+    Given Omada and MO data, yield new or updated MO objects that needs to be sent to
     the server, such that they correspond to the Omada data.
 
     Args:
         mo_it_bindings: MO IT system user bindings.
         omada_it_users: Omada IT users.
-        mo_user_addresses: MO user addresses.
+        mo_user_addresses: Dictionary mapping person UUIDs to a dictionary of lists of
+         their adresses, indexed by its user key.
         service_number_to_person: Dictionary mapping Omada 'TJENESTENR' to MO person
          UUIDs.
-        address_classes: Dictionary mapping address class user keys into their UUIDs.
+        address_class_uuids: Dictionary mapping address class user keys into UUIDs.
         it_system_uuid: UUID of the IT system users are inserted into in MO.
 
     Yields: New or updated MO objects.
     """
-    person_to_service_number = {
-        person_uuid: service_number
-        for service_number, person_uuid in service_number_to_person.items()
+    person_to_omada = {
+        service_number_to_person[u.service_number]: u for u in omada_it_users
     }
-
-    def get_omada_it_user(person_uuid: UUID) -> Optional[OmadaITUser]:
-        try:
-            service_number = person_to_service_number[person_uuid]
-            return omada_it_users[service_number]
-        except KeyError:
-            return None
-
     mo_person_uuids = mo_it_bindings.keys()
-    omada_person_uuids = set(service_number_to_person[n] for n in omada_it_users.keys())
+    omada_person_uuids = person_to_omada.keys()
     for person_uuid in mo_person_uuids | omada_person_uuids:
         user = User(
-            omada_it_user=get_omada_it_user(person_uuid),
+            omada_it_user=person_to_omada.get(person_uuid),
             mo_it_system_binding=mo_it_bindings.get(person_uuid),
             mo_addresses=mo_user_addresses.get(person_uuid, {}),
             mo_person_uuid=person_uuid,
         )
-        yield from update(
+        yield from _updated_mo_objects(
             user=user,
             it_system_uuid=it_system_uuid,
-            address_class_uuids=address_classes,
+            address_class_uuids=address_class_uuids,
         )

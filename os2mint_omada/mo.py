@@ -11,7 +11,7 @@ from ramodels.mo import FacetClass
 from ramodels.mo.details import Address
 from ramodels.mo.details import ITSystemBinding
 
-from os2mint_omada.clients import client
+from os2mint_omada.clients import mo_client
 from os2mint_omada.clients import model_client
 from os2mint_omada.config import settings
 
@@ -53,15 +53,6 @@ async def ensure_address_classes(root_org: UUID) -> Dict[str, UUID]:
     Returns: Dictionary mapping address class user keys into their UUIDs.
     """
     # TODO: This should be handled by os2mo-init instead.
-    employee_address_type = await client.get(
-        f"{settings.mo_url}/service/o/{root_org}/f/employee_address_type/"
-    )
-    employee_address_class_uuids = {
-        c["user_key"]: UUID(c["uuid"])
-        for c in employee_address_type.json()["data"]["items"]
-    }
-
-    # Create missing employee address classes
     required_classes = {
         # user_key: (name, scope)
         "EmailEmployee": ("Email", "EMAIL"),  # should always exist in MO already
@@ -69,22 +60,35 @@ async def ensure_address_classes(root_org: UUID) -> Dict[str, UUID]:
         "MobilePhoneEmployee": ("Mobiltelefon", "PHONE"),
         "InstitutionPhoneEmployee": ("Institutionstelefonnummer", "PHONE"),
     }
-    create = []
-    for user_key in required_classes.keys() - employee_address_class_uuids.keys():
-        name, scope = required_classes[user_key]
-        create.append(
-            FacetClass(
-                facet_uuid=employee_address_type.json()["uuid"],
-                name=name,
-                user_key=user_key,
-                scope=scope,
-                org_uuid=root_org,
-            )
+
+    # Get existing address classes
+    r = await mo_client.get(
+        f"{settings.mo_url}/service/o/{root_org}/f/employee_address_type/"
+    )
+    address_type = r.json()
+    address_class_keys_to_uuids = {
+        c["user_key"]: UUID(c["uuid"]) for c in address_type["data"]["items"]
+    }
+
+    # Create missing address classes
+    missing_class_keys = required_classes.keys() - address_class_keys_to_uuids.keys()
+    missing_classes = {
+        user_key: required_classes[user_key] for user_key in missing_class_keys
+    }
+    create = [
+        FacetClass(
+            facet_uuid=address_type["uuid"],
+            name=name,
+            user_key=user_key,
+            scope=scope,
+            org_uuid=root_org,
         )
+        for user_key, (name, scope) in missing_classes.items()
+    ]
     async with model_client.context():
         await model_client.load_mo_objs(create)
 
-    return employee_address_class_uuids | {f.user_key: f.uuid for f in create}
+    return address_class_keys_to_uuids | {f.user_key: f.uuid for f in create}
 
 
 async def get_it_bindings(it_system: UUID) -> Dict[UUID, ITSystemBinding]:
@@ -96,20 +100,14 @@ async def get_it_bindings(it_system: UUID) -> Dict[UUID, ITSystemBinding]:
 
     Returns: Dictionary mapping binding person UUIDs into ITSystemBinding objects.
     """
-    it_bindings = await client.get(f"{settings.mo_url}/api/v1/it")
+    r = await mo_client.get(f"{settings.mo_url}/api/v1/it")
     it_user_bindings_for_system = [
         b
-        for b in it_bindings.json()
+        for b in r.json()
         if b["person"] is not None and UUID(b["itsystem"]["uuid"]) == it_system
     ]
 
-    # For simplicity it is assumed that each user only has *one* binding for the given
-    # IT system. Although there are no guards in MO to maintain this constraint, this
-    # precondition should always be true since this integration *should* be the single
-    # authoritative source for this IT system.
-    unique_persons = len(set(b["person"]["uuid"] for b in it_user_bindings_for_system))
-    assert unique_persons == len(it_user_bindings_for_system)
-    return {
+    it_bindings = {
         UUID(b["person"]["uuid"]): ITSystemBinding.from_simplified_fields(
             uuid=b["uuid"],
             user_key=b["user_key"],
@@ -120,6 +118,14 @@ async def get_it_bindings(it_system: UUID) -> Dict[UUID, ITSystemBinding]:
         )
         for b in it_user_bindings_for_system
     }
+    # For simplicity it is assumed that each user only has *one* binding for the given
+    # IT system. Although there are no guards in MO to maintain this constraint, this
+    # precondition should always be true since this integration *should* be the single
+    # authoritative source for this IT system.
+    assert len(it_bindings) == len(it_user_bindings_for_system)
+    # TODO: Clean up the IT bindings if assertion doesn't hold
+
+    return it_bindings
 
 
 async def get_engagements() -> List[dict]:
@@ -128,23 +134,24 @@ async def get_engagements() -> List[dict]:
 
     Returns: List of engagement dictionaries.
     """
-    r = await client.get(f"{settings.mo_url}/api/v1/engagement")
+    r = await mo_client.get(f"{settings.mo_url}/api/v1/engagement")
     return r.json()
 
 
-async def get_user_addresses() -> Dict[UUID, Dict[str, Address]]:
+async def get_user_addresses() -> Dict[UUID, Dict[str, List[Address]]]:
     """
     Get user addresses.
 
-    Returns: Dictionary mapping user person UUIDs to a dictionary of Addresses indexed
-             by user_key.
+    Returns: Dictionary mapping person UUIDs to a dictionary of lists of their adresses,
+     indexed by its user key.
     """
-    addresses = await client.get(f"{settings.mo_url}/api/v1/address")
-    user_addresses: Dict[UUID, Dict[str, Address]] = defaultdict(dict)
-    for address in addresses.json():
-        address_person_uuid = (address.get("person") or {}).get("uuid")
-        if not address_person_uuid:
-            continue
+    addresses = await mo_client.get(f"{settings.mo_url}/api/v1/address")
+    addresses_for_persons = (a for a in addresses.json() if a.get("person") is not None)
+    user_addresses: Dict[UUID, Dict[str, List[Address]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for address in addresses_for_persons:
+        address_person_uuid = address["person"]["uuid"]
         address_obj = Address.from_simplified_fields(
             uuid=address["uuid"],
             address_type_uuid=address["address_type"]["uuid"],
@@ -158,6 +165,7 @@ async def get_user_addresses() -> Dict[UUID, Dict[str, Address]]:
             to_date=address["validity"]["to"],
         )
         user_key = address["address_type"]["user_key"]
-        user_addresses[UUID(address_person_uuid)][user_key] = address_obj
+        user_addresses[UUID(address_person_uuid)][user_key].append(address_obj)
 
-    return dict(user_addresses)
+    # Converting to normal dicts to avoid surprises further down the line
+    return {uuid: dict(a) for uuid, a in user_addresses.items()}
