@@ -2,16 +2,13 @@
 # SPDX-License-Identifier: MPL-2.0
 import itertools
 import unittest
+from collections.abc import Iterator
 from dataclasses import dataclass
 from dataclasses import field
 from datetime import date
 from datetime import datetime
 from typing import ClassVar
-from typing import Dict
-from typing import Iterator
-from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Union
 from unittest.mock import patch
 from uuid import UUID
@@ -37,7 +34,7 @@ def without_uuid(model: MOBase) -> MOBase:
     """
     Strip MO Model UUID attribute to help comparison.
     """
-    return model.copy(update=dict(uuid=None))
+    return model.copy(update=dict(uuid=None, user_key=None))
 
 
 @pytest.fixture(autouse=True)
@@ -51,11 +48,11 @@ class TestUser:
     name: str
 
     mo_uuid: UUID = field(default_factory=uuid4)
-    mo_addresses: Dict[str, List[Address]] = field(default_factory=dict)
+    mo_addresses: dict[str, list[Address]] = field(default_factory=dict)
     mo_it_system_binding: Optional[ITSystemBinding] = None
     omada_it_user: Optional[OmadaITUser] = None
 
-    address_classes: ClassVar[Dict[str, UUID]] = {
+    address_classes: ClassVar[dict[str, UUID]] = {
         "EmailEmployee": uuid4(),
         "PhoneEmployee": uuid4(),
         "MobilePhoneEmployee": uuid4(),
@@ -95,8 +92,8 @@ class TestUser:
         self,
         from_date: Union[date, str] = date(1991, 2, 3),
         to_date: Optional[Union[date, str]] = None,
-        **kwargs: List[str],
-    ) -> Dict[str, List[Address]]:
+        **kwargs: list[str],
+    ) -> dict[str, list[Address]]:
         return {
             user_key: [
                 Address(
@@ -202,14 +199,14 @@ def test_users(
     erin_exist: TestUser,
     eve_exist: TestUser,
     oscar_update: TestUser,
-) -> Tuple[TestUser, ...]:
+) -> tuple[TestUser, ...]:
     return carol_create, dave_delete, erin_exist, eve_exist, oscar_update
 
 
 @pytest.fixture
 def mo_it_bindings(
-    test_users: Tuple[TestUser, ...], it_system_uuid: UUID
-) -> Dict[UUID, ITSystemBinding]:
+    test_users: tuple[TestUser, ...], it_system_uuid: UUID
+) -> dict[UUID, ITSystemBinding]:
     """
     Returns: Dictionary mapping binding person UUIDs into MO ITSystemBinding objects.
     """
@@ -221,7 +218,7 @@ def mo_it_bindings(
 
 
 @pytest.fixture
-def omada_it_users(test_users: Tuple[TestUser, ...]) -> List[OmadaITUser]:
+def omada_it_users(test_users: tuple[TestUser, ...]) -> list[OmadaITUser]:
     """
     Returns: Dictionary mapping ' service numbers to Omada IT user objects.
     """
@@ -230,8 +227,8 @@ def omada_it_users(test_users: Tuple[TestUser, ...]) -> List[OmadaITUser]:
 
 @pytest.fixture
 def mo_user_addresses(
-    test_users: Tuple[TestUser, ...]
-) -> Dict[UUID, Dict[str, List[Address]]]:
+    test_users: tuple[TestUser, ...]
+) -> dict[UUID, dict[str, list[Address]]]:
     """
     Returns: Dictionary mapping person UUIDs to a dictionary of lists of their MO
      adresses, indexed by its user key.
@@ -240,7 +237,7 @@ def mo_user_addresses(
 
 
 @pytest.fixture
-def service_number_to_person(test_users: Tuple[TestUser, ...]) -> Dict[str, UUID]:
+def service_number_to_person(test_users: tuple[TestUser, ...]) -> dict[str, UUID]:
     """
     Returns: Dictionary mapping Omada service numbers to MO person UUIDs.
     """
@@ -252,7 +249,7 @@ def service_number_to_person(test_users: Tuple[TestUser, ...]) -> Dict[str, UUID
 
 
 @pytest.fixture
-def address_classes() -> Dict[str, UUID]:
+def address_classes() -> dict[str, UUID]:
     """
     Returns: Dictionary mapping address class user keys into their UUIDs.
     """
@@ -260,18 +257,18 @@ def address_classes() -> Dict[str, UUID]:
 
 
 def test_get_updated_mo_objects(
-    test_users: Tuple[TestUser, ...],
+    test_users: tuple[TestUser, ...],
     carol_create: TestUser,
     dave_delete: TestUser,
     erin_exist: TestUser,
     eve_exist: TestUser,
     oscar_update: TestUser,
-    mo_it_bindings: Dict[UUID, ITSystemBinding],
-    omada_it_users: List[OmadaITUser],
-    mo_user_addresses: Dict[UUID, Dict[str, List[Address]]],
-    service_number_to_person: Dict[str, UUID],
+    mo_it_bindings: dict[UUID, ITSystemBinding],
+    omada_it_users: list[OmadaITUser],
+    mo_user_addresses: dict[UUID, dict[str, list[Address]]],
+    service_number_to_person: dict[str, UUID],
     it_system_uuid: UUID,
-    address_classes: Dict[str, UUID],
+    address_classes: dict[str, UUID],
 ) -> None:
     with patch("os2mint_omada.sync._updated_mo_objects") as update_mock:
         updated_objects = sync.get_updated_mo_objects(
@@ -298,7 +295,7 @@ def test_update_carol_create(
     frozen_datetime: datetime,
     carol_create: TestUser,
     it_system_uuid: UUID,
-    address_classes: Dict[str, UUID],
+    address_classes: dict[str, UUID],
 ) -> None:
     # Exists only in Omada => should create
     actual_binding, actual_address_1, actual_address_2 = sync._updated_mo_objects(
@@ -332,7 +329,7 @@ def test_update_dave_delete(
     frozen_datetime: datetime,
     dave_delete: TestUser,
     it_system_uuid: UUID,
-    address_classes: Dict[str, UUID],
+    address_classes: dict[str, UUID],
 ) -> None:
     # Exists only in MO => should delete
     (
@@ -369,7 +366,7 @@ def test_update_eve_exist(
     frozen_datetime: datetime,
     eve_exist: TestUser,
     it_system_uuid: UUID,
-    address_classes: Dict[str, UUID],
+    address_classes: dict[str, UUID],
 ) -> None:
     # Exists in both with up-to-date date => should do nothing
     updated_objects = sync._updated_mo_objects(
@@ -384,7 +381,7 @@ def test_update_oscar_update(
     frozen_datetime: datetime,
     oscar_update: TestUser,
     it_system_uuid: UUID,
-    address_classes: Dict[str, UUID],
+    address_classes: dict[str, UUID],
 ) -> None:
     (
         actual_address_1,

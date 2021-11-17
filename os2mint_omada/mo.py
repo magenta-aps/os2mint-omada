@@ -1,12 +1,9 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from collections import defaultdict
-from typing import Dict
-from typing import List
 from uuid import UUID
 
 from gql import gql
-from raclients.graph.client import GraphQLClient
 from ramodels.mo import FacetClass
 from ramodels.mo.details import Address
 from ramodels.mo.details import ITSystemBinding
@@ -43,7 +40,7 @@ async def get_root_org() -> UUID:
     return UUID(result["org"]["uuid"])
 
 
-async def ensure_address_classes(root_org: UUID) -> Dict[str, UUID]:
+async def ensure_address_classes(root_org: UUID) -> dict[str, UUID]:
     """
     Ensure the required address classes exist in MO.
 
@@ -91,7 +88,7 @@ async def ensure_address_classes(root_org: UUID) -> Dict[str, UUID]:
     return address_class_keys_to_uuids | {f.user_key: f.uuid for f in create}
 
 
-async def get_it_bindings(it_system: UUID) -> Dict[UUID, ITSystemBinding]:
+async def get_it_bindings(it_system: UUID) -> dict[UUID, ITSystemBinding]:
     """
     Get IT system user bindings for the given IT system.
 
@@ -128,7 +125,7 @@ async def get_it_bindings(it_system: UUID) -> Dict[UUID, ITSystemBinding]:
     return it_bindings
 
 
-async def get_engagements() -> List[dict]:
+async def get_engagements() -> list[dict]:
     """
     Get user engagements.
 
@@ -138,7 +135,7 @@ async def get_engagements() -> List[dict]:
     return r.json()
 
 
-async def get_user_addresses() -> Dict[UUID, Dict[str, List[Address]]]:
+async def get_user_addresses() -> dict[UUID, dict[str, list[Address]]]:
     """
     Get user addresses.
 
@@ -147,7 +144,7 @@ async def get_user_addresses() -> Dict[UUID, Dict[str, List[Address]]]:
     """
     addresses = await mo_client.get(f"{settings.mo_url}/api/v1/address")
     addresses_for_persons = (a for a in addresses.json() if a.get("person") is not None)
-    user_addresses: Dict[UUID, Dict[str, List[Address]]] = defaultdict(
+    user_addresses: dict[UUID, dict[str, list[Address]]] = defaultdict(
         lambda: defaultdict(list)
     )
     for address in addresses_for_persons:

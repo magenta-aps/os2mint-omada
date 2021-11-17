@@ -96,7 +96,7 @@ Autopub:
   stage: prepare-release
   rules:
     - if: $CI_COMMIT_REF_NAME == "master"
-  image: python:3.9
+  image: python:3.10
   variables:
     PROJECT_ROOT: .
   before_script:

@@ -10,12 +10,12 @@ repository = "https://git.magenta.dk/rammearkitektur/os2mint/os2mint-omada"
 keywords = ["os2mo", "os2mint", "omada"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 pydantic = "^1.8.2"
 fastapi = "^0.70.0"
 uvicorn = "^0.15.0"
 httpx = "^0.20.0"
-ramodels = "^3.4.0"
+ramodels = "^3.8.0"
 raclients = "^0.8.2"
 
 [tool.poetry.dev-dependencies]

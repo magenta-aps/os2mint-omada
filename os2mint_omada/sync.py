@@ -1,9 +1,7 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Dict
-from typing import Iterator
-from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -28,12 +26,12 @@ ADDRESS_USER_KEY_TO_OMADA_ATTR = {
 class User:
     omada_it_user: Optional[OmadaITUser]
     mo_it_system_binding: Optional[ITSystemBinding]
-    mo_addresses: Dict[str, List[Address]]
+    mo_addresses: dict[str, list[Address]]
     mo_person_uuid: UUID
 
 
 def _updated_mo_objects(
-    user: User, it_system_uuid: UUID, address_class_uuids: Dict[str, UUID]
+    user: User, it_system_uuid: UUID, address_class_uuids: dict[str, UUID]
 ) -> Iterator[MOBase]:
     """
     Given a User containing linked Omada and MO data, yield new or updated MO objects,
@@ -80,7 +78,7 @@ def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
 
 
 def _updated_addresses(
-    user: User, address_class_uuids: Dict[str, UUID]
+    user: User, address_class_uuids: dict[str, UUID]
 ) -> Iterator[MOBase]:
     """
     Yield new or updated MO addresses for the given user.
@@ -126,11 +124,11 @@ def _updated_addresses(
 
 
 def get_updated_mo_objects(
-    mo_it_bindings: Dict[UUID, ITSystemBinding],
-    omada_it_users: List[OmadaITUser],
-    mo_user_addresses: Dict[UUID, Dict[str, List[Address]]],
-    service_number_to_person: Dict[str, UUID],
-    address_class_uuids: Dict[str, UUID],
+    mo_it_bindings: dict[UUID, ITSystemBinding],
+    omada_it_users: list[OmadaITUser],
+    mo_user_addresses: dict[UUID, dict[str, list[Address]]],
+    service_number_to_person: dict[str, UUID],
+    address_class_uuids: dict[str, UUID],
     it_system_uuid: UUID,
 ) -> Iterator[MOBase]:
     """

@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from typing import List
 from uuid import UUID
 
 from pydantic import AnyHttpUrl
@@ -28,7 +27,7 @@ class OmadaITUser(BaseModel):
         allow_population_by_field_name = True
 
 
-async def get_it_users(odata_url: AnyHttpUrl) -> List[OmadaITUser]:
+async def get_it_users(odata_url: AnyHttpUrl) -> list[OmadaITUser]:
     """
     Get all IT users from the Omada OData view at the given URL.
 
