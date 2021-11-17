@@ -8,6 +8,7 @@ from ramodels.mo import FacetClass
 from ramodels.mo.details import Address
 from ramodels.mo.details import ITSystemBinding
 
+from os2mint_omada.clients import graphql_client
 from os2mint_omada.clients import mo_client
 from os2mint_omada.clients import model_client
 from os2mint_omada.config import settings
@@ -26,17 +27,7 @@ async def get_root_org() -> UUID:
         }
         """
     )
-    client_args = dict(
-        client_id=settings.client_id,
-        client_secret=settings.client_secret,
-        auth_realm=settings.auth_realm,
-        auth_server=settings.auth_server,
-    )
-    async with GraphQLClient(
-        url=f"{settings.mo_url}/graphql",
-        client_args=client_args,
-    ) as client:
-        result = await client.execute(query)
+    result = await graphql_client.execute(query)
     return UUID(result["org"]["uuid"])
 
 

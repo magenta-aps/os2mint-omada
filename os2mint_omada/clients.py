@@ -3,7 +3,7 @@
 import httpx
 from ra_utils.headers import TokenSettings
 from raclients.auth import AuthenticatedAsyncHTTPXClient
-from raclients.graph.client import GraphQLClient
+from raclients.graph.client import PersistentGraphQLClient
 from raclients.mo import ModelClient
 from raclients.modelclientbase import common_session_factory
 
@@ -19,6 +19,8 @@ _mo_args = dict(
     auth_realm=settings.auth_realm,
     auth_server=settings.auth_server,
 )
+
+graphql_client = PersistentGraphQLClient(url=f"{settings.mo_url}/graphql", **_mo_args)
 
 mo_client = AuthenticatedAsyncHTTPXClient(**_mo_args)
 
