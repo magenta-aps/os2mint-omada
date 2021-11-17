@@ -42,6 +42,7 @@ include:
 # ---------------------------------------------------------------------------
 Lint Python:
   extends: .lint-python
+  image: python:3.10
   stage: lint
   script:
     - poetry run pre-commit run --all-files
