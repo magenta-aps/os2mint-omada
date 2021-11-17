@@ -1,15 +1,28 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from datetime import datetime
+from datetime import date
 from uuid import uuid4
 
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.strategies import composite
 from ramodels.mo import MOBase
 from ramodels.mo._shared import Validity
 
 from os2mint_omada.util import as_terminated
 
 
-def test_as_terminated() -> None:
+@composite
+def from_and_to_date(draw) -> tuple[date, date]:
+    from_date = draw(st.dates())
+    to_date = draw(st.dates(min_value=from_date))
+    return from_date, to_date
+
+
+@given(from_and_to_date())
+def test_as_terminated(from_and_to_date: tuple[date, date]) -> None:
+    from_date, to_date = from_and_to_date
+
     class Model(MOBase):
         validity: Validity
 
@@ -17,16 +30,16 @@ def test_as_terminated() -> None:
     obj = Model(
         uuid=uuid,
         validity=Validity(
-            from_date=datetime(2010, 1, 2),
+            from_date=from_date,
             to_date=None,
         ),
     )
-    actual = as_terminated(obj, from_date=datetime(2011, 2, 3))
+    actual = as_terminated(obj, from_date=from_date)
     expected = Model(
         uuid=uuid,
         validity=Validity(
-            from_date=datetime(2010, 1, 2),
-            to_date=datetime(2011, 2, 3),
+            from_date=from_date,
+            to_date=from_date,
         ),
     )
     assert actual == expected
