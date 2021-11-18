@@ -25,9 +25,9 @@ The following environment variables are used:
   - `AUTH_REALM`: Keycloak realm for OS2mo authentication, e.g. `mo`.
 
 
-  - `LORA_URL`: OS2mo URL, e.g. `http://mox:80`.
+  - `LORA_URL`: LoRa URL, e.g. `http://mox:80`.
   - `LORA_CLIENT_ID`: Client ID used to authenticate against LoRa, e.g. `dipex`.
-  - `LORA_CLIENT_SECRET`: Client secret used to authenticate against OS2mo, e.g. `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.
+  - `LORA_CLIENT_SECRET`: Client secret used to authenticate against LoRa, e.g. `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.
   - `LORA_AUTH_REALM`: Keycloak realm for LoRa authentication, e.g. `lora`.
 
 
