@@ -22,14 +22,7 @@ _mo_args = dict(
 
 graphql_client = PersistentGraphQLClient(url=f"{settings.mo_url}/graphql", **_mo_args)
 
-mo_client = AuthenticatedAsyncHTTPXClient(**_mo_args)
-
-lora_client = AuthenticatedAsyncHTTPXClient(
-    client_id=settings.lora_client_id,
-    client_secret=settings.lora_client_secret,
-    auth_server=settings.auth_server,
-    auth_realm=settings.lora_auth_realm,
-)
+mo_client = AuthenticatedAsyncHTTPXClient(base_url=settings.mo_url, **_mo_args)
 
 model_client = ModelClient(
     base_url=settings.mo_url,
