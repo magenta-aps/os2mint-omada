@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import parse_obj_as
 
 from os2mint_omada.clients import client
 
@@ -40,5 +41,5 @@ async def get_it_users(odata_url: AnyHttpUrl) -> list[OmadaITUser]:
 
     Returns: List of Omada IT user objects.
     """
-    r = await client.get(odata_url)  # TODO: set 'timeout=' ?
-    return [OmadaITUser.parse_obj(user_json) for user_json in r.json()["value"]]
+    r = await client.get(odata_url, timeout=30)
+    return parse_obj_as(list[OmadaITUser], r.json()["value"])
