@@ -88,7 +88,7 @@ async def get_it_bindings(it_system: UUID) -> dict[UUID, ITSystemBinding]:
 
     Returns: Dictionary mapping binding person UUIDs into ITSystemBinding objects.
     """
-    r = await mo_client.get(f"{settings.mo_url}/api/v1/it")
+    r = await mo_client.get("/api/v1/it")
     it_user_bindings_for_system = [
         b
         for b in r.json()
@@ -122,7 +122,7 @@ async def get_engagements() -> list[dict]:
 
     Returns: List of engagement dictionaries.
     """
-    r = await mo_client.get(f"{settings.mo_url}/api/v1/engagement")
+    r = await mo_client.get("/api/v1/engagement")
     return r.json()
 
 
@@ -133,7 +133,7 @@ async def get_user_addresses() -> dict[UUID, dict[str, list[Address]]]:
     Returns: Dictionary mapping person UUIDs to a dictionary of lists of their adresses,
      indexed by its user key.
     """
-    addresses = await mo_client.get(f"{settings.mo_url}/api/v1/address")
+    addresses = await mo_client.get("/api/v1/address")
     addresses_for_persons = (a for a in addresses.json() if a.get("person") is not None)
     user_addresses: dict[UUID, dict[str, list[Address]]] = defaultdict(
         lambda: defaultdict(list)
