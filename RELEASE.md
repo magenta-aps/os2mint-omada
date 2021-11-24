@@ -1,3 +1,3 @@
-Release type: patch
+Release type: minor
 
-[#42613] Add autopub
+[#42613] Initial release
