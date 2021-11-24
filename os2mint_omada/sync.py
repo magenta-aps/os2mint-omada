@@ -45,6 +45,7 @@ def _updated_mo_objects(
     Yields: New or updated MO objects.
     """
     yield from _updated_binding(user=user, it_system_uuid=it_system_uuid)
+    yield from _terminate_excess_addresses(user=user)
     yield from _updated_addresses(user=user, address_class_uuids=address_class_uuids)
 
 
@@ -77,6 +78,25 @@ def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
         yield as_terminated(user.mo_it_system_binding)
 
 
+def _terminate_excess_addresses(user: User) -> Iterator[MOBase]:
+    """
+    Terminate excess addresses for the user, since omada is authoritative for all
+    adresses of these types, and we want at most one.
+
+    Args:
+        user: Object containing Omada and MO data for a single user.
+
+    Yields: Excess MO addresses as terminated.
+    """
+    for user_key, omada_attribute_name in ADDRESS_USER_KEY_TO_OMADA_ATTR.items():
+        try:
+            excess_mo_addresses = user.mo_addresses[user_key][1:]
+        except KeyError:
+            continue
+        for address in excess_mo_addresses:
+            yield as_terminated(address)
+
+
 def _updated_addresses(
     user: User, address_class_uuids: dict[str, UUID]
 ) -> Iterator[MOBase]:
@@ -90,13 +110,9 @@ def _updated_addresses(
     Yields: Updated MO addresses.
     """
     for user_key, omada_attribute_name in ADDRESS_USER_KEY_TO_OMADA_ATTR.items():
-        # Terminate excess addresses for the user_key, since omada is authoritative for
-        # all adresses of these types, and we want at most one.
         try:
-            mo_address, *excess_mo_addresses = user.mo_addresses[user_key]
-            for address in excess_mo_addresses:
-                yield as_terminated(address)
-        except KeyError:
+            mo_address = user.mo_addresses[user_key][0]
+        except (KeyError, IndexError):
             mo_address = None
 
         # Create or update MO address if Omada attribute was added or changed. Omada
