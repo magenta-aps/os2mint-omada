@@ -16,11 +16,11 @@ router = APIRouter()
 
 
 @router.post("/import/it-users")
-async def import_it_users() -> str:
+async def import_it_users() -> dict[str, Any]:
     """
     Import Omada IT users into MO.
 
-    Returns: A greeting, if everything was successful.
+    Returns: Dictionary of statistics.
     """
     # Set up the IT system and address classes in MO
     root_org = await mo.get_root_org()
@@ -60,4 +60,6 @@ async def import_it_users() -> str:
     async with model_client.context():
         await model_client.load_mo_objs(updated_objects)
 
-    return "Have a nice day ^_^"
+    return dict(
+        num_updated_objects=len(updated_objects),
+    )
