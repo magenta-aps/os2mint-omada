@@ -66,7 +66,7 @@ class TestUser:
         return uuid5(self.mo_uuid, "C_OBJECTGUID_I_AD")
 
     @property
-    def service_number(self):
+    def service_number(self) -> str:
         return f"#{self.name}"
 
     def get_mo_it_system_binding(

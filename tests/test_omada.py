@@ -1,5 +1,7 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from typing import Callable
+
 import pytest
 import respx
 from hypothesis import given
@@ -11,7 +13,7 @@ from os2mint_omada.config import settings
 
 
 @composite
-def it_users(draw) -> list[dict]:
+def it_users(draw: Callable) -> list[dict]:
     required = {
         "C_TJENESTENR": st.text(),
         "C_OBJECTGUID_I_AD": st.uuids().map(str),
@@ -26,7 +28,14 @@ def it_users(draw) -> list[dict]:
         "UId": st.text(),
         "EMAIL2": st.text(),
     }
-    return draw(st.lists(st.fixed_dictionaries(required, optional=optional)))
+    return draw(
+        st.lists(
+            st.fixed_dictionaries(
+                required,
+                optional=optional,  # type: ignore [arg-type]
+            )
+        )
+    )
 
 
 @pytest.mark.asyncio

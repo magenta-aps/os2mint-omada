@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from datetime import date
+from typing import Callable
 from uuid import uuid4
 
 from hypothesis import given
@@ -13,7 +14,7 @@ from os2mint_omada.util import as_terminated
 
 
 @composite
-def from_and_to_date(draw) -> tuple[date, date]:
+def from_and_to_date(draw: Callable) -> tuple[date, date]:
     from_date = draw(st.dates())
     to_date = draw(st.dates(min_value=from_date))
     return from_date, to_date
