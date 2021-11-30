@@ -56,10 +56,6 @@ Lint Python:
     IT_SYSTEM_USER_KEY: "omada_ad_guid"
     ODATA_URL: "http://omada.example.org/OData/DataObjects/Identity?viewid=12345"
 
-Test on Python 3.9:
-  <<: *test
-  image: python:3.9
-
 Test on Python 3.10:
   <<: *test
   image: python:3.10
