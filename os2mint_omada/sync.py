@@ -143,7 +143,7 @@ def get_updated_mo_objects(
     mo_it_bindings: dict[UUID, ITSystemBinding],
     omada_it_users: list[OmadaITUser],
     mo_user_addresses: dict[UUID, dict[str, list[Address]]],
-    service_number_to_person: dict[str, UUID],
+    mo_engagements: list[dict],
     address_class_uuids: dict[str, UUID],
     it_system_uuid: UUID,
 ) -> Iterator[MOBase]:
@@ -156,15 +156,19 @@ def get_updated_mo_objects(
         omada_it_users: Omada IT users.
         mo_user_addresses: Dictionary mapping person UUIDs to a dictionary of lists of
          their adresses, indexed by its user key.
-        service_number_to_person: Dictionary mapping Omada 'TJENESTENR' to MO person
-         UUIDs.
+        mo_engagements: List of MO engagement dicts.
         address_class_uuids: Dictionary mapping address class user keys into UUIDs.
         it_system_uuid: UUID of the IT system users are inserted into in MO.
 
     Yields: New or updated MO objects.
     """
+    # Omada and MO users are linked through the 'TJENESTENR' field. However 'TJENESTENR'
+    # is not set on the MO users directly, but on their engagement as the 'user_key',
+    # so we need to link through that.
+    service_number_to_omada = {u.service_number: u for u in omada_it_users}
     person_to_omada = {
-        service_number_to_person[u.service_number]: u for u in omada_it_users
+        UUID(e["person"]["uuid"]): service_number_to_omada.get(e["user_key"])
+        for e in mo_engagements
     }
     mo_person_uuids = mo_it_bindings.keys()
     omada_person_uuids = person_to_omada.keys()

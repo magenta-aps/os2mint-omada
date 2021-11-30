@@ -50,6 +50,7 @@ class TestUser:
     mo_uuid: UUID = field(default_factory=uuid4)
     mo_addresses: dict[str, list[Address]] = field(default_factory=dict)
     mo_it_system_binding: Optional[ITSystemBinding] = None
+    mo_engagement = True
     omada_it_user: Optional[OmadaITUser] = None
 
     address_classes: ClassVar[dict[str, UUID]] = {
@@ -63,6 +64,10 @@ class TestUser:
     @property
     def ad_guid(self) -> UUID:
         return uuid5(self.mo_uuid, "C_OBJECTGUID_I_AD")
+
+    @property
+    def service_number(self):
+        return f"#{self.name}"
 
     def get_mo_it_system_binding(
         self,
@@ -79,7 +84,7 @@ class TestUser:
 
     def get_omada_it_user(self, **kwargs: str) -> OmadaITUser:
         return OmadaITUser(
-            service_number=f"#{self.name}",
+            service_number=self.service_number,
             ad_guid=self.ad_guid,
             login=kwargs.get("C_LOGIN", ""),
             email=kwargs.get("EMAIL", ""),
@@ -164,10 +169,14 @@ def eve_exist() -> TestUser:
 
 @pytest.fixture
 def erin_exist() -> TestUser:
-    # Exists in both with no relevance to Omada => should do nothing
+    # Exists in both, but no MO engagement => should do nothing
     user = TestUser(name="Erin Exist")
+    user.mo_engagement = False
+    user.omada_it_user = user.get_omada_it_user(
+        EMAIL="erin@example.org",
+    )
     user.mo_addresses = user.get_mo_addresses(
-        UnrelatedAddressEmployee=["Can't touch this!"],
+        EmailEmployee=["erin@example.org"],
     )
     return user
 
@@ -237,15 +246,18 @@ def mo_user_addresses(
 
 
 @pytest.fixture
-def service_number_to_person(test_users: tuple[TestUser, ...]) -> dict[str, UUID]:
+def mo_engagements(test_users: tuple[TestUser, ...]) -> list[dict]:
     """
-    Returns: Dictionary mapping Omada service numbers to MO person UUIDs.
+    Returns: List of MO engagement dicts.
     """
-    return {
-        user.omada_it_user.service_number: user.mo_uuid
-        for user in test_users
-        if user.omada_it_user is not None
-    }
+    return [
+        {
+            "user_key": u.service_number,
+            "person": {"uuid": str(u.mo_uuid)},
+        }
+        for u in test_users
+        if u.mo_engagement
+    ]
 
 
 @pytest.fixture
@@ -266,7 +278,7 @@ def test_get_updated_mo_objects(
     mo_it_bindings: dict[UUID, ITSystemBinding],
     omada_it_users: list[OmadaITUser],
     mo_user_addresses: dict[UUID, dict[str, list[Address]]],
-    service_number_to_person: dict[str, UUID],
+    mo_engagements: list[dict],
     it_system_uuid: UUID,
     address_classes: dict[str, UUID],
 ) -> None:
@@ -275,7 +287,7 @@ def test_get_updated_mo_objects(
             mo_it_bindings=mo_it_bindings,
             omada_it_users=omada_it_users,
             mo_user_addresses=mo_user_addresses,
-            service_number_to_person=service_number_to_person,
+            mo_engagements=mo_engagements,
             address_class_uuids=address_classes,
             it_system_uuid=it_system_uuid,
         )
@@ -357,8 +369,8 @@ def test_update_dave_delete(
         to_date=frozen_datetime.date(),
     )
     assert [
-        [actual_address_1],
-        [actual_address_3, actual_address_2],
+        [actual_address_2],
+        [actual_address_3, actual_address_1],
     ] == list(expected_addresses.values())
 
 
@@ -405,7 +417,7 @@ def test_update_oscar_update(
         from_date=frozen_datetime.date(),
     )
     # Strip UUIDs as they are (very) unlikely to be equal on create
-    assert [without_uuid(actual_address_3)] == [
+    assert [without_uuid(actual_address_4)] == [
         without_uuid(a) for a in itertools.chain.from_iterable(expected_create.values())
     ]
 
@@ -413,7 +425,7 @@ def test_update_oscar_update(
         EmailEmployee=["oscar@example.org"],
         from_date=frozen_datetime.date(),
     )
-    assert [[actual_address_2]] == list(expected_update.values())
+    assert [[actual_address_3]] == list(expected_update.values())
 
     expected_delete = oscar_update.get_mo_addresses(
         EmailEmployee=["EXTRA-OSCAR@example.org"],
@@ -423,6 +435,6 @@ def test_update_oscar_update(
     )
     assert [
         [actual_address_1],
-        [actual_address_4],
+        [actual_address_2],
         [actual_address_5],
     ] == list(expected_delete.values())

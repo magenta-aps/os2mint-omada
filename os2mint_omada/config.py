@@ -3,7 +3,6 @@
 from pydantic import AnyHttpUrl
 from pydantic import BaseSettings
 from pydantic import Field
-from pydantic import UUID4
 
 
 class Settings(BaseSettings):
@@ -15,9 +14,7 @@ class Settings(BaseSettings):
     auth_server: AnyHttpUrl = Field("http://keycloak:8081/auth")
 
     # MO IT-system users will be inserted into
-    it_system_uuid: UUID4
     it_system_user_key: str
-    it_system_name: str
 
     # Omada OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     odata_url: AnyHttpUrl

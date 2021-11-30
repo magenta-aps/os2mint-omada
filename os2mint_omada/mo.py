@@ -4,14 +4,11 @@ from collections import defaultdict
 from uuid import UUID
 
 from gql import gql
-from ramodels.mo import FacetClass
 from ramodels.mo.details import Address
 from ramodels.mo.details import ITSystemBinding
 
 from os2mint_omada.clients import graphql_client
 from os2mint_omada.clients import mo_client
-from os2mint_omada.clients import model_client
-from os2mint_omada.config import settings
 
 
 async def get_root_org() -> UUID:
@@ -31,52 +28,36 @@ async def get_root_org() -> UUID:
     return UUID(result["org"]["uuid"])
 
 
-async def ensure_address_classes(root_org: UUID) -> dict[str, UUID]:
+async def get_address_classes(organisation_uuid: UUID) -> dict[str, UUID]:
     """
-    Ensure the required address classes exist in MO.
+    Get addresses classes for the 'employee_address_type' facet.
 
     Args:
-        root_org: The UUID of the root organisation.
+        organisation_uuid: UUID of the (root) organisation.
 
-    Returns: Dictionary mapping address class user keys into their UUIDs.
+    Returns: Dictionary mapping employee address class user keys into their UUIDs.
     """
-    # TODO: This should be handled by os2mo-init instead.
-    required_classes = {
-        # user_key: (name, scope)
-        "EmailEmployee": ("Email", "EMAIL"),  # should always exist in MO already
-        "PhoneEmployee": ("Telefon", "PHONE"),  # should always exist in MO already
-        "MobilePhoneEmployee": ("Mobiltelefon", "PHONE"),
-        "InstitutionPhoneEmployee": ("Institutionstelefonnummer", "PHONE"),
-    }
+    r = await mo_client.get(f"/service/o/{organisation_uuid}/f/employee_address_type/")
+    classes = r.json()["data"]["items"]
+    return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 
-    # Get existing address classes
-    r = await mo_client.get(
-        f"{settings.mo_url}/service/o/{root_org}/f/employee_address_type/"
-    )
-    address_type = r.json()
-    address_class_keys_to_uuids = {
-        c["user_key"]: UUID(c["uuid"]) for c in address_type["data"]["items"]
-    }
 
-    # Create missing address classes
-    missing_class_keys = required_classes.keys() - address_class_keys_to_uuids.keys()
-    missing_classes = {
-        user_key: required_classes[user_key] for user_key in missing_class_keys
-    }
-    create = [
-        FacetClass(
-            facet_uuid=address_type["uuid"],
-            name=name,
-            user_key=user_key,
-            scope=scope,
-            org_uuid=root_org,
-        )
-        for user_key, (name, scope) in missing_classes.items()
-    ]
-    async with model_client.context():
-        await model_client.load_mo_objs(create)
+async def get_it_system_uuid(organisation_uuid: UUID, user_key: str) -> UUID:
+    """
+    Get the UUID of the MO IT System with the provided user key.
 
-    return address_class_keys_to_uuids | {f.user_key: f.uuid for f in create}
+    Args:
+        organisation_uuid: UUID of the (root) organisation.
+        user_key: User key of the IT system.
+
+    Returns: UUID of the IT System with the provided user key, or KeyError if it does
+     not exist.
+    """
+    r = await mo_client.get(f"/service/o/{organisation_uuid}/it/")
+    try:
+        return next(UUID(i["uuid"]) for i in r.json() if i["user_key"] == user_key)
+    except StopIteration:
+        raise KeyError(f"IT System with '{user_key=}' does not exist.")
 
 
 async def get_it_bindings(it_system: UUID) -> dict[UUID, ITSystemBinding]:
