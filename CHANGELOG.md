@@ -5,4 +5,3 @@ CHANGELOG
 ------------------
 
 [#42613] Fix autopub
-
