@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+# SPDX-License-Identifier: MPL-2.0
+---
+facets:
+  employee_address_type:
+    EmailEmployee:
+      title: "Email"
+      scope: "EMAIL"
+    PhoneEmployee:
+      title: "Telefon"
+      scope: "PHONE"
+    MobilePhoneEmployee:
+      title: "Mobiltelefon"
+      scope: "PHONE"
+    InstitutionPhoneEmployee:
+      title: "Institutionstelefonnummer"
+      scope: "PHONE"
+
+it_systems:
+  omada_ad_guid: "Omada"

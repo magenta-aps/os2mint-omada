@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  mo-init:
+    image: magentaaps/os2mo-init:0.1.0
+    environment:
+      AUTH_SERVER: "http://keycloak:8080/auth"
+      MO_URL: "http://mo"
+      CLIENT_ID: "dipex"
+      CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      AUTH_REALM: "mo"
+      LORA_URL: "http://mox"
+      LORA_CLIENT_ID: "dipex"
+      LORA_CLIENT_SECRET: "a091ed82-6e82-4efc-a8f0-001e2b127853"
+      LORA_AUTH_REALM: "lora"
+    volumes:
+      - type: bind
+        source: ./init.config.yml
+        target: /config/config.yml
+
+  omada:
+    build:
+      context: .
+    environment:
+      # OS2mo
+      MO_URL: "http://mo"
+      CLIENT_ID: "dipex"
+      CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      AUTH_REALM: "mo"
+      AUTH_SERVER: "http://keycloak:8080/auth"
+
+      # IT-system users will be inserted into
+      IT_SYSTEM_USER_KEY: "omada_ad_guid"
+
+      # Omada OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
+      ODATA_URL: "http://omada.example.org/OData/DataObjects/Identity?viewid=12345"
+    ports:
+      - "9000:80"
+    depends_on:
+      mo-init:
+        condition: service_completed_successfully
+
+networks:
+  default:
+    external: true
+    name: os2mo_default

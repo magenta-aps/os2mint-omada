@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2021 Magenta ApS
+# SPDX-License-Identifier: MPL-2.0
+
+# For `docker push` to work, the following environment variables have to set in
+# the Gitlab UI:
+# RELEASE_REGISTRY_USER
+# RELEASE_REGISTRY_PASSWORD
+
+variables:
+  RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mint-omada
+  IMAGE_SHA: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
+
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
+
+
+stages:
+  - lint
+  - test
+  - build
+  - prepare-release
+  - release
+
+# ---------------------------------------------------------------------------
+# Templates
+# ---------------------------------------------------------------------------
+include:
+  - project: labs/salt-automation
+    file: gitlab-ci-templates/common/autopub.v1.yml
+  - project: labs/salt-automation
+    file: gitlab-ci-templates/common/docker-release.v1.yml
+  - project: rammearkitektur/gitlab-ci-templates
+    file: templates/poetry-precommit.yml
+
+
+# ---------------------------------------------------------------------------
+# Lint
+# ---------------------------------------------------------------------------
+Lint Python:
+  extends: .lint-python
+  image: python:3.10
+  stage: lint
+  script:
+    - poetry run pre-commit run --all-files
+
+
+# ---------------------------------------------------------------------------
+# Test
+# ---------------------------------------------------------------------------
+.test-template: &test
+  extends: .test-python
+  stage: test
+  needs: []
+  variables:
+    CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+    IT_SYSTEM_USER_KEY: "omada_ad_guid"
+    ODATA_URL: "http://omada.example.org/OData/DataObjects/Identity?viewid=12345"
+
+Test on Python 3.10:
+  <<: *test
+  image: python:3.10
+
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+Build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --cache
+      --context=$CI_PROJECT_DIR
+      --dockerfile=$CI_PROJECT_DIR/Dockerfile
+      --destination=$IMAGE_SHA
