@@ -129,7 +129,7 @@ def carol_create() -> TestUser:
     user = TestUser(name="Carol Create")
     user.omada_it_user = user.get_omada_it_user(
         EMAIL="carol@example.org",
-        C_DIREKTE_TLF="+45 12 34 56 78",
+        C_DIREKTE_TLF="12345678",
     )
     user.mo_addresses = user.get_mo_addresses(
         UnrelatedAddressEmployee=["Can't touch this!", "or this!"],
@@ -157,11 +157,11 @@ def eve_exist() -> TestUser:
     user.mo_it_system_binding = user.get_mo_it_system_binding()
     user.omada_it_user = user.get_omada_it_user(
         EMAIL="eve@example.org",
-        CELLPHONE="+45 00 00 00 01",
+        CELLPHONE="00000001",
     )
     user.mo_addresses = user.get_mo_addresses(
         EmailEmployee=["eve@example.org"],
-        MobilePhoneEmployee=["+45 00 00 00 01"],
+        MobilePhoneEmployee=["00000001"],
         UnrelatedAddressEmployee=["whatever", "dude"],
     )
     return user
@@ -188,13 +188,13 @@ def oscar_update() -> TestUser:
     user.mo_it_system_binding = user.get_mo_it_system_binding()
     user.omada_it_user = user.get_omada_it_user(
         EMAIL="oscar@example.org",
-        CELLPHONE="+45 11 22 33 44",
-        C_DIREKTE_TLF="+45 66 77 88 99",
+        CELLPHONE="11223344",
+        C_DIREKTE_TLF="66778899",
     )
     user.mo_addresses = user.get_mo_addresses(
         EmailEmployee=["WRONG-OSCAR@example.org", "EXTRA-OSCAR@example.org"],
-        MobilePhoneEmployee=["+45 11 22 33 44", "+1 111 1111 1111"],
-        InstitutionPhoneEmployee=["+45 55 55 55 55"],
+        MobilePhoneEmployee=["11223344", "11111111111"],
+        InstitutionPhoneEmployee=["55555555"],
         UnrelatedAddressEmployee=["Can't touch this!"],
     )
 
@@ -326,7 +326,7 @@ def test_update_carol_create(
     assert isinstance(actual_address_2, Address)
     expected_addresses = carol_create.get_mo_addresses(
         EmailEmployee=["carol@example.org"],
-        PhoneEmployee=["+45 12 34 56 78"],
+        PhoneEmployee=["12345678"],
         from_date=frozen_datetime.date(),
     )
     actual = [without_uuid(actual_address_1), without_uuid(actual_address_2)]
@@ -413,7 +413,7 @@ def test_update_oscar_update(
     assert isinstance(actual_address_5, Address)
 
     expected_create = oscar_update.get_mo_addresses(
-        PhoneEmployee=["+45 66 77 88 99"],
+        PhoneEmployee=["66778899"],
         from_date=frozen_datetime.date(),
     )
     # Strip UUIDs as they are (very) unlikely to be equal on create
@@ -429,8 +429,8 @@ def test_update_oscar_update(
 
     expected_delete = oscar_update.get_mo_addresses(
         EmailEmployee=["EXTRA-OSCAR@example.org"],
-        MobilePhoneEmployee=["+1 111 1111 1111"],
-        InstitutionPhoneEmployee=["+45 55 55 55 55"],
+        MobilePhoneEmployee=["11111111111"],
+        InstitutionPhoneEmployee=["55555555"],
         to_date=frozen_datetime.date(),
     )
     assert [

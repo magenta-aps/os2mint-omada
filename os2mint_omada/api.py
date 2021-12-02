@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-import asyncio
 from typing import Any
 
 from fastapi import APIRouter
@@ -27,20 +26,21 @@ async def import_it_users() -> dict[str, Any]:
         organisation_uuid=root_org_uuid,
         user_key=settings.it_system_user_key,
     )
-    address_classes = asyncio.create_task(mo.get_address_classes(root_org_uuid))
-    mo_it_bindings = asyncio.create_task(mo.get_it_bindings(it_system_uuid))
-    mo_user_addresses = asyncio.create_task(mo.get_user_addresses())
-    mo_engagements = asyncio.create_task(mo.get_engagements())
-    omada_it_users = asyncio.create_task(omada.get_it_users(settings.odata_url))
+
+    address_classes = await mo.get_address_classes(root_org_uuid)
+    mo_it_bindings = await mo.get_it_bindings(it_system_uuid)
+    mo_user_addresses = await mo.get_user_addresses()
+    mo_engagements = await mo.get_engagements()
+    omada_it_users = await omada.get_it_users(settings.odata_url)
 
     # Synchronise updated objects to MO
     updated_objects = list(
         sync.get_updated_mo_objects(
-            mo_it_bindings=await mo_it_bindings,
-            omada_it_users=await omada_it_users,
-            mo_user_addresses=await mo_user_addresses,
-            mo_engagements=await mo_engagements,
-            address_class_uuids=await address_classes,
+            mo_it_bindings=mo_it_bindings,
+            omada_it_users=omada_it_users,
+            mo_user_addresses=mo_user_addresses,
+            mo_engagements=mo_engagements,
+            address_class_uuids=address_classes,
             it_system_uuid=it_system_uuid,
         )
     )
