@@ -42,4 +42,6 @@ async def get_it_users(odata_url: AnyHttpUrl) -> list[OmadaITUser]:
     Returns: List of Omada IT user objects.
     """
     r = await client.get(odata_url, timeout=30)
-    return parse_obj_as(list[OmadaITUser], r.json()["value"])
+    users = r.json()["value"]
+    valid_users = (u for u in users if u["C_OBJECTGUID_I_AD"])
+    return parse_obj_as(list[OmadaITUser], valid_users)
