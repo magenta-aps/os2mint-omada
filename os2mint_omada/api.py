@@ -27,7 +27,13 @@ async def import_it_users() -> dict[str, Any]:
         user_key=settings.it_system_user_key,
     )
 
-    address_classes = await mo.get_address_classes(root_org_uuid)
+    address_classes = await mo.get_classes(
+        organisation_uuid=root_org_uuid,
+        facet="employee_address_type",
+    )
+    visibility_classes = await mo.get_classes(
+        organisation_uuid=root_org_uuid, facet="visibility"
+    )
     mo_it_bindings = await mo.get_it_bindings(it_system_uuid)
     mo_user_addresses = await mo.get_user_addresses()
     mo_engagements = await mo.get_engagements()
@@ -42,6 +48,7 @@ async def import_it_users() -> dict[str, Any]:
             mo_engagements=mo_engagements,
             address_class_uuids=address_classes,
             it_system_uuid=it_system_uuid,
+            address_visibility_uuid=visibility_classes["Intern"],
         )
     )
     async with model_client.context():
