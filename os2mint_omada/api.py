@@ -57,3 +57,11 @@ async def import_it_users() -> dict[str, Any]:
     return dict(
         num_updated_objects=len(updated_objects),
     )
+
+
+@router.get("/ready")
+async def readiness_probe() -> dict[str, str]:
+    """
+    Kubernetes readiness probe endpoint
+    """
+    return {"msg": "Omada API ready"}
