@@ -22,11 +22,13 @@ from ramodels.mo._shared import AddressType
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Validity
+from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 from ramodels.mo.details import ITSystemBinding
 
 from os2mint_omada import sync
 from os2mint_omada.omada import OmadaITUser
+from tests.conftest import INTERNAL_VISIBILITY_UUID
 from tests.conftest import IT_SYSTEM_UUID
 
 
@@ -106,6 +108,7 @@ class TestUser:
                     address_type=AddressType(uuid=self.address_classes[user_key]),
                     value=value,
                     person=PersonRef(uuid=self.mo_uuid),
+                    visibility=Visibility(uuid=INTERNAL_VISIBILITY_UUID),
                     validity=Validity(from_date=from_date, to_date=to_date),
                 )
                 for value in values
@@ -281,6 +284,7 @@ def test_get_updated_mo_objects(
     mo_engagements: list[dict],
     it_system_uuid: UUID,
     address_classes: dict[str, UUID],
+    internal_visibility_uuid: UUID,
 ) -> None:
     with patch("os2mint_omada.sync._updated_mo_objects") as update_mock:
         updated_objects = sync.get_updated_mo_objects(
@@ -290,6 +294,7 @@ def test_get_updated_mo_objects(
             mo_engagements=mo_engagements,
             address_class_uuids=address_classes,
             it_system_uuid=it_system_uuid,
+            address_visibility_uuid=internal_visibility_uuid,
         )
         list(updated_objects)  # force execution of lazy 'yield from'
 
@@ -308,12 +313,14 @@ def test_update_carol_create(
     carol_create: TestUser,
     it_system_uuid: UUID,
     address_classes: dict[str, UUID],
+    internal_visibility_uuid: UUID,
 ) -> None:
     # Exists only in Omada => should create
     actual_binding, actual_address_1, actual_address_2 = sync._updated_mo_objects(
         user=carol_create.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
+        address_visibility_uuid=internal_visibility_uuid,
     )
     assert isinstance(actual_binding, ITSystemBinding)
     expected_binding = carol_create.get_mo_it_system_binding(
@@ -342,6 +349,7 @@ def test_update_dave_delete(
     dave_delete: TestUser,
     it_system_uuid: UUID,
     address_classes: dict[str, UUID],
+    internal_visibility_uuid: UUID,
 ) -> None:
     # Exists only in MO => should delete
     (
@@ -353,6 +361,7 @@ def test_update_dave_delete(
         user=dave_delete.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
+        address_visibility_uuid=internal_visibility_uuid,
     )
     assert isinstance(actual_binding, ITSystemBinding)
     expected_binding = dave_delete.get_mo_it_system_binding(
@@ -379,12 +388,14 @@ def test_update_eve_exist(
     eve_exist: TestUser,
     it_system_uuid: UUID,
     address_classes: dict[str, UUID],
+    internal_visibility_uuid: UUID,
 ) -> None:
     # Exists in both with up-to-date date => should do nothing
     updated_objects = sync._updated_mo_objects(
         user=eve_exist.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
+        address_visibility_uuid=internal_visibility_uuid,
     )
     assert list(updated_objects) == []
 
@@ -394,6 +405,7 @@ def test_update_oscar_update(
     oscar_update: TestUser,
     it_system_uuid: UUID,
     address_classes: dict[str, UUID],
+    internal_visibility_uuid: UUID,
 ) -> None:
     (
         actual_address_1,
@@ -405,6 +417,7 @@ def test_update_oscar_update(
         user=oscar_update.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
+        address_visibility_uuid=internal_visibility_uuid,
     )
     assert isinstance(actual_address_1, Address)
     assert isinstance(actual_address_2, Address)

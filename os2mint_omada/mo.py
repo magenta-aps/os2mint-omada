@@ -28,16 +28,17 @@ async def get_root_org() -> UUID:
     return UUID(result["org"]["uuid"])
 
 
-async def get_address_classes(organisation_uuid: UUID) -> dict[str, UUID]:
+async def get_classes(organisation_uuid: UUID, facet: str) -> dict[str, UUID]:
     """
-    Get addresses classes for the 'employee_address_type' facet.
+    Get classes for the given facet.
 
     Args:
         organisation_uuid: UUID of the (root) organisation.
+        facet: Name of the facet.
 
-    Returns: Dictionary mapping employee address class user keys into their UUIDs.
+    Returns: Dictionary mapping class user keys into their UUIDs.
     """
-    r = await mo_client.get(f"/service/o/{organisation_uuid}/f/employee_address_type/")
+    r = await mo_client.get(f"/service/o/{organisation_uuid}/f/{facet}/")
     classes = r.json()["data"]["items"]
     return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 

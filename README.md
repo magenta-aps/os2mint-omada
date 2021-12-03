@@ -27,6 +27,10 @@ facets:
     InstitutionPhoneEmployee:
       title: "Institutionstelefonnummer"
       scope: "PHONE"
+  visibility:
+    Intern:
+      title: "Må vises internt"
+      scope: "INTERNAL"
 
 it_systems:
   omada_ad_guid: "Omada"

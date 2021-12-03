@@ -31,7 +31,10 @@ class User:
 
 
 def _updated_mo_objects(
-    user: User, it_system_uuid: UUID, address_class_uuids: dict[str, UUID]
+    user: User,
+    it_system_uuid: UUID,
+    address_class_uuids: dict[str, UUID],
+    address_visibility_uuid: UUID,
 ) -> Iterator[MOBase]:
     """
     Given a User containing linked Omada and MO data, yield new or updated MO objects,
@@ -41,12 +44,18 @@ def _updated_mo_objects(
         user: Object containing Omada and MO data for a single user.
         it_system_uuid: UUID of the IT system users are inserted into in MO.
         address_class_uuids: Mapping of address class user keys into their UUIDS.
+        address_visibility_uuid: UUID of the visibility class addresses are created
+         with.
 
     Yields: New or updated MO objects.
     """
     yield from _updated_binding(user=user, it_system_uuid=it_system_uuid)
     yield from _terminate_excess_addresses(user=user)
-    yield from _updated_addresses(user=user, address_class_uuids=address_class_uuids)
+    yield from _updated_addresses(
+        user=user,
+        address_class_uuids=address_class_uuids,
+        visibility_uuid=address_visibility_uuid,
+    )
 
 
 def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
@@ -98,7 +107,7 @@ def _terminate_excess_addresses(user: User) -> Iterator[MOBase]:
 
 
 def _updated_addresses(
-    user: User, address_class_uuids: dict[str, UUID]
+    user: User, address_class_uuids: dict[str, UUID], visibility_uuid: UUID
 ) -> Iterator[MOBase]:
     """
     Yield new or updated MO addresses for the given user.
@@ -106,6 +115,7 @@ def _updated_addresses(
     Args:
         user: Object containing Omada and MO data for a single user.
         address_class_uuids: Mapping of address class user keys into their UUIDS.
+        visibility_uuid: UUID of the visibility class addresses are created with.
 
     Yields: Updated MO addresses.
     """
@@ -128,6 +138,7 @@ def _updated_addresses(
                     uuid=None,  # new address
                     address_type=dict(uuid=address_class_uuids[user_key]),
                     person=dict(uuid=user.mo_person_uuid),
+                    visibility=dict(uuid=visibility_uuid),
                     **attributes
                 )
             else:
@@ -146,6 +157,7 @@ def get_updated_mo_objects(
     mo_engagements: list[dict],
     address_class_uuids: dict[str, UUID],
     it_system_uuid: UUID,
+    address_visibility_uuid: UUID,
 ) -> Iterator[MOBase]:
     """
     Given Omada and MO data, yield new or updated MO objects that needs to be sent to
@@ -159,6 +171,8 @@ def get_updated_mo_objects(
         mo_engagements: List of MO engagement dicts.
         address_class_uuids: Dictionary mapping address class user keys into UUIDs.
         it_system_uuid: UUID of the IT system users are inserted into in MO.
+        address_visibility_uuid: UUID of the visibility class addresses are created
+         with.
 
     Yields: New or updated MO objects.
     """
@@ -183,4 +197,5 @@ def get_updated_mo_objects(
             user=user,
             it_system_uuid=it_system_uuid,
             address_class_uuids=address_class_uuids,
+            address_visibility_uuid=address_visibility_uuid,
         )
