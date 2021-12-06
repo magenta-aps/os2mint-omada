@@ -51,10 +51,6 @@ Lint Python:
   extends: .test-python
   stage: test
   needs: []
-  variables:
-    CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
-    IT_SYSTEM_USER_KEY: "omada_ad_guid"
-    ODATA_URL: "http://omada.example.org/OData/DataObjects/Identity?viewid=12345"
 
 Test on Python 3.9:
   <<: *test
