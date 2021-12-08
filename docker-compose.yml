@@ -35,7 +35,7 @@ services:
       # Omada OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
       ODATA_URL: "http://omada.example.org/OData/DataObjects/Identity?viewid=12345"
     ports:
-      - "9000:80"
+      - "9000:8080"
     depends_on:
       mo-init:
         condition: service_completed_successfully
