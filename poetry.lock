@@ -346,7 +346,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "httpcore"
-version = "0.14.4"
+version = "0.14.5"
 description = "A minimal low-level HTTP client."
 category = "main"
 optional = false
@@ -360,6 +360,7 @@ sniffio = ">=1.0.0,<2.0.0"
 
 [package.extras]
 http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "httpx"
@@ -380,6 +381,26 @@ sniffio = "*"
 brotli = ["brotlicffi", "brotli"]
 cli = ["click (>=8.0.0,<9.0.0)", "rich (>=10.0.0,<11.0.0)", "pygments (>=2.0.0,<3.0.0)"]
 http2 = ["h2 (>=3,<5)"]
+
+[[package]]
+name = "httpx_ntlm"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.dependencies]
+cryptography = ">=36.0.0,<36.1.0"
+httpx = ">=0.21"
+pyspnego = ">=0.3.0,<0.4.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/magenta-aps/httpx-ntlm.git"
+reference = "v1.0.0"
+resolved_reference = "7305a5ddbb6733d9fdd472f468b756e922b3faf7"
 
 [[package]]
 name = "hypothesis"
@@ -634,6 +655,21 @@ description = "Persistent/Functional/Immutable data structures"
 category = "main"
 optional = false
 python-versions = ">=3.7"
+
+[[package]]
+name = "pyspnego"
+version = "0.3.1"
+description = "Windows Negotiate Authentication Client and Server"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+cryptography = "*"
+
+[package.extras]
+kerberos = ["gssapi (>=1.5.0)", "krb5"]
+yaml = ["ruamel.yaml"]
 
 [[package]]
 name = "pytest"
@@ -1004,7 +1040,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "b91d774d9debceb074a7b89155a35361c87940695f6f09eae241868099c8afc1"
+content-hash = "fff6c77f354788ce5aac518f09afdf15b0ce1d8ede9e30eb45320fa46ccb0221"
 
 [metadata.files]
 aiohttp = [
@@ -1370,13 +1406,14 @@ h11 = [
     {file = "h11-0.12.0.tar.gz", hash = "sha256:47222cb6067e4a307d535814917cd98fd0a57b6788ce715755fa2b6c28b56042"},
 ]
 httpcore = [
-    {file = "httpcore-0.14.4-py3-none-any.whl", hash = "sha256:9410fe352bea732311f2b2bee0555c8cc5e62b9a73b9d3272fe125a2aa6eb28e"},
-    {file = "httpcore-0.14.4.tar.gz", hash = "sha256:d4305811f604d3c2e22869147392f134796976ff946c96a8cfba87f4e0171d83"},
+    {file = "httpcore-0.14.5-py3-none-any.whl", hash = "sha256:2621ee769d0236574df51b305c5f4c69ca8f0c7b215221ad247b1ee42a9a9de1"},
+    {file = "httpcore-0.14.5.tar.gz", hash = "sha256:435ab519628a6e2393f67812dea3ca5c6ad23b457412cd119295d9f906d96a2b"},
 ]
 httpx = [
     {file = "httpx-0.21.3-py3-none-any.whl", hash = "sha256:df9a0fd43fa79dbab411d83eb1ea6f7a525c96ad92e60c2d7f40388971b25777"},
     {file = "httpx-0.21.3.tar.gz", hash = "sha256:7a3eb67ef0b8abbd6d9402248ef2f84a76080fa1c839f8662e6eb385640e445a"},
 ]
+httpx_ntlm = []
 hypothesis = [
     {file = "hypothesis-6.35.1-py3-none-any.whl", hash = "sha256:536b928d14934809d0da676579436aaa379b06df84408b4c154412e8fd4e1b91"},
     {file = "hypothesis-6.35.1.tar.gz", hash = "sha256:8533812bd277925b0c594ef2681dc8f4289a7b6be0169cc2df295d096c7cd783"},
@@ -1611,6 +1648,20 @@ pyrsistent = [
     {file = "pyrsistent-0.18.1-cp39-cp39-win32.whl", hash = "sha256:1b34eedd6812bf4d33814fca1b66005805d3640ce53140ab8bbb1e2651b0d9bc"},
     {file = "pyrsistent-0.18.1-cp39-cp39-win_amd64.whl", hash = "sha256:e24a828f57e0c337c8d8bb9f6b12f09dfdf0273da25fda9e314f0b684b415a07"},
     {file = "pyrsistent-0.18.1.tar.gz", hash = "sha256:d4d61f8b993a7255ba714df3aca52700f8125289f84f704cf80916517c46eb96"},
+]
+pyspnego = [
+    {file = "pyspnego-0.3.1-cp310-cp310-win32.whl", hash = "sha256:b02c9b61f85c96f969c78f492b35915a590dddabf987687eb1256ef2fd8fbdcb"},
+    {file = "pyspnego-0.3.1-cp310-cp310-win_amd64.whl", hash = "sha256:6387b4631120205240d1be25aff7a78d41db9b99bb5803b3ac6b7b6ed80b8920"},
+    {file = "pyspnego-0.3.1-cp36-cp36m-win32.whl", hash = "sha256:19da2de9d55d73d05b2798d4e5bd7ee5980e573ae50dc2f2bc460df5eaffe5ea"},
+    {file = "pyspnego-0.3.1-cp36-cp36m-win_amd64.whl", hash = "sha256:37c4d80a0c90bd2b670c583b2efbd210c26f54b1f7661c0cbc684a954b88c1c3"},
+    {file = "pyspnego-0.3.1-cp37-cp37m-win32.whl", hash = "sha256:9235a3159a4e1648d6bb4d170b8d68ecf5b1f55fa2f3157335ce74df5c192468"},
+    {file = "pyspnego-0.3.1-cp37-cp37m-win_amd64.whl", hash = "sha256:e15d16b205fbc5e945244b974312e9796467913f69736fdad262edee0c3c105f"},
+    {file = "pyspnego-0.3.1-cp38-cp38-win32.whl", hash = "sha256:f4a00cc3796d34212b391caecb3fd636cdefea798cb4ac231f893bdade674f01"},
+    {file = "pyspnego-0.3.1-cp38-cp38-win_amd64.whl", hash = "sha256:27dd07b6b918c289d2820c685b346a198498354cf3a1bfe9ec19cff9fa8fce2f"},
+    {file = "pyspnego-0.3.1-cp39-cp39-win32.whl", hash = "sha256:a0d41d43657cd4d4456ca734ec00b6e24c95a144499cfc429371a310c4b10d7a"},
+    {file = "pyspnego-0.3.1-cp39-cp39-win_amd64.whl", hash = "sha256:6df4b5233ec28358992adadfef5be76807ca1424e7c0fbf430424759edc85f8b"},
+    {file = "pyspnego-0.3.1-py2.py3-none-any.whl", hash = "sha256:75a0d4be4236f6b7c2ded0b43fd03e942c48cdbe91c2856f45f22884b7e92ddc"},
+    {file = "pyspnego-0.3.1.tar.gz", hash = "sha256:ccb8d9cea310f1715d5ed3d2d092db9bf50ff2762cf94a0dd9dfab7774a727fe"},
 ]
 pytest = [
     {file = "pytest-6.2.5-py3-none-any.whl", hash = "sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134"},

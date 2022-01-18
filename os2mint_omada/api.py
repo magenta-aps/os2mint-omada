@@ -47,7 +47,12 @@ async def import_it_users(response: Response) -> dict[str, Any]:
         mo_it_users = await mo.get_it_users(it_system_uuid)
         mo_user_addresses = await mo.get_user_addresses()
         mo_engagements = await mo.get_engagements()
-        omada_it_users = await omada.get_it_users(settings.odata_url)
+        omada_it_users = await omada.get_it_users(
+            odata_url=settings.odata_url,
+            host_header=settings.omada_host_header,
+            ntlm_username=settings.omada_ntlm_username,
+            ntlm_password=settings.omada_ntlm_password,
+        )
 
         # Synchronise updated objects to MO
         updated_objects = list(

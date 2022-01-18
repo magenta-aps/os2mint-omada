@@ -61,8 +61,8 @@ def _updated_mo_objects(
 def _updated_it_user(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
     """
     Yield a new or updated (i.e. expired) MO IT User for the given user. The IT User
-    binding will always either be created or deleted, never updated, since it only
-    contains the user_key, which is exactly the field we use to map the objects.
+    will always either be created or deleted, never updated, since it only contains the
+    user_key, which is exactly the field we use to map the objects.
 
     Args:
         user: Object containing Omada and MO data for a single user.
