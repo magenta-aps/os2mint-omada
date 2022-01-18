@@ -8,7 +8,7 @@ from uuid import UUID
 from ramodels.mo import MOBase
 from ramodels.mo._shared import Validity
 from ramodels.mo.details import Address
-from ramodels.mo.details import ITSystemBinding
+from ramodels.mo.details import ITUser
 
 from os2mint_omada.omada import OmadaITUser
 from os2mint_omada.util import as_terminated
@@ -25,7 +25,7 @@ ADDRESS_USER_KEY_TO_OMADA_ATTR = {
 @dataclass
 class User:
     omada_it_user: Optional[OmadaITUser]
-    mo_it_system_binding: Optional[ITSystemBinding]
+    mo_it_user: Optional[ITUser]
     mo_addresses: dict[str, list[Address]]
     mo_person_uuid: UUID
 
@@ -49,7 +49,7 @@ def _updated_mo_objects(
 
     Yields: New or updated MO objects.
     """
-    yield from _updated_binding(user=user, it_system_uuid=it_system_uuid)
+    yield from _updated_it_user(user=user, it_system_uuid=it_system_uuid)
     yield from _terminate_excess_addresses(user=user)
     yield from _updated_addresses(
         user=user,
@@ -58,9 +58,9 @@ def _updated_mo_objects(
     )
 
 
-def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
+def _updated_it_user(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
     """
-    Yield a new or updated (i.e. expired) MO IT System binding for the given user. The
+    Yield a new or updated (i.e. expired) MO IT User for the given user. The IT User
     binding will always either be created or deleted, never updated, since it only
     contains the user_key, which is exactly the field we use to map the objects.
 
@@ -68,12 +68,12 @@ def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
         user: Object containing Omada and MO data for a single user.
         it_system_uuid: UUID of the IT system users are inserted into in MO.
 
-    Yields: Updated MO IT System binding.
+    Yields: Updated MO IT User.
     """
-    # Create binding if user exists in Omada, but not in MO
-    if user.omada_it_user and not user.mo_it_system_binding:
-        yield ITSystemBinding.from_simplified_fields(
-            uuid=None,  # new binding
+    # Create if user exists in Omada, but not in MO
+    if user.omada_it_user and not user.mo_it_user:
+        yield ITUser.from_simplified_fields(
+            uuid=None,  # new user
             user_key=str(user.omada_it_user.ad_guid),  # account name
             itsystem_uuid=it_system_uuid,
             person_uuid=user.mo_person_uuid,
@@ -82,9 +82,9 @@ def _updated_binding(user: User, it_system_uuid: UUID) -> Iterator[MOBase]:
         )
         return
 
-    # Delete binding if user exists in MO, but not in Omada
-    if not user.omada_it_user and user.mo_it_system_binding:
-        yield as_terminated(user.mo_it_system_binding)
+    # Delete if user exists in MO, but not in Omada
+    if not user.omada_it_user and user.mo_it_user:
+        yield as_terminated(user.mo_it_user)
 
 
 def _terminate_excess_addresses(user: User) -> Iterator[MOBase]:
@@ -131,7 +131,7 @@ def _updated_addresses(
         if omada_attribute and (not mo_address or mo_address.value != omada_attribute):
             attributes = dict(
                 value=omada_attribute,
-                validity=Validity(from_date=midnight().isoformat(), to_date=None),
+                validity=Validity(from_date=midnight(), to_date=None),
             )
             if not mo_address:
                 address = dict(
@@ -151,7 +151,7 @@ def _updated_addresses(
 
 
 def get_updated_mo_objects(
-    mo_it_bindings: dict[UUID, ITSystemBinding],
+    mo_it_users: dict[UUID, ITUser],
     omada_it_users: list[OmadaITUser],
     mo_user_addresses: dict[UUID, dict[str, list[Address]]],
     mo_engagements: list[dict],
@@ -164,7 +164,7 @@ def get_updated_mo_objects(
     the server, such that they correspond to the Omada data.
 
     Args:
-        mo_it_bindings: MO IT system user bindings.
+        mo_it_users: MO IT users.
         omada_it_users: Omada IT users.
         mo_user_addresses: Dictionary mapping person UUIDs to a dictionary of lists of
          their adresses, indexed by its user key.
@@ -184,12 +184,12 @@ def get_updated_mo_objects(
         UUID(e["person"]["uuid"]): service_number_to_omada.get(e["user_key"])
         for e in mo_engagements
     }
-    mo_person_uuids = mo_it_bindings.keys()
+    mo_person_uuids = mo_it_users.keys()
     omada_person_uuids = person_to_omada.keys()
     for person_uuid in mo_person_uuids | omada_person_uuids:
         user = User(
             omada_it_user=person_to_omada.get(person_uuid),
-            mo_it_system_binding=mo_it_bindings.get(person_uuid),
+            mo_it_user=mo_it_users.get(person_uuid),
             mo_addresses=mo_user_addresses.get(person_uuid, {}),
             mo_person_uuid=person_uuid,
         )

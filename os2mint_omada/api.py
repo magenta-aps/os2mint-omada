@@ -44,7 +44,7 @@ async def import_it_users(response: Response) -> dict[str, Any]:
         visibility_classes = await mo.get_classes(
             organisation_uuid=root_org_uuid, facet="visibility"
         )
-        mo_it_bindings = await mo.get_it_bindings(it_system_uuid)
+        mo_it_users = await mo.get_it_users(it_system_uuid)
         mo_user_addresses = await mo.get_user_addresses()
         mo_engagements = await mo.get_engagements()
         omada_it_users = await omada.get_it_users(settings.odata_url)
@@ -52,7 +52,7 @@ async def import_it_users(response: Response) -> dict[str, Any]:
         # Synchronise updated objects to MO
         updated_objects = list(
             sync.get_updated_mo_objects(
-                mo_it_bindings=mo_it_bindings,
+                mo_it_users=mo_it_users,
                 omada_it_users=omada_it_users,
                 mo_user_addresses=mo_user_addresses,
                 mo_engagements=mo_engagements,

@@ -5,11 +5,10 @@ import unittest
 from collections.abc import Iterator
 from dataclasses import dataclass
 from dataclasses import field
-from datetime import date
 from datetime import datetime
+from datetime import time
 from typing import ClassVar
 from typing import Optional
-from typing import Union
 from unittest.mock import patch
 from uuid import UUID
 from uuid import uuid4
@@ -24,7 +23,7 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Validity
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
-from ramodels.mo.details import ITSystemBinding
+from ramodels.mo.details import ITUser
 
 from os2mint_omada import sync
 from os2mint_omada.omada import OmadaITUser
@@ -51,7 +50,7 @@ class TestUser:
 
     mo_uuid: UUID = field(default_factory=uuid4)
     mo_addresses: dict[str, list[Address]] = field(default_factory=dict)
-    mo_it_system_binding: Optional[ITSystemBinding] = None
+    mo_it_user: Optional[ITUser] = None
     mo_engagement = True
     omada_it_user: Optional[OmadaITUser] = None
 
@@ -71,13 +70,13 @@ class TestUser:
     def service_number(self) -> str:
         return f"#{self.name}"
 
-    def get_mo_it_system_binding(
+    def get_mo_it_user(
         self,
-        from_date: Union[date, str] = date(1991, 2, 3),
-        to_date: Optional[Union[date, str]] = None,
-    ) -> ITSystemBinding:
-        return ITSystemBinding(
-            uuid=uuid5(self.mo_uuid, "ITSystemBinding"),
+        from_date: datetime = datetime(1991, 2, 3),
+        to_date: datetime = None,
+    ) -> ITUser:
+        return ITUser(
+            uuid=uuid5(self.mo_uuid, "ITUser"),
             user_key=str(self.ad_guid),
             itsystem=ITSystemRef(uuid=IT_SYSTEM_UUID),
             person=PersonRef(uuid=self.mo_uuid),
@@ -97,8 +96,8 @@ class TestUser:
 
     def get_mo_addresses(
         self,
-        from_date: Union[date, str] = date(1991, 2, 3),
-        to_date: Optional[Union[date, str]] = None,
+        from_date: datetime = datetime(1991, 2, 3),
+        to_date: datetime = None,
         **kwargs: list[str],
     ) -> dict[str, list[Address]]:
         return {
@@ -120,7 +119,7 @@ class TestUser:
     def sync_user(self) -> sync.User:
         return sync.User(
             omada_it_user=self.omada_it_user,
-            mo_it_system_binding=self.mo_it_system_binding,
+            mo_it_user=self.mo_it_user,
             mo_addresses=self.mo_addresses,
             mo_person_uuid=self.mo_uuid,
         )
@@ -144,7 +143,7 @@ def carol_create() -> TestUser:
 def dave_delete() -> TestUser:
     # Exists only in MO => should delete
     user = TestUser(name="Dave Delete")
-    user.mo_it_system_binding = user.get_mo_it_system_binding()
+    user.mo_it_user = user.get_mo_it_user()
     user.mo_addresses = user.get_mo_addresses(
         PhoneEmployee=["delete"],
         InstitutionPhoneEmployee=["me", "please"],
@@ -157,7 +156,7 @@ def dave_delete() -> TestUser:
 def eve_exist() -> TestUser:
     # Exists in both with up-to-date date data => should do nothing
     user = TestUser(name="Eve Exist")
-    user.mo_it_system_binding = user.get_mo_it_system_binding()
+    user.mo_it_user = user.get_mo_it_user()
     user.omada_it_user = user.get_omada_it_user(
         EMAIL="eve@example.org",
         CELLPHONE="00000001",
@@ -188,7 +187,7 @@ def erin_exist() -> TestUser:
 def oscar_update() -> TestUser:
     # Exists in both, but outdated in MO => should update MO
     user = TestUser(name="Oscar Update")
-    user.mo_it_system_binding = user.get_mo_it_system_binding()
+    user.mo_it_user = user.get_mo_it_user()
     user.omada_it_user = user.get_omada_it_user(
         EMAIL="oscar@example.org",
         CELLPHONE="11223344",
@@ -216,16 +215,16 @@ def test_users(
 
 
 @pytest.fixture
-def mo_it_bindings(
+def mo_it_users(
     test_users: tuple[TestUser, ...], it_system_uuid: UUID
-) -> dict[UUID, ITSystemBinding]:
+) -> dict[UUID, ITUser]:
     """
-    Returns: Dictionary mapping binding person UUIDs into MO ITSystemBinding objects.
+    Returns: Dictionary mapping person UUIDs into MO ITUser objects.
     """
     return {
-        user.mo_it_system_binding.person.uuid: user.mo_it_system_binding
+        user.mo_it_user.person.uuid: user.mo_it_user
         for user in test_users
-        if user.mo_it_system_binding is not None
+        if user.mo_it_user is not None
     }
 
 
@@ -278,7 +277,7 @@ def test_get_updated_mo_objects(
     erin_exist: TestUser,
     eve_exist: TestUser,
     oscar_update: TestUser,
-    mo_it_bindings: dict[UUID, ITSystemBinding],
+    mo_it_users: dict[UUID, ITUser],
     omada_it_users: list[OmadaITUser],
     mo_user_addresses: dict[UUID, dict[str, list[Address]]],
     mo_engagements: list[dict],
@@ -288,7 +287,7 @@ def test_get_updated_mo_objects(
 ) -> None:
     with patch("os2mint_omada.sync._updated_mo_objects") as update_mock:
         updated_objects = sync.get_updated_mo_objects(
-            mo_it_bindings=mo_it_bindings,
+            mo_it_users=mo_it_users,
             omada_it_users=omada_it_users,
             mo_user_addresses=mo_user_addresses,
             mo_engagements=mo_engagements,
@@ -316,25 +315,25 @@ def test_update_carol_create(
     internal_visibility_uuid: UUID,
 ) -> None:
     # Exists only in Omada => should create
-    actual_binding, actual_address_1, actual_address_2 = sync._updated_mo_objects(
+    actual_it_user, actual_address_1, actual_address_2 = sync._updated_mo_objects(
         user=carol_create.sync_user,
         it_system_uuid=it_system_uuid,
         address_class_uuids=address_classes,
         address_visibility_uuid=internal_visibility_uuid,
     )
-    assert isinstance(actual_binding, ITSystemBinding)
-    expected_binding = carol_create.get_mo_it_system_binding(
-        from_date=frozen_datetime.date()
+    assert isinstance(actual_it_user, ITUser)
+    expected_it_user = carol_create.get_mo_it_user(
+        from_date=datetime.combine(frozen_datetime, time.min)
     )
     # Strip UUIDs as they are (very) unlikely to be equal on create
-    assert without_uuid(actual_binding) == without_uuid(expected_binding)
+    assert without_uuid(actual_it_user) == without_uuid(expected_it_user)
 
     assert isinstance(actual_address_1, Address)
     assert isinstance(actual_address_2, Address)
     expected_addresses = carol_create.get_mo_addresses(
         EmailEmployee=["carol@example.org"],
         PhoneEmployee=["12345678"],
-        from_date=frozen_datetime.date(),
+        from_date=datetime.combine(frozen_datetime, time.min),
     )
     actual = [without_uuid(actual_address_1), without_uuid(actual_address_2)]
     expected = [
@@ -353,7 +352,7 @@ def test_update_dave_delete(
 ) -> None:
     # Exists only in MO => should delete
     (
-        actual_binding,
+        actual_it_user,
         actual_address_1,
         actual_address_2,
         actual_address_3,
@@ -363,11 +362,11 @@ def test_update_dave_delete(
         address_class_uuids=address_classes,
         address_visibility_uuid=internal_visibility_uuid,
     )
-    assert isinstance(actual_binding, ITSystemBinding)
-    expected_binding = dave_delete.get_mo_it_system_binding(
-        to_date=frozen_datetime.date()
+    assert isinstance(actual_it_user, ITUser)
+    expected_it_user = dave_delete.get_mo_it_user(
+        to_date=datetime.combine(frozen_datetime, time.min),
     )
-    assert actual_binding == expected_binding
+    assert actual_it_user == expected_it_user
 
     assert isinstance(actual_address_1, Address)
     assert isinstance(actual_address_2, Address)
@@ -375,7 +374,7 @@ def test_update_dave_delete(
     expected_addresses = dave_delete.get_mo_addresses(
         PhoneEmployee=["delete"],
         InstitutionPhoneEmployee=["me", "please"],
-        to_date=frozen_datetime.date(),
+        to_date=datetime.combine(frozen_datetime, time.min),
     )
     assert [
         [actual_address_2],
@@ -427,7 +426,7 @@ def test_update_oscar_update(
 
     expected_create = oscar_update.get_mo_addresses(
         PhoneEmployee=["66778899"],
-        from_date=frozen_datetime.date(),
+        from_date=datetime.combine(frozen_datetime, time.min),
     )
     # Strip UUIDs as they are (very) unlikely to be equal on create
     assert [without_uuid(actual_address_4)] == [
@@ -436,7 +435,7 @@ def test_update_oscar_update(
 
     expected_update = oscar_update.get_mo_addresses(
         EmailEmployee=["oscar@example.org"],
-        from_date=frozen_datetime.date(),
+        from_date=datetime.combine(frozen_datetime, time.min),
     )
     assert [[actual_address_3]] == list(expected_update.values())
 
@@ -444,7 +443,7 @@ def test_update_oscar_update(
         EmailEmployee=["EXTRA-OSCAR@example.org"],
         MobilePhoneEmployee=["11111111111"],
         InstitutionPhoneEmployee=["55555555"],
-        to_date=frozen_datetime.date(),
+        to_date=datetime.combine(frozen_datetime, time.min),
     )
     assert [
         [actual_address_1],
