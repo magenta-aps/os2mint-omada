@@ -57,7 +57,7 @@ async def test_get_it_system_uuid_no_exist(
 
 
 @pytest.mark.asyncio
-async def test_get_it_bindings(
+async def test_get_it_users(
     alice: UUID, bob: UUID, it_system_uuid: UUID, respx_mock: MockRouter
 ) -> None:
     validity = {"from": "1900-01-01T00:00:00+01:00", "to": None}
@@ -106,10 +106,10 @@ async def test_get_it_bindings(
         ]
     )
 
-    actual = await mo.get_it_bindings(it_system=it_system_uuid)
+    actual = await mo.get_it_users(it_system=it_system_uuid)
 
     assert actual.keys() == {alice, bob}
-    assert all(binding.itsystem.uuid == it_system_uuid for binding in actual.values())
+    assert all(it_user.itsystem.uuid == it_system_uuid for it_user in actual.values())
 
 
 @pytest.mark.asyncio

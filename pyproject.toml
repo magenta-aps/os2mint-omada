@@ -11,12 +11,14 @@ keywords = ["os2mo", "os2mint", "omada"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pydantic = "^1.8.2"
-fastapi = "^0.70.0"
-uvicorn = "^0.15.0"
-httpx = "^0.21.1"
-ramodels = "^3.15.2"
-raclients = "^0.10.1"
+pydantic = "^1.9.0"
+fastapi = "^0.72.0"
+uvicorn = "^0.17.0"
+httpx = "^0.21.3"
+ramodels = "^5.0.0"
+raclients = "^0.11.4"
+# TODO: Fix when https://github.com/ulodciv/httpx-ntlm/pull/7 is merged upstream
+httpx-ntlm = { git = "https://github.com/magenta-aps/httpx-ntlm.git", tag = "v1.0.0" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

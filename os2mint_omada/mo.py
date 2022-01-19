@@ -5,7 +5,7 @@ from uuid import UUID
 
 from gql import gql
 from ramodels.mo.details import Address
-from ramodels.mo.details import ITSystemBinding
+from ramodels.mo.details import ITUser
 
 from os2mint_omada.clients import graphql_client
 from os2mint_omada.clients import mo_client
@@ -61,24 +61,24 @@ async def get_it_system_uuid(organisation_uuid: UUID, user_key: str) -> UUID:
         raise KeyError(f"IT System with '{user_key=}' does not exist.")
 
 
-async def get_it_bindings(it_system: UUID) -> dict[UUID, ITSystemBinding]:
+async def get_it_users(it_system: UUID) -> dict[UUID, ITUser]:
     """
-    Get IT system user bindings for the given IT system.
+    Get IT users for the given IT system.
 
     Args:
-        it_system: The UUID of the IT system to get bindings for.
+        it_system: The UUID of the IT system to get users for.
 
-    Returns: Dictionary mapping binding person UUIDs into ITSystemBinding objects.
+    Returns: Dictionary mapping person UUIDs into ITUser objects.
     """
     r = await mo_client.get("/api/v1/it")
-    it_user_bindings_for_system = [
+    it_users_for_system = [
         b
         for b in r.json()
         if b["person"] is not None and UUID(b["itsystem"]["uuid"]) == it_system
     ]
 
-    it_bindings = {
-        UUID(b["person"]["uuid"]): ITSystemBinding.from_simplified_fields(
+    it_users = {
+        UUID(b["person"]["uuid"]): ITUser.from_simplified_fields(
             uuid=b["uuid"],
             user_key=b["user_key"],
             itsystem_uuid=b["itsystem"]["uuid"],
@@ -86,16 +86,16 @@ async def get_it_bindings(it_system: UUID) -> dict[UUID, ITSystemBinding]:
             from_date=b["validity"]["from"],
             to_date=b["validity"]["to"],
         )
-        for b in it_user_bindings_for_system
+        for b in it_users_for_system
     }
-    # For simplicity it is assumed that each user only has *one* binding for the given
-    # IT system. Although there are no guards in MO to maintain this constraint, this
-    # precondition should always be true since this integration *should* be the single
-    # authoritative source for this IT system.
-    assert len(it_bindings) == len(it_user_bindings_for_system)
-    # TODO: Clean up the IT bindings if assertion doesn't hold
+    # For simplicity, it is assumed that each user only has *one* MO ITUser for the
+    # given IT system. Although there are no guards in MO to maintain this constraint,
+    # this precondition should always be true since this integration *should* be the
+    # single authoritative source for this IT system.
+    assert len(it_users) == len(it_users_for_system)
+    # TODO: Clean up the IT Users if assertion doesn't hold
 
-    return it_bindings
+    return it_users
 
 
 async def get_engagements() -> list[dict]:
