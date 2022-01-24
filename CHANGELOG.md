@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4.1 - 2022-01-24
+------------------
+
+[#47972] Update httpx-ntlm dependency to upstream version from PyPI
+
 0.4.0 - 2022-01-19
 ------------------
 
