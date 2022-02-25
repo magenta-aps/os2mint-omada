@@ -71,7 +71,7 @@ async def import_it_users(response: Response) -> dict[str, Any]:
         )
         logger.info("Uploading updates", num_changes=len(updated_objects))
         async with mo_model_client:
-            mo_model_client.upload(updated_objects)
+            await mo_model_client.upload(updated_objects)
 
         logger.info("Finished importing IT users")
         return dict(
