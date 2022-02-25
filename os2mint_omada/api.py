@@ -3,6 +3,7 @@
 import asyncio
 from typing import Any
 
+import structlog
 from fastapi import APIRouter
 from fastapi import Response
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
@@ -15,6 +16,7 @@ from os2mint_omada.config import settings
 
 router = APIRouter()
 lock = asyncio.Lock()
+logger = structlog.get_logger(__name__)
 
 
 @router.post("/import/it-users")
@@ -24,7 +26,7 @@ async def import_it_users(response: Response) -> dict[str, Any]:
 
     Returns: Dictionary of statistics.
     """
-
+    logger.info("Starting Omada IT user import")
     if lock.locked():
         response.status_code = HTTP_429_TOO_MANY_REQUESTS
         return {"msg": "Already running"}
@@ -47,6 +49,7 @@ async def import_it_users(response: Response) -> dict[str, Any]:
         mo_it_users = await mo.get_it_users(it_system_uuid)
         mo_user_addresses = await mo.get_user_addresses()
         mo_engagements = await mo.get_engagements()
+
         omada_it_users = await omada.get_it_users(
             odata_url=settings.odata_url,
             host_header=settings.omada_host_header,
@@ -66,9 +69,11 @@ async def import_it_users(response: Response) -> dict[str, Any]:
                 address_visibility_uuid=visibility_classes["Intern"],
             )
         )
+        logger.info("Uploading updates", num_changes=len(updated_objects))
         async with mo_model_client:
             mo_model_client.upload(updated_objects)
 
+        logger.info("Finished importing IT users")
         return dict(
             num_updated_objects=len(updated_objects),
         )

@@ -5,6 +5,7 @@ from typing import Optional
 from uuid import UUID
 
 import httpx
+import structlog
 from httpx_ntlm import HttpNtlmAuth
 from pydantic import AnyHttpUrl
 from pydantic import BaseModel
@@ -13,6 +14,8 @@ from pydantic import parse_obj_as
 from pydantic import validator
 
 from os2mint_omada.clients import client
+
+logger = structlog.get_logger(__name__)
 
 
 class OmadaITUser(BaseModel):
@@ -63,6 +66,7 @@ async def get_it_users(
 
     Returns: List of Omada IT user objects.
     """
+    logger.info("Getting Omada IT users", odata_url=odata_url, host_header=host_header)
     headers = {}
     if host_header is not None:
         headers["Host"] = host_header
@@ -73,6 +77,7 @@ async def get_it_users(
         auth = httpx.USE_CLIENT_DEFAULT
 
     response = await client.get(odata_url, headers=headers, auth=auth, timeout=30)
+    response.raise_for_status()
 
     users = response.json()["value"]
     valid_users = (u for u in users if u["C_OBJECTGUID_I_AD"])

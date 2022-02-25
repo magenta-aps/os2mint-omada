@@ -1,13 +1,17 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import logging
 from typing import Optional
 
+import structlog
 from pydantic import AnyHttpUrl
 from pydantic import BaseSettings
 from pydantic import Field
 
 
 class Settings(BaseSettings):
+    log_level: str = "INFO"
+
     # OS2mo
     mo_url: AnyHttpUrl = Field("http://mo:5000")
     client_id: str = "dipex"
@@ -29,3 +33,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def set_log_level(log_level_name: str) -> None:
+    log_level_value = logging.getLevelName(log_level_name)
+    structlog.configure(
+        wrapper_class=structlog.make_filtering_bound_logger(log_level_value)
+    )

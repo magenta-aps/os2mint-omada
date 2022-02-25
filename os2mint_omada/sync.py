@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
+import structlog
 from ramodels.mo import MOBase
 from ramodels.mo._shared import Validity
 from ramodels.mo.details import Address
@@ -13,6 +14,8 @@ from ramodels.mo.details import ITUser
 from os2mint_omada.omada import OmadaITUser
 from os2mint_omada.util import as_terminated
 from os2mint_omada.util import midnight
+
+logger = structlog.get_logger(__name__)
 
 ADDRESS_USER_KEY_TO_OMADA_ATTR = {
     "EmailEmployee": "email",
@@ -176,6 +179,7 @@ def get_updated_mo_objects(
 
     Yields: New or updated MO objects.
     """
+    logger.info("Calculating updates")
     # Omada and MO users are linked through the 'TJENESTENR' field. However 'TJENESTENR'
     # is not set on the MO users directly, but on their engagement as the 'user_key',
     # so we need to link through that.
