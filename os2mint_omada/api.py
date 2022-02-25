@@ -10,7 +10,7 @@ from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 from os2mint_omada import mo
 from os2mint_omada import omada
 from os2mint_omada import sync
-from os2mint_omada.clients import model_client
+from os2mint_omada.clients import mo_model_client
 from os2mint_omada.config import settings
 
 router = APIRouter()
@@ -66,8 +66,8 @@ async def import_it_users(response: Response) -> dict[str, Any]:
                 address_visibility_uuid=visibility_classes["Intern"],
             )
         )
-        async with model_client.context():
-            await model_client.load_mo_objs(updated_objects)
+        async with mo_model_client:
+            mo_model_client.upload(updated_objects)
 
         return dict(
             num_updated_objects=len(updated_objects),
