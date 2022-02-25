@@ -3,6 +3,7 @@
 from collections import defaultdict
 from uuid import UUID
 
+import structlog
 from gql import gql
 from ramodels.mo.details import Address
 from ramodels.mo.details import ITUser
@@ -10,11 +11,14 @@ from ramodels.mo.details import ITUser
 from os2mint_omada.clients import graphql_client
 from os2mint_omada.clients import mo_client
 
+logger = structlog.get_logger(__name__)
+
 
 async def get_root_org() -> UUID:
     """
     Returns: The UUID of the root organisation.
     """
+    logger.info("Getting root organisation")
     query = gql(
         """
         query RootOrgQuery {
@@ -25,6 +29,7 @@ async def get_root_org() -> UUID:
         """
     )
     result = await graphql_client.execute(query)
+    logger.info("Fetched root organisation", root_organisation=result)
     return UUID(result["org"]["uuid"])
 
 
@@ -38,7 +43,9 @@ async def get_classes(organisation_uuid: UUID, facet: str) -> dict[str, UUID]:
 
     Returns: Dictionary mapping class user keys into their UUIDs.
     """
+    logger.info("Getting classes", facet=facet)
     r = await mo_client.get(f"/service/o/{organisation_uuid}/f/{facet}/")
+    r.raise_for_status()
     classes = r.json()["data"]["items"]
     return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 
@@ -54,7 +61,9 @@ async def get_it_system_uuid(organisation_uuid: UUID, user_key: str) -> UUID:
     Returns: UUID of the IT System with the provided user key, or KeyError if it does
      not exist.
     """
+    logger.info("Getting IT system", it_system_user_key=user_key)
     r = await mo_client.get(f"/service/o/{organisation_uuid}/it/")
+    r.raise_for_status()
     try:
         return next(UUID(i["uuid"]) for i in r.json() if i["user_key"] == user_key)
     except StopIteration:
@@ -70,7 +79,9 @@ async def get_it_users(it_system: UUID) -> dict[UUID, ITUser]:
 
     Returns: Dictionary mapping person UUIDs into ITUser objects.
     """
+    logger.info("Getting MO IT users", it_system_uuid=it_system)
     r = await mo_client.get("/api/v1/it")
+    r.raise_for_status()
     it_users_for_system = [
         b
         for b in r.json()
@@ -104,7 +115,9 @@ async def get_engagements() -> list[dict]:
 
     Returns: List of engagement dictionaries.
     """
+    logger.info("Getting engagements")
     r = await mo_client.get("/api/v1/engagement")
+    r.raise_for_status()
     return r.json()
 
 
@@ -115,7 +128,9 @@ async def get_user_addresses() -> dict[UUID, dict[str, list[Address]]]:
     Returns: Dictionary mapping person UUIDs to a dictionary of lists of their adresses,
      indexed by its user key.
     """
+    logger.info("Getting addresses")
     addresses = await mo_client.get("/api/v1/address")
+    addresses.raise_for_status()
     addresses_for_persons = (a for a in addresses.json() if a.get("person") is not None)
     user_addresses: dict[UUID, dict[str, list[Address]]] = defaultdict(
         lambda: defaultdict(list)
