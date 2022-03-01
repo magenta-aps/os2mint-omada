@@ -35,7 +35,7 @@ facets:
 it_systems:
   omada_ad_guid: "Omada"
 ```
-The default `docker-compose.yml` does so automatically.
+The default `docker-compose.yml` does so automatically. Additionally, the v1 API must be enabled in OS2mo by setting the environment variable `V1_API_ENABLE=true`, the "lora" realm must be enabled in Keycloak, and the DIPEX client for the LoRa realm must be enabled as well.
 
 
 ## Usage
