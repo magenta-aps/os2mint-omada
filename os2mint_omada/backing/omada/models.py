@@ -40,6 +40,12 @@ class OmadaUser(BaseModel):
     valid_from: datetime = Field(alias="VALIDFROM")
     valid_to: datetime | None = Field(alias="VALIDTO", default=None)
 
+    @validator("valid_to")
+    def fix_pseudo_infinity(cls, value: datetime | None) -> datetime | None:
+        if value is None or value.year == 9999:
+            return None
+        return value
+
     class Config:
         # Allow fields to be populated by both alias and model attribute name
         allow_population_by_field_name = True
