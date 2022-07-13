@@ -10,40 +10,41 @@ repository = "https://git.magenta.dk/rammearkitektur/os2mint/os2mint-omada"
 keywords = ["os2mo", "os2mint", "omada"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pydantic = "^1.9.0"
-fastapi = "^0.72.0"
-uvicorn = "^0.17.0"
-httpx = "^0.21.3"
-ramodels = "^5.0.0"
-raclients = "^1.2.1"
+python = "^3.10"
+pydantic = "^1.9.1"
+structlog = "^21.5.0"
+fastapi = "^0.78.0"
+uvicorn = "^0.17.6"
+httpx = "^0.23.0"
+ramodels = "^7.0.2"
+raclients = "^1.2.5"
+ramqp = "^6.1.0"
 httpx-ntlm = "^1.0.0"
+prometheus-fastapi-instrumentator = "^5.8.2"
+more-itertools = "^8.13.0"
+ra-utils = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
-black = "^21.11b1"
+pytest = "^7.1.2"
+black = "^22.3.0"
 flake8 = "^4.0.1"
-mypy = "^0.910"
-reorder-python-imports = "^2.6.0"
-pre-commit = "^2.15.0"
+mypy = "^0.961"
+reorder-python-imports = "^3.1.0"
+pre-commit = "^2.19.0"
 pytest-cov = "^3.0.0"
 pytest-env = "^0.6.2"
-respx = "^0.19.0"
-pytest-asyncio = "^0.16.0"
-hypothesis = "^6.29.0"
-freezegun = "^1.1.0"
-types-freezegun = "^1.1.3"
-
-[tool.pytest.ini_options]
-env = [
-    "D:CLIENT_SECRET = 603f1c82-d012-4d04-9382-dbe659c533fb",
-    "D:IT_SYSTEM_USER_KEY = omada_ad_guid",
-    "D:ODATA_URL = http://omada.example.org/OData/DataObjects/Identity?viewid=12345",
-]
+respx = "^0.19.2"
+pytest-asyncio = "^0.18.3"
+hypothesis = "^6.47.3"
+freezegun = "^1.2.1"
+types-freezegun = "^1.1.10"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode="auto"
 
 [tool.autopub]
 git-username = "MagentaBot"

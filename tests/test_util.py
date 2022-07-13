@@ -1,7 +1,8 @@
-# SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from datetime import datetime
 from typing import Callable
+from typing import cast
 from uuid import uuid4
 
 from hypothesis import given
@@ -11,6 +12,7 @@ from ramodels.mo import MOBase
 from ramodels.mo._shared import Validity
 
 from os2mint_omada.util import as_terminated
+from os2mint_omada.util import MOBaseWithValidity
 
 
 @composite
@@ -35,6 +37,7 @@ def test_as_terminated(from_and_to_date: tuple[datetime, datetime]) -> None:
             to_date=None,
         ),
     )
+    obj = cast(MOBaseWithValidity, obj)
     actual = as_terminated(obj, from_date=from_date)
     expected = Model(
         uuid=uuid,
