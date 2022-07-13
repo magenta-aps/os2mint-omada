@@ -43,7 +43,7 @@ async def parse_omada_user(
             Union[ManualOmadaUser, OmadaUser], message.body  # type: ignore[arg-type]
         )
     except ValidationError:
-        logger.warning("Failed to parse user", raw=message.body)
+        logger.exception("Failed to parse user", raw=message.body)
         return
     if isinstance(omada_user, ManualOmadaUser):
         identity_category = IdentityCategory.MANUAL

@@ -22,7 +22,6 @@ def omada_user() -> dict:
         "C_DIREKTE_TLF": "12341234",
         "CELLPHONE": "",
         "C_INST_PHONE": "",
-        "C_SYNLIG_I_OS2MO": True,
         "VALIDFROM": "2016-06-15T00:00:00+02:00",
         "VALIDTO": "2022-12-03T00:00:00+01:00",
     }
@@ -56,3 +55,9 @@ def test_omada_user_manual_non_manual(omada_user_manual: dict) -> None:
     omada_user_manual["IDENTITYCATEGORY"]["Id"] = 123
     with pytest.raises(ValidationError):
         ManualOmadaUser.parse_obj(omada_user_manual)
+
+
+def test_omada_pseudo_infinity(omada_user: dict) -> None:
+    omada_user["VALIDTO"] = "9999-12-31T01:00:00+01:00"
+    parsed = OmadaUser.parse_obj(omada_user)
+    assert parsed.valid_to is None
