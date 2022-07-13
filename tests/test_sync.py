@@ -349,13 +349,6 @@ async def test_ensure_addresses(
             phone_direct="changed",
             valid_from=datetime(2011, 5, 6),
         ),
-        alice.get_omada_user(
-            service_number="alice_undercover",
-            ad_guid=UUID("3981c61b-5242-459f-bcab-330dc9dbd952"),
-            phone_institution="hidden",
-            is_visible=False,
-            valid_from=datetime(2001, 11, 9),
-        ),
     ]
     addresses = [
         alice.get_mo_address(
@@ -393,7 +386,7 @@ async def test_ensure_addresses(
         omada_users=omada_users,
         mo_employee=mo_employee,
         address_types=address_types,
-        visibility_classes=visibilities,
+        visibility_uuid=visibilities["Intern"],
     )
 
     terminated, created = fake_syncer.mo_service.model.upload.await_args_list

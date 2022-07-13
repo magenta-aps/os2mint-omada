@@ -40,11 +40,8 @@ class MoSettings(BaseModel):
         "phone_cell": "MobilePhoneEmployee",
         "phone_institution": "InstitutionPhoneEmployee",
     }
-    # Maps from the Omada user visibility attribute to MO visibility class
-    visibility_map: dict[bool, str] = {
-        False: "Secret",
-        True: "Intern",
-    }
+    # Visibility class for created addresses
+    address_visibility = "Intern"
     # Fallback job function for engagements created for manual users if the job title
     # from Omada does not exist in MO.
     manual_job_function_default: str = "not_applicable"

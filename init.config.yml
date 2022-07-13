@@ -19,9 +19,6 @@ facets:
     Intern:
       title: "Må vises internt"
       scope: "INTERNAL"
-    Secret:
-      title: "Hemmelig"
-      scope: "SECRET"
   engagement_job_function:
     not_applicable:
       title: "N/A"

@@ -22,7 +22,6 @@ def omada_user() -> dict:
         "C_DIREKTE_TLF": "12341234",
         "CELLPHONE": "",
         "C_INST_PHONE": "",
-        "C_SYNLIG_I_OS2MO": True,
         "VALIDFROM": "2016-06-15T00:00:00+02:00",
         "VALIDTO": "2022-12-03T00:00:00+01:00",
     }

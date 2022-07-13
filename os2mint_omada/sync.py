@@ -105,16 +105,13 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         omada_attr: str,
         mo_employee: MOEmployee,
         address_type_uuid: UUID,
-        visibility_map: dict[bool, str],
-        visibility_classes: dict[str, UUID],
+        visibility_uuid: UUID,
     ) -> ComparableAddress | None:
         # Omada often returns empty strings for non-existent attributes, which is
         # falsy - and therefore also ignored, like None values.
         omada_value = getattr(omada_user, omada_attr)
         if not omada_value:
             return None
-        visibility_class = visibility_map[omada_user.is_visible]
-        visibility_uuid = visibility_classes[visibility_class]
         return cls(
             value=omada_value,
             address_type=AddressType(uuid=address_type_uuid),
@@ -300,6 +297,7 @@ class Syncer:
         # Get current user data from MO
         address_types = await self.mo_service.get_classes("employee_address_type")
         visibility_classes = await self.mo_service.get_classes("visibility")
+        visibility_uuid = visibility_classes[self.settings.address_visibility]
         it_systems = await self.mo_service.get_it_systems()
         mo_employee = await self.mo_service.get_employee_data(
             uuid=uuid,
@@ -323,7 +321,7 @@ class Syncer:
             omada_users=omada_users,
             mo_employee=mo_employee,
             address_types=address_types,
-            visibility_classes=visibility_classes,
+            visibility_uuid=visibility_uuid,
         )
         await self.ensure_it_users(
             omada_users=omada_users,
@@ -336,7 +334,7 @@ class Syncer:
         omada_users: list[OmadaUser],
         mo_employee: MOEmployee,
         address_types: dict[str, UUID],
-        visibility_classes: dict[str, UUID],
+        visibility_uuid: UUID,
     ) -> None:
         logger.info("Ensuring addresses", employee_uuid=mo_employee.uuid)
         # Actual addresses in MO
@@ -352,8 +350,7 @@ class Syncer:
                 omada_attr=omada_attr,
                 mo_employee=mo_employee,
                 address_type_uuid=address_types[mo_address_user_key],
-                visibility_map=self.settings.visibility_map,
-                visibility_classes=visibility_classes,
+                visibility_uuid=visibility_uuid,
             )
             for omada_user in omada_users
             for omada_attr, mo_address_user_key in self.settings.address_map.items()

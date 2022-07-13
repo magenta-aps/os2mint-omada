@@ -91,7 +91,6 @@ def primary_types() -> dict[str, UUID]:
 def visibilities() -> dict[str, UUID]:
     return {
         "Intern": UUID("70beca48-6520-4af9-9bf8-a8a70880e6d2"),
-        "Secret": UUID("d41c62ea-8ed0-4628-9f2c-d20a1fb345e8"),
     }
 
 

@@ -37,8 +37,6 @@ class OmadaUser(BaseModel):
     phone_cell: str = Field(alias="CELLPHONE")
     phone_institution: str = Field(alias="C_INST_PHONE")
 
-    is_visible: bool = Field(alias="C_SYNLIG_I_OS2MO", default=False)
-
     valid_from: datetime = Field(alias="VALIDFROM")
     valid_to: datetime | None = Field(alias="VALIDTO", default=None)
 
