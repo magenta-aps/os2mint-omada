@@ -11,6 +11,8 @@ from ramodels.mo.details import ITUser as MOITUser
 
 
 class Address(MOAddress):
+    """RA-Models Address which works with output from GraphQL."""
+
     @root_validator(pre=True)
     def convert_graphql(cls, values: dict) -> dict:
         values["person"] = one(values["person"])
@@ -18,6 +20,8 @@ class Address(MOAddress):
 
 
 class Engagement(MOEngagement):
+    """RA-Models Engagement which works with output from GraphQL."""
+
     @root_validator(pre=True)
     def convert_graphql(cls, values: dict) -> dict:
         values["person"] = one(values["person"])
@@ -26,6 +30,8 @@ class Engagement(MOEngagement):
 
 
 class ITUser(MOITUser):
+    """RA-Models Address which works with output from GraphQL."""
+
     @root_validator(pre=True)
     def convert_graphql(cls, values: dict) -> dict:
         values["person"] = one(values["person"])
@@ -33,7 +39,9 @@ class ITUser(MOITUser):
         return values
 
 
-class MOEmployee(BaseModel):
+class EmployeeData(BaseModel):
+    """Model for GraphQL employee data."""
+
     uuid: UUID
     engagements: list[Engagement]
     addresses: list[Address]

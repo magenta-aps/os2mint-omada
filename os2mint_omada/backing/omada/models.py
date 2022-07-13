@@ -13,6 +13,8 @@ RawOmadaUser = NewType("RawOmadaUser", dict[str, Any])
 
 
 class IdentityCategory(BaseModel):
+    """Identifies the type of user, i.e. 'normal' or 'manual'."""
+
     id: str = Field(alias="Id")
     uid: UUID = Field(alias="UId")
 
@@ -22,8 +24,9 @@ class IdentityCategory(BaseModel):
 
 
 class OmadaUser(BaseModel):
-    """
-    Types derived from Omada OData. See: docs/odata.dataobjects.metadata.xml.
+    """Omada API user with relevant fields.
+
+    Types derived from Omada OData. See: docs/odata.dataobjects.metadata.xml or #42613.
     """
 
     identity_category: IdentityCategory = Field(alias="IDENTITYCATEGORY")
@@ -52,8 +55,10 @@ class OmadaUser(BaseModel):
 
 
 class ManualOmadaUser(OmadaUser):
-    """
-    TODO
+    """Omada API user with additional fields for 'manual' users.
+
+    Manual users not only have addresses and IT users synchronised, but the employee
+    object itself, as well as associated engagements, are _created_ in MO.
     """
 
     first_name: str = Field(alias="C_FORNAVNE")
@@ -66,8 +71,11 @@ class ManualOmadaUser(OmadaUser):
 
     @validator("identity_category")
     def check_is_manual(cls, identity_category: IdentityCategory) -> IdentityCategory:
-        """
-        TODO
+        """Validate that the identity category is indeed that of a manual user.
+
+        All users in the Omada OData view have the same set of fields, so a 'normal'
+        user could pass validation as a manual one (and vice-versa) unless we check
+        the identity category explicitly.
         """
         # Manually created users have ID 561 in Silkeborg
         if identity_category.id != "561":

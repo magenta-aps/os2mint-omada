@@ -15,11 +15,13 @@ from os2mint_omada.config import Settings
 
 @pytest.fixture
 def app(settings: Settings) -> FastAPI:
+    """FastAPI app with automatic settings from fixtures."""
     return create_app(**settings.dict())
 
 
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
+    """HTTPX AsyncClient with the FastAPI ASGI app pre-bound."""
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
@@ -40,6 +42,7 @@ async def test_readiness(
     app: FastAPI,
     client: AsyncClient,
 ) -> None:
+    """Test that the kubernetes readiness endpoints behaves as expected."""
     mo_service = MagicMock()
     mo_service.is_ready = AsyncMock(return_value=is_mo_ready)
 

@@ -16,13 +16,12 @@ import structlog
 from gql import gql
 from gql.client import AsyncClientSession
 from more_itertools import one
-from raclients.auth import AuthenticatedAsyncHTTPXClient
 from raclients.graph.client import GraphQLClient
 from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
 from ramqp.mo import MOAMQPSystem
 
-from os2mint_omada.backing.mo.models import MOEmployee
+from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.config import MoSettings
 
 logger = structlog.get_logger(__name__)
@@ -32,6 +31,12 @@ ITSystems = NewType("ITSystems", dict[str, UUID])
 
 class MOService(AbstractAsyncContextManager):
     def __init__(self, settings: MoSettings, amqp_system: MOAMQPSystem) -> None:
+        """The MO backing service manages the connection to MO's AMQP and API.
+
+        Args:
+            settings: MO-specific settings.
+            amqp_system: MO AMQP System.
+        """
         super().__init__()
         self.settings = settings
         self.amqp_system = amqp_system
@@ -39,6 +44,7 @@ class MOService(AbstractAsyncContextManager):
         self.stack = AsyncExitStack()
 
     async def __aenter__(self) -> MOService:
+        """Start clients for persistent connections to the MO API and AMQP system."""
         settings = self.settings
         client_kwargs = dict(
             client_id=settings.client_id,
@@ -55,11 +61,8 @@ class MOService(AbstractAsyncContextManager):
         model = MoModelClient(base_url=settings.url, **client_kwargs)
         self.model: MoModelClient = await self.stack.enter_async_context(model)
 
-        # HTTPX Client
-        client = AuthenticatedAsyncHTTPXClient(base_url=settings.url, **client_kwargs)
-        self.client: AsyncClientSession = await self.stack.enter_async_context(client)
-
-        # AMQP
+        # The AMQP system is started last so the API clients, which are used from the
+        # AMQP handlers, are ready before messages are received.
         await self.stack.enter_async_context(self.amqp_system)
 
         return await super().__aenter__()
@@ -70,6 +73,7 @@ class MOService(AbstractAsyncContextManager):
         __exc_value: BaseException | None,
         __traceback: TracebackType | None,
     ) -> bool | None:
+        """Close connections to the MO API and AMQP system."""
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 
@@ -110,6 +114,10 @@ class MOService(AbstractAsyncContextManager):
         return all(await asyncio.gather(self._is_api_ready(), self._is_amqp_ready()))
 
     async def get_it_systems(self) -> ITSystems:
+        """Get IT Systems configured in MO.
+
+        Returns: Mapping from IT system user key to UUID.
+        """
         logger.debug("Getting MO IT systems")
         query = gql(
             """
@@ -127,6 +135,13 @@ class MOService(AbstractAsyncContextManager):
         return ITSystems({s["user_key"]: UUID(s["uuid"]) for s in it_systems})
 
     async def get_classes(self, facet_user_key: str) -> dict[str, UUID]:
+        """Get classes for the given facet user key.
+
+        Args:
+            facet_user_key: Facet to retrieve classes for.
+
+        Returns: Mapping from class user key to UUID.
+        """
         logger.debug("Getting MO classes", facet=facet_user_key)
         query = gql(
             """
@@ -152,6 +167,16 @@ class MOService(AbstractAsyncContextManager):
     async def get_employee_uuid_from_service_number(
         self, service_number: str
     ) -> UUID | None:
+        """Find employee UUID by Omada service number.
+
+        Omada users are linked to MO employees through user keys on the employee's
+        engagements.
+
+        Args:
+            service_number: Service number to find employee for.
+
+        Returns: Employee UUID if found, otherwise None.
+        """
         logger.info("Getting MO employee UUID", service_number=service_number)
         query = gql(
             """
@@ -181,6 +206,13 @@ class MOService(AbstractAsyncContextManager):
         return UUID(employee["uuid"])
 
     async def get_employee_uuid_from_cpr(self, cpr: str) -> UUID | None:
+        """Find employee UUID by CPR number.
+
+        Args:
+            cpr: CPR number to find employee for.
+
+        Returns: Employee UUID if matching employee exists, otherwise None.
+        """
         logger.info("Getting MO employee UUID", cpr=cpr)
         query = gql(
             """
@@ -204,6 +236,16 @@ class MOService(AbstractAsyncContextManager):
         return UUID(employee["uuid"])
 
     async def get_employee(self, uuid: UUID) -> Employee | None:
+        """Retrieve employee.
+
+        The retrieved fields correspond to the fields which are synchronised from
+        Omada, i.e. exactly the fields we are interested in, to check up-to-dateness.
+
+        Args:
+            uuid: Employee UUID.
+
+        Returns: Employee if one exists, otherwise None.
+        """
         logger.info("Getting MO employee", uuid=uuid)
         query = gql(
             """
@@ -238,7 +280,22 @@ class MOService(AbstractAsyncContextManager):
         uuid: UUID,
         address_types: Iterable[UUID],
         it_systems: Collection[UUID],
-    ) -> MOEmployee | None:
+    ) -> EmployeeData | None:
+        """Retrieve data related to an employee.
+
+        The fields on each retrieved object corresponds to the fields necessary to
+        upload it back to the MO service API (with changes) through the model client.
+
+        Args:
+            uuid: Employee UUID.
+            address_types: Only retrieve the given address types, to avoid terminating
+             addresses irrelevant to Omada.
+            it_systems: Only retrieve IT users for the given IT systems, to avoid
+             terminating IT users irrelevant to Omada.
+
+        Returns: EmployeeData object, containing the parsed GraphQL result if the
+         employee exists, otherwise None.
+        """
         logger.info("Getting MO employee data", uuid=uuid)
         query = gql(
             """
@@ -314,15 +371,30 @@ class MOService(AbstractAsyncContextManager):
         except ValueError:
             return None
         obj = one(employee_dict["objects"])
-        employee = MOEmployee.parse_obj(obj)
+        employee_data = EmployeeData.parse_obj(obj)
         # Filter IT users. Ideally this would be done directly in GraphQL, but it is
         # not currently supported.
-        for it_user in employee.itusers.copy():
+        for it_user in employee_data.itusers.copy():
             if it_user.itsystem.uuid not in it_systems:
-                employee.itusers.remove(it_user)
-        return employee
+                employee_data.itusers.remove(it_user)
+        return employee_data
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
+        """Find organisational unit with the given IT system user user_key.
+
+        Engagements for manual Omada users are created in the organisational unit which
+        has an IT system with user key equal to the 'org_unit'/'C_ORGANISATIONSKODE'
+        field on the Omada user. While some org units are imported into MO with the
+        UUID from the connected system, it isn't always the case, so in the general
+        case we want to link the UUIDs through a special IT system on the org unit.
+        Because we cannot know what this IT system is called, we don't filter on the
+        name, but error if more than one is returned.
+
+        Args:
+            user_key: IT system user_key to find org unit for.
+
+        Returns: UUID of the org unit if found, otherwise raises KeyError.
+        """
         logger.info("Getting org unit with it system", user_key=user_key)
         query = gql(
             """
@@ -349,6 +421,17 @@ class MOService(AbstractAsyncContextManager):
         return UUID(obj["org_unit_uuid"])
 
     async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
+        """Get organisational unit with the given UUID, validating that it exists.
+
+        Since some org units are imported into MO with special UUIDs, this check serves
+        as a fallback to the omada/mo engagement linking otherwise handled by
+        get_org_unit_with_it_system_user_key.
+
+        Args:
+            uuid: UUID of the org unit to look up.
+
+        Returns: UUID of the org unit if it exists, otherwise raises KeyError.
+        """
         logger.info("Getting org unit with uuid", uuid=uuid)
         query = gql(
             """
