@@ -4,6 +4,7 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 # OS2mint: Omada
+TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 OS2mo integration for Omada. Synchronises Omada IT users to MO through the IT system defined by the `IT_SYSTEM_USER_KEY`
 environment variable.
 
@@ -45,6 +46,7 @@ docker-compose up -d
 The API can then be viewed from the host through http://localhost:9000/.
 
 The following environment variables are used:
+TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
   - `MO_URL`: OS2mo URL, e.g. `http://mo:80`.
   - `CLIENT_ID`: Client ID used to authenticate against OS2mo, e.g. `dipex`.
   - `CLIENT_SECRET`: Client secret used to authenticate against OS2mo, e.g. `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.

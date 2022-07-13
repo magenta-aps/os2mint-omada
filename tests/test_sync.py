@@ -1,452 +1,409 @@
-# SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-import itertools
-import unittest
-from collections.abc import Iterator
 from dataclasses import dataclass
-from dataclasses import field
 from datetime import datetime
-from datetime import time
-from typing import ClassVar
-from typing import Optional
-from unittest.mock import patch
+from typing import Any
 from uuid import UUID
-from uuid import uuid4
-from uuid import uuid5
 
 import pytest
-from freezegun import freeze_time
-from ramodels.mo import MOBase
+from more_itertools import one
+from ramodels.mo import Employee
+from ramodels.mo import Validity
 from ramodels.mo._shared import AddressType
-from ramodels.mo._shared import ITSystemRef
+from ramodels.mo._shared import EngagementType
+from ramodels.mo._shared import JobFunction
+from ramodels.mo._shared import OrgUnitRef
 from ramodels.mo._shared import PersonRef
-from ramodels.mo._shared import Validity
+from ramodels.mo._shared import Primary
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
-from ramodels.mo.details import ITUser
+from ramodels.mo.details import Engagement
 
-from os2mint_omada import sync
-from os2mint_omada.omada import OmadaITUser
-from tests.conftest import INTERNAL_VISIBILITY_UUID
-from tests.conftest import IT_SYSTEM_UUID
-
-
-def without_uuid(model: MOBase) -> MOBase:
-    """
-    Strip MO Model UUID attribute to help comparison.
-    """
-    return model.copy(update=dict(uuid=None, user_key=None))
-
-
-@pytest.fixture(autouse=True)
-def frozen_datetime() -> Iterator[datetime]:
-    with freeze_time("2021-11-12 13:14:15") as frozen_datetime:
-        yield frozen_datetime()
+from os2mint_omada.backing.mo.models import MOEmployee
+from os2mint_omada.backing.omada.models import IdentityCategory
+from os2mint_omada.backing.omada.models import ManualOmadaUser
+from os2mint_omada.backing.omada.models import OmadaUser
+from os2mint_omada.config import MoSettings
+from os2mint_omada.sync import Syncer
+from tests.conftest import FakeMOService
+from tests.conftest import FakeOmadaService
 
 
 @dataclass
 class TestUser:
-    name: str
+    uuid: UUID
+    first_name: str
+    last_name: str
+    cpr_number: str
 
-    mo_uuid: UUID = field(default_factory=uuid4)
-    mo_addresses: dict[str, list[Address]] = field(default_factory=dict)
-    mo_it_user: Optional[ITUser] = None
-    mo_engagement = True
-    omada_it_user: Optional[OmadaITUser] = None
-
-    address_classes: ClassVar[dict[str, UUID]] = {
-        "EmailEmployee": uuid4(),
-        "PhoneEmployee": uuid4(),
-        "MobilePhoneEmployee": uuid4(),
-        "InstitutionPhoneEmployee": uuid4(),
-        "UnrelatedAddressEmployee": uuid4(),
-    }
-
-    @property
-    def ad_guid(self) -> UUID:
-        return uuid5(self.mo_uuid, "C_OBJECTGUID_I_AD")
-
-    @property
-    def service_number(self) -> str:
-        return f"#{self.name}"
-
-    def get_mo_it_user(
-        self,
-        from_date: datetime = datetime(1991, 2, 3),
-        to_date: datetime = None,
-    ) -> ITUser:
-        return ITUser(
-            uuid=uuid5(self.mo_uuid, "ITUser"),
-            user_key=str(self.ad_guid),
-            itsystem=ITSystemRef(uuid=IT_SYSTEM_UUID),
-            person=PersonRef(uuid=self.mo_uuid),
-            validity=Validity(from_date=from_date, to_date=to_date),
+    def get_omada_user(self, **kwargs: Any) -> OmadaUser:
+        # Omada uses empty strings for absent values
+        kwargs.setdefault("login", "")
+        kwargs.setdefault("email", "")
+        kwargs.setdefault("phone_direct", "")
+        kwargs.setdefault("phone_cell", "")
+        kwargs.setdefault("phone_institution", "")
+        return OmadaUser.parse_obj(
+            {
+                "identity_category": IdentityCategory(
+                    id=100,
+                    uid="ac0c67fc-5f47-4112-94e6-446bfb68326a",
+                ),
+                **kwargs,
+            }
         )
 
-    def get_omada_it_user(self, **kwargs: str) -> OmadaITUser:
-        return OmadaITUser(
-            service_number=self.service_number,
-            ad_guid=self.ad_guid,
-            login=kwargs.get("C_LOGIN", ""),
-            email=kwargs.get("EMAIL", ""),
-            phone_direct=kwargs.get("C_DIREKTE_TLF", ""),
-            phone_cell=kwargs.get("CELLPHONE", ""),
-            phone_institution=kwargs.get("C_INST_PHONE", ""),
+    def get_manual_omada_user(self, **kwargs: Any) -> ManualOmadaUser:
+        omada_user = self.get_omada_user(**kwargs)
+        return ManualOmadaUser.parse_obj(
+            {
+                **omada_user.dict(),
+                "identity_category": IdentityCategory(
+                    id=561,
+                    uid="270a1807-95ca-40b4-9ce5-475d8961f31b",
+                ),
+                "first_name": self.first_name,
+                "last_name": self.last_name,
+                "cpr_number": self.cpr_number,
+                **kwargs,
+            }
         )
 
-    def get_mo_addresses(
-        self,
-        from_date: datetime = datetime(1991, 2, 3),
-        to_date: datetime = None,
-        **kwargs: list[str],
-    ) -> dict[str, list[Address]]:
-        return {
-            user_key: [
-                Address(
-                    uuid=uuid5(self.mo_uuid, f"Address-{user_key}"),
-                    address_type=AddressType(uuid=self.address_classes[user_key]),
-                    value=value,
-                    person=PersonRef(uuid=self.mo_uuid),
-                    visibility=Visibility(uuid=INTERNAL_VISIBILITY_UUID),
-                    validity=Validity(from_date=from_date, to_date=to_date),
-                )
-                for value in values
-            ]
-            for user_key, values in kwargs.items()
-        }
-
-    @property
-    def sync_user(self) -> sync.User:
-        return sync.User(
-            omada_it_user=self.omada_it_user,
-            mo_it_user=self.mo_it_user,
-            mo_addresses=self.mo_addresses,
-            mo_person_uuid=self.mo_uuid,
+    def get_mo_employee(self, **kwargs: Any) -> Employee:
+        return Employee.parse_obj(
+            {
+                "givenname": self.first_name,
+                "surname": self.last_name,
+                "cpr_no": self.cpr_number,
+                **kwargs,
+            }
         )
 
+    def get_mo_engagement(self, **kwargs: Any) -> Engagement:
+        return Engagement.parse_obj({"person": PersonRef(uuid=self.uuid), **kwargs})
 
-@pytest.fixture
-def carol_create() -> TestUser:
-    # Exists only in Omada => should create
-    user = TestUser(name="Carol Create")
-    user.omada_it_user = user.get_omada_it_user(
-        EMAIL="carol@example.org",
-        C_DIREKTE_TLF="12345678",
-    )
-    user.mo_addresses = user.get_mo_addresses(
-        UnrelatedAddressEmployee=["Can't touch this!", "or this!"],
-    )
-    return user
+    def get_mo_address(self, **kwargs: Any) -> Address:
+        return Address.parse_obj({"person": PersonRef(uuid=self.uuid), **kwargs})
 
 
 @pytest.fixture
-def dave_delete() -> TestUser:
-    # Exists only in MO => should delete
-    user = TestUser(name="Dave Delete")
-    user.mo_it_user = user.get_mo_it_user()
-    user.mo_addresses = user.get_mo_addresses(
-        PhoneEmployee=["delete"],
-        InstitutionPhoneEmployee=["me", "please"],
-        UnrelatedAddressEmployee=["but not me", "or me"],
-    )
-    return user
-
-
-@pytest.fixture
-def eve_exist() -> TestUser:
-    # Exists in both with up-to-date date data => should do nothing
-    user = TestUser(name="Eve Exist")
-    user.mo_it_user = user.get_mo_it_user()
-    user.omada_it_user = user.get_omada_it_user(
-        EMAIL="eve@example.org",
-        CELLPHONE="00000001",
-    )
-    user.mo_addresses = user.get_mo_addresses(
-        EmailEmployee=["eve@example.org"],
-        MobilePhoneEmployee=["00000001"],
-        UnrelatedAddressEmployee=["whatever", "dude"],
-    )
-    return user
-
-
-@pytest.fixture
-def erin_exist() -> TestUser:
-    # Exists in both, but no MO engagement => should do nothing
-    user = TestUser(name="Erin Exist")
-    user.mo_engagement = False
-    user.omada_it_user = user.get_omada_it_user(
-        EMAIL="erin@example.org",
-    )
-    user.mo_addresses = user.get_mo_addresses(
-        EmailEmployee=["erin@example.org"],
-    )
-    return user
-
-
-@pytest.fixture
-def oscar_update() -> TestUser:
-    # Exists in both, but outdated in MO => should update MO
-    user = TestUser(name="Oscar Update")
-    user.mo_it_user = user.get_mo_it_user()
-    user.omada_it_user = user.get_omada_it_user(
-        EMAIL="oscar@example.org",
-        CELLPHONE="11223344",
-        C_DIREKTE_TLF="66778899",
-    )
-    user.mo_addresses = user.get_mo_addresses(
-        EmailEmployee=["WRONG-OSCAR@example.org", "EXTRA-OSCAR@example.org"],
-        MobilePhoneEmployee=["11223344", "11111111111"],
-        InstitutionPhoneEmployee=["55555555"],
-        UnrelatedAddressEmployee=["Can't touch this!"],
+def alice() -> TestUser:
+    return TestUser(
+        uuid=UUID("d4332525-5c1c-4a70-88fe-a87e38c5364c"),
+        first_name="Alice",
+        last_name="Walker",
+        cpr_number="1807972118",
     )
 
-    return user
+
+# service_number = (todo,)
+# ad_guid = (todo,)
+# job_title = (todo,)
+# org_unit = (todo,)
+
+
+# @pytest.fixture
+# def alice(
+#     facets: dict[str, dict[str, UUID]],
+#     it_systems: dict[str, UUID],
+# ) -> tuple[Employee, MOEmployee]:
+#     uuid = UUID("ec9fe65a-428d-4c70-a85f-36c2982baf2e")
+#     mo_employee = MOEmployee(
+#         uuid=uuid,
+#         engagements=[
+#             Engagement(
+#                 uuid=UUID("282e4b99-341f-44cf-9962-73885706944b"),
+#                 user_key="alice engagement E",
+#                 org_unit=OrgUnitRef(uuid=todo),
+#                 person=PersonRef(uuid=uuid),
+#                 job_function=JobFunction(uuid=todo),
+#                 engagement_type=EngagementType(uuid=todo),
+#                 primary=Primary(uuid=todo),
+#                 validity=Validity(
+#                     from_date=datetime(2017, 2, 3),
+#                     to_date=None,
+#                 ),
+#             ),
+#         ],
+#         addresses=[
+#             Address(
+#                 uuid=UUID("145dcc57-fe44-4dfa-84cc-867c5817641d"),
+#                 value="alice address a",
+#                 address_type=AddressType(uuid=todo),
+#                 person=PersonRef(uuid=uuid),
+#                 visibility=Visibility(uuid=todo),
+#                 validity=Validity(
+#                     from_date=datetime(2017, 2, 3),
+#                     to_date=None,
+#                 ),
+#             ),
+#         ],
+#         itusers=[
+#             ITUser(
+#                 uuid=UUID("76f6942f-e30c-4e3e-ae06-f7932fb3c6cd"),
+#                 user_key="alice1",
+#                 itsystem=ITSystemRef(uuid=UUID("d7559722-a20a-42cb-94a8-3afd8c5445ed")),
+#                 person=PersonRef(uuid=uuid),
+#                 validity=Validity(
+#                     from_date=datetime(2017, 2, 3),
+#                     to_date=None,
+#                 ),
+#             ),
+#             ITUser(),
+#         ],
+#     )
+#
+#     return employee, mo_employee
+
+
+class FakeSyncer(Syncer):
+    mo_service: FakeMOService
+    omada_service: FakeOmadaService
 
 
 @pytest.fixture
-def test_users(
-    carol_create: TestUser,
-    dave_delete: TestUser,
-    erin_exist: TestUser,
-    eve_exist: TestUser,
-    oscar_update: TestUser,
-) -> tuple[TestUser, ...]:
-    return carol_create, dave_delete, erin_exist, eve_exist, oscar_update
+def fake_syncer(
+    mo_settings: MoSettings,
+    fake_mo_service: FakeMOService,
+    fake_omada_service: FakeOmadaService,
+) -> FakeSyncer:
+    return FakeSyncer(
+        settings=mo_settings,
+        mo_service=fake_mo_service,
+        omada_service=fake_omada_service,
+    )
 
 
-@pytest.fixture
-def mo_it_users(
-    test_users: tuple[TestUser, ...], it_system_uuid: UUID
-) -> dict[UUID, ITUser]:
-    """
-    Returns: Dictionary mapping person UUIDs into MO ITUser objects.
-    """
-    return {
-        user.mo_it_user.person.uuid: user.mo_it_user
-        for user in test_users
-        if user.mo_it_user is not None
-    }
+async def test_ensure_employee_no_existing(
+    fake_syncer: FakeSyncer, alice: TestUser, org_units: dict[str, UUID]
+) -> None:
+    omada_user = alice.get_manual_omada_user(
+        service_number="alice123",
+        ad_guid=UUID("d3ea59fd-6095-45b6-9d4c-3eb44c9e9f12"),
+        job_title="cryptographer",
+        org_unit=org_units["org_unit_a"],
+        valid_from=datetime(2019, 5, 6),
+    )
+    fake_syncer.omada_service.api.users.append(omada_user)
+
+    await fake_syncer.ensure_employee(
+        omada_user=omada_user,
+        employee=None,
+    )
+
+    uploads = fake_syncer.mo_service.model.upload.await_args.args[0]
+    expected = dict(
+        givenname=alice.first_name,
+        surname=alice.last_name,
+        cpr_no=alice.cpr_number,
+    )
+    assert one(uploads).dict().items() >= expected.items()
 
 
-@pytest.fixture
-def omada_it_users(test_users: tuple[TestUser, ...]) -> list[OmadaITUser]:
-    """
-    Returns: Dictionary mapping ' service numbers to Omada IT user objects.
-    """
-    return [user.omada_it_user for user in test_users if user.omada_it_user is not None]
+async def test_ensure_employee_existing(
+    fake_syncer: FakeSyncer, alice: TestUser, org_units: dict[str, UUID]
+) -> None:
+    omada_user = alice.get_manual_omada_user(
+        service_number="alice123",
+        ad_guid=UUID("d3ea59fd-6095-45b6-9d4c-3eb44c9e9f12"),
+        job_title="cryptographer",
+        org_unit=org_units["org_unit_a"],
+        valid_from=datetime(2019, 5, 6),
+    )
+    employee = alice.get_mo_employee()
+    fake_syncer.omada_service.api.users.append(omada_user)
+    fake_syncer.mo_service.employees.append(employee)
+
+    await fake_syncer.ensure_employee(
+        omada_user=omada_user,
+        employee=employee,
+    )
+
+    fake_syncer.mo_service.model.upload.assert_not_awaited()
 
 
-@pytest.fixture
-def mo_user_addresses(
-    test_users: tuple[TestUser, ...]
-) -> dict[UUID, dict[str, list[Address]]]:
-    """
-    Returns: Dictionary mapping person UUIDs to a dictionary of lists of their MO
-     adresses, indexed by its user key.
-    """
-    return {user.mo_uuid: user.mo_addresses for user in test_users if user.mo_addresses}
+async def test_ensure_employee_existing_changed(
+    fake_syncer: FakeSyncer, alice: TestUser, org_units: dict[str, UUID]
+) -> None:
+    new_name = "Bob"  # it's 2022, you got a problem?
+    omada_user = alice.get_manual_omada_user(
+        first_name=new_name,
+        service_number="alice123",
+        ad_guid=UUID("d3ea59fd-6095-45b6-9d4c-3eb44c9e9f12"),
+        job_title="cryptographer",
+        org_unit=org_units["org_unit_a"],
+        valid_from=datetime(2019, 5, 6),
+    )
+    employee = alice.get_mo_employee()
+    fake_syncer.omada_service.api.users.append(omada_user)
+    fake_syncer.mo_service.employees.append(employee)
+
+    await fake_syncer.ensure_employee(
+        omada_user=omada_user,
+        employee=employee,
+    )
+
+    uploads = fake_syncer.mo_service.model.upload.await_args.args[0]
+    expected = dict(
+        givenname=new_name,
+        surname=alice.last_name,
+        cpr_no=alice.cpr_number,
+    )
+    assert one(uploads).dict().items() >= expected.items()
 
 
-@pytest.fixture
-def mo_engagements(test_users: tuple[TestUser, ...]) -> list[dict]:
-    """
-    Returns: List of MO engagement dicts.
-    """
-    return [
-        {
-            "user_key": u.service_number,
-            "person": {"uuid": str(u.mo_uuid)},
-        }
-        for u in test_users
-        if u.mo_engagement
+async def test_ensure_engagements(
+    fake_syncer: FakeSyncer,
+    alice: TestUser,
+    address_types: dict[str, UUID],
+    job_functions: dict[str, UUID],
+    engagement_types: dict[str, UUID],
+    primary_types: dict[str, UUID],
+    visibilities: dict[str, UUID],
+    org_units: dict[str, UUID],
+    org_unit_it_systems: dict[str, UUID],
+) -> None:
+    omada_users = [
+        alice.get_manual_omada_user(
+            service_number="unchanged",
+            ad_guid=UUID("4ca9d4f0-d6bf-42f7-a676-01ff99aee05f"),
+            job_title="cryptographer",
+            org_unit=org_unit_it_systems["org_unit_a"],
+            valid_from=datetime(2019, 5, 6),
+        ),
+        alice.get_manual_omada_user(
+            service_number="new",
+            ad_guid=UUID("d9dc2d8c-845d-4575-92ea-7fd0d5b6c028"),
+            job_title="",
+            org_unit=org_unit_it_systems["org_unit_a"],
+            valid_from=datetime(2022, 11, 12),
+        ),
+    ]
+    engagements = [
+        alice.get_mo_engagement(
+            user_key="unchanged",
+            org_unit=OrgUnitRef(uuid=org_units["org_unit_a"]),
+            job_function=JobFunction(uuid=job_functions["cryptographer"]),
+            engagement_type=EngagementType(uuid=engagement_types["manually_created"]),
+            primary=Primary(uuid=primary_types["primary"]),
+            validity=Validity(
+                from_date=datetime(2019, 5, 6),
+                to_date=None,
+            ),
+        ),
+        alice.get_mo_engagement(
+            user_key="old",
+            org_unit=OrgUnitRef(uuid=org_units["org_unit_a"]),
+            job_function=JobFunction(uuid=job_functions["cryptographer"]),
+            engagement_type=EngagementType(uuid=engagement_types["manually_created"]),
+            primary=Primary(uuid=primary_types["primary"]),
+            validity=Validity(
+                from_date=datetime(2009, 8, 9),
+                to_date=None,
+            ),
+        ),
     ]
 
+    mo_employee = MOEmployee.construct(uuid=alice.uuid, engagements=engagements)
 
-@pytest.fixture
-def address_classes() -> dict[str, UUID]:
-    """
-    Returns: Dictionary mapping address class user keys into their UUIDs.
-    """
-    return TestUser.address_classes
+    await fake_syncer.ensure_engagements(
+        omada_users=omada_users,
+        mo_employee=mo_employee,
+        job_functions=job_functions,
+        job_function_default="not_applicable",
+        engagement_type_uuid=engagement_types["manually_created"],
+        primary_type_uuid=primary_types["primary"],
+    )
+
+    terminated, created = fake_syncer.mo_service.model.upload.await_args_list
+
+    expected_terminated = dict(
+        user_key="old",
+    )
+    assert one(terminated.args[0]).dict().items() >= expected_terminated.items()
+
+    expected_created = dict(
+        user_key="new",
+    )
+    assert one(created.args[0]).dict().items() >= expected_created.items()
 
 
-def test_get_updated_mo_objects(
-    test_users: tuple[TestUser, ...],
-    carol_create: TestUser,
-    dave_delete: TestUser,
-    erin_exist: TestUser,
-    eve_exist: TestUser,
-    oscar_update: TestUser,
-    mo_it_users: dict[UUID, ITUser],
-    omada_it_users: list[OmadaITUser],
-    mo_user_addresses: dict[UUID, dict[str, list[Address]]],
-    mo_engagements: list[dict],
-    it_system_uuid: UUID,
-    address_classes: dict[str, UUID],
-    internal_visibility_uuid: UUID,
+@pytest.mark.xfail  # TODO: yolo
+async def test_ensure_addresses(
+    fake_syncer: FakeSyncer,
+    alice: TestUser,
+    address_types: dict[str, UUID],
+    visibilities: dict[str, UUID],
 ) -> None:
-    with patch("os2mint_omada.sync._updated_mo_objects") as update_mock:
-        updated_objects = sync.get_updated_mo_objects(
-            mo_it_users=mo_it_users,
-            omada_it_users=omada_it_users,
-            mo_user_addresses=mo_user_addresses,
-            mo_engagements=mo_engagements,
-            address_class_uuids=address_classes,
-            it_system_uuid=it_system_uuid,
-            address_visibility_uuid=internal_visibility_uuid,
-        )
-        list(updated_objects)  # force execution of lazy 'yield from'
-
-    expected_call_users = [
-        carol_create.sync_user,
-        dave_delete.sync_user,
-        eve_exist.sync_user,
-        oscar_update.sync_user,
+    omada_users = [
+        alice.get_omada_user(
+            service_number="alice1",
+            ad_guid=UUID("4ca9d4f0-d6bf-42f7-a676-01ff99aee05f"),
+            email="unchanged@example.com",
+            phone_direct="new",
+            valid_from=datetime(2019, 5, 6),
+        ),
+        alice.get_omada_user(
+            service_number="alice2",
+            ad_guid=UUID("9a100081-03e0-4e89-ae6f-b13001b35d06"),
+            phone_direct="changed",
+            valid_from=datetime(2011, 5, 6),
+        ),
+        alice.get_omada_user(
+            service_number="alice_undercover",
+            ad_guid=UUID("3981c61b-5242-459f-bcab-330dc9dbd952"),
+            phone_institution="hidden",
+            is_visible=False,
+            valid_from=datetime(2001, 11, 9),
+        ),
     ]
-    actual_call_users = [c.kwargs["user"] for c in update_mock.call_args_list]
-    unittest.TestCase().assertCountEqual(actual_call_users, expected_call_users)
-
-
-def test_update_carol_create(
-    frozen_datetime: datetime,
-    carol_create: TestUser,
-    it_system_uuid: UUID,
-    address_classes: dict[str, UUID],
-    internal_visibility_uuid: UUID,
-) -> None:
-    # Exists only in Omada => should create
-    actual_it_user, actual_address_1, actual_address_2 = sync._updated_mo_objects(
-        user=carol_create.sync_user,
-        it_system_uuid=it_system_uuid,
-        address_class_uuids=address_classes,
-        address_visibility_uuid=internal_visibility_uuid,
-    )
-    assert isinstance(actual_it_user, ITUser)
-    expected_it_user = carol_create.get_mo_it_user(
-        from_date=datetime.combine(frozen_datetime, time.min)
-    )
-    # Strip UUIDs as they are (very) unlikely to be equal on create
-    assert without_uuid(actual_it_user) == without_uuid(expected_it_user)
-
-    assert isinstance(actual_address_1, Address)
-    assert isinstance(actual_address_2, Address)
-    expected_addresses = carol_create.get_mo_addresses(
-        EmailEmployee=["carol@example.org"],
-        PhoneEmployee=["12345678"],
-        from_date=datetime.combine(frozen_datetime, time.min),
-    )
-    actual = [without_uuid(actual_address_1), without_uuid(actual_address_2)]
-    expected = [
-        without_uuid(a)
-        for a in itertools.chain.from_iterable(expected_addresses.values())
-    ]
-    assert actual == expected
-
-
-def test_update_dave_delete(
-    frozen_datetime: datetime,
-    dave_delete: TestUser,
-    it_system_uuid: UUID,
-    address_classes: dict[str, UUID],
-    internal_visibility_uuid: UUID,
-) -> None:
-    # Exists only in MO => should delete
-    (
-        actual_it_user,
-        actual_address_1,
-        actual_address_2,
-        actual_address_3,
-    ) = sync._updated_mo_objects(
-        user=dave_delete.sync_user,
-        it_system_uuid=it_system_uuid,
-        address_class_uuids=address_classes,
-        address_visibility_uuid=internal_visibility_uuid,
-    )
-    assert isinstance(actual_it_user, ITUser)
-    expected_it_user = dave_delete.get_mo_it_user(
-        to_date=datetime.combine(frozen_datetime, time.min),
-    )
-    assert actual_it_user == expected_it_user
-
-    assert isinstance(actual_address_1, Address)
-    assert isinstance(actual_address_2, Address)
-    assert isinstance(actual_address_3, Address)
-    expected_addresses = dave_delete.get_mo_addresses(
-        PhoneEmployee=["delete"],
-        InstitutionPhoneEmployee=["me", "please"],
-        to_date=datetime.combine(frozen_datetime, time.min),
-    )
-    assert [
-        [actual_address_2],
-        [actual_address_3, actual_address_1],
-    ] == list(expected_addresses.values())
-
-
-def test_update_eve_exist(
-    frozen_datetime: datetime,
-    eve_exist: TestUser,
-    it_system_uuid: UUID,
-    address_classes: dict[str, UUID],
-    internal_visibility_uuid: UUID,
-) -> None:
-    # Exists in both with up-to-date date => should do nothing
-    updated_objects = sync._updated_mo_objects(
-        user=eve_exist.sync_user,
-        it_system_uuid=it_system_uuid,
-        address_class_uuids=address_classes,
-        address_visibility_uuid=internal_visibility_uuid,
-    )
-    assert list(updated_objects) == []
-
-
-def test_update_oscar_update(
-    frozen_datetime: datetime,
-    oscar_update: TestUser,
-    it_system_uuid: UUID,
-    address_classes: dict[str, UUID],
-    internal_visibility_uuid: UUID,
-) -> None:
-    (
-        actual_address_1,
-        actual_address_2,
-        actual_address_3,
-        actual_address_4,
-        actual_address_5,
-    ) = sync._updated_mo_objects(
-        user=oscar_update.sync_user,
-        it_system_uuid=it_system_uuid,
-        address_class_uuids=address_classes,
-        address_visibility_uuid=internal_visibility_uuid,
-    )
-    assert isinstance(actual_address_1, Address)
-    assert isinstance(actual_address_2, Address)
-    assert isinstance(actual_address_3, Address)
-    assert isinstance(actual_address_4, Address)
-    assert isinstance(actual_address_5, Address)
-
-    expected_create = oscar_update.get_mo_addresses(
-        PhoneEmployee=["66778899"],
-        from_date=datetime.combine(frozen_datetime, time.min),
-    )
-    # Strip UUIDs as they are (very) unlikely to be equal on create
-    assert [without_uuid(actual_address_4)] == [
-        without_uuid(a) for a in itertools.chain.from_iterable(expected_create.values())
+    addresses = [
+        alice.get_mo_address(
+            value="unchanged@example.com",
+            address_type=AddressType(uuid=address_types["EmailEmployee"]),
+            visibility=Visibility(uuid=visibilities["Intern"]),
+            validity=Validity(
+                from_date=datetime(2019, 5, 6),
+                to_date=None,
+            ),
+        ),
+        alice.get_mo_address(
+            value="not changed yet",
+            address_type=AddressType(uuid=address_types["PhoneEmployee"]),
+            visibility=Visibility(uuid=visibilities["Intern"]),
+            validity=Validity(
+                from_date=datetime(2011, 5, 6),
+                to_date=None,
+            ),
+        ),
+        alice.get_mo_address(
+            value="old - delete me!",
+            address_type=AddressType(uuid=address_types["InstitutionPhoneEmployee"]),
+            visibility=Visibility(uuid=visibilities["Intern"]),
+            validity=Validity(
+                from_date=datetime(1967, 12, 8),
+                to_date=None,
+            ),
+        ),
     ]
 
-    expected_update = oscar_update.get_mo_addresses(
-        EmailEmployee=["oscar@example.org"],
-        from_date=datetime.combine(frozen_datetime, time.min),
-    )
-    assert [[actual_address_3]] == list(expected_update.values())
+    mo_employee = MOEmployee.construct(uuid=alice.uuid, addresses=addresses)
 
-    expected_delete = oscar_update.get_mo_addresses(
-        EmailEmployee=["EXTRA-OSCAR@example.org"],
-        MobilePhoneEmployee=["11111111111"],
-        InstitutionPhoneEmployee=["55555555"],
-        to_date=datetime.combine(frozen_datetime, time.min),
+    await fake_syncer.ensure_addresses(
+        omada_users=omada_users,
+        mo_employee=mo_employee,
+        address_types=address_types,
+        visibility_classes=visibilities,
     )
-    assert [
-        [actual_address_1],
-        [actual_address_2],
-        [actual_address_5],
-    ] == list(expected_delete.values())
+
+    terminated, created = fake_syncer.mo_service.model.upload.await_args_list
+
+    expected_terminated = dict(
+        user_key="old",
+    )
+    assert one(terminated.args[0]).dict().items() >= expected_terminated.items()
+
+    expected_created = dict(
+        user_key="new",
+    )
+    assert one(created.args[0]).dict().items() >= expected_created.items()

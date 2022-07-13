@@ -45,7 +45,7 @@ include:
 # ---------------------------------------------------------------------------
 Lint Python:
   extends: .lint-python
-  image: python:3.9
+  image: python:3.10
   stage: lint
   script:
     - poetry run pre-commit run --all-files
@@ -59,9 +59,9 @@ Lint Python:
   stage: test
   needs: []
 
-Test on Python 3.9:
+Test on Python 3.10:
   <<: *test
-  image: python:3.9
+  image: python:3.10
 
 
 # ---------------------------------------------------------------------------

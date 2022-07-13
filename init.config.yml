@@ -19,6 +19,22 @@ facets:
     Intern:
       title: "Må vises internt"
       scope: "INTERNAL"
+    Secret:
+      title: "Hemmelig"
+      scope: "SECRET"
+  engagement_job_function:
+    not_applicable:
+      title: "N/A"
+      scope: "TEXT"
+  engagement_type:
+    manually_created:
+      title: "Manuelt oprettet"
+      scope: "TEXT"
+  primary_type:
+    primary:
+      title: "Primær"
+      scope: "3000"
 
 it_systems:
-  omada_ad_guid: "Omada"
+  omada_ad_guid: "Omada - AD GUID"
+  omada_login: "Omada - LOGIN"

@@ -1,41 +1,101 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import logging
-from typing import Optional
+from pathlib import Path
 
 import structlog
 from pydantic import AnyHttpUrl
+from pydantic import BaseModel
 from pydantic import BaseSettings
 from pydantic import Field
+from pydantic import SecretStr
+from pydantic import validator
+from ramqp.config import ConnectionSettings as AMQPConnectionSettings
+
+
+class MOAMQPConnectionSettings(AMQPConnectionSettings):
+    queue_prefix = "omada"
+
+
+class MoSettings(BaseModel):
+    url: AnyHttpUrl = Field("http://mo-service:5000")
+    client_id: str = "omada"
+    client_secret: SecretStr
+    auth_realm: str = "mo"
+    auth_server: AnyHttpUrl = Field("http://keycloak-service:8080/auth")
+
+    amqp: MOAMQPConnectionSettings = Field(default_factory=MOAMQPConnectionSettings)
+
+    # These classes and IT systems should be created by os2mo-init before starting.
+    # See init.config.yml for an example that corresponds to these defaults.
+    # Maps from Omada user attributes to IT system user keys in MO
+    it_user_map: dict[str, str] = {
+        "ad_guid": "omada_ad_guid",
+        "login": "omada_login",
+    }
+    # Maps from Omada user attributes to employee address type (class) user key in MO
+    address_map: dict[str, str] = {
+        "email": "EmailEmployee",
+        "phone_direct": "PhoneEmployee",
+        "phone_cell": "MobilePhoneEmployee",
+        "phone_institution": "InstitutionPhoneEmployee",
+    }
+    # Maps from the Omada user visibility attribute to MO visibility class
+    visibility_map: dict[bool, str] = {
+        False: "Secret",
+        True: "Intern",
+    }
+    # Fallback job function for engagements created for manual users if the job title
+    # from Omada does not exist in MO.
+    manual_job_function_default: str = "not_applicable"
+    # Engagement type for engagements created for manual users
+    manual_engagement_type: str = "manually_created"
+    # Primary class for engagements created for manual users
+    manual_primary_class: str = "primary"
+
+
+class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
+    exchange = "omada"
+    queue_prefix = "omada"
+
+
+class OmadaSettings(BaseModel):
+    # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
+    url: AnyHttpUrl
+    host_header: str | None = None  # http host header override
+    ntlm_username: str | None = None
+    ntlm_password: str | None = None
+    insecure_skip_ssl_verify = False
+
+    amqp: OmadaAMQPConnectionSettings = Field(
+        default_factory=OmadaAMQPConnectionSettings
+    )
+    interval: int = 1800
+    persistence_file: Path = Path("/data/omada.json")
+
+    @validator("persistence_file", always=True)
+    def persistence_directory_exists(cls, persistence_file: Path) -> Path:
+        if not persistence_file.parent.is_dir():
+            raise ValueError("Persistence file's parent directory doesn't exist")
+        return persistence_file
 
 
 class Settings(BaseSettings):
+    commit_sha: str = Field("HEAD", description="Git commit SHA.")
+    commit_tag: str | None = Field(None, description="Git commit tag.")
+
     log_level: str = "INFO"
+    enable_metrics: bool = False
 
-    # OS2mo
-    mo_url: AnyHttpUrl = Field("http://mo:5000")
-    client_id: str = "dipex"
-    client_secret: str
-    auth_realm: str = "mo"
-    auth_server: AnyHttpUrl = Field("http://keycloak:8081/auth")
-
-    # MO IT-system users will be inserted into
-    it_system_user_key: str
-
-    # Omada OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
-    odata_url: AnyHttpUrl
-    omada_host_header: Optional[str] = None  # http host header override
-    omada_ntlm_username: Optional[str] = None
-    omada_ntlm_password: Optional[str] = None
+    mo: MoSettings
+    omada: OmadaSettings
 
     class Config:
         frozen = True
+        env_nested_delimiter = "__"  # allows setting e.g. MO__AMQP__QUEUE_PREFIX=foo
 
 
-settings = Settings()
-
-
-def set_log_level(log_level_name: str) -> None:
+def configure_logging(log_level_name: str) -> None:
     log_level_value = logging.getLevelName(log_level_name)
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(log_level_value)

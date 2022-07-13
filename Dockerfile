@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-FROM python:3.9
+FROM python:3.10
 
 WORKDIR /app
 
@@ -16,4 +16,6 @@ RUN /opt/poetry/bin/poetry install --no-root --no-dev
 
 COPY . ./
 
-CMD ["uvicorn", "os2mint_omada.main:app", "--host", "0.0.0.0", "--port", "8080"]
+VOLUME ["/data/"]
+
+CMD ["uvicorn", "os2mint_omada.main:app", "--host", "0.0.0.0"]

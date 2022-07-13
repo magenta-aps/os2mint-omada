@@ -1,32 +1,97 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-import asyncio
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack
+from functools import partial
+from typing import Any
 
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
+from ramqp import AMQPSystem
+from ramqp.mo import MOAMQPSystem
 
 from os2mint_omada import api
-from os2mint_omada import config
-from os2mint_omada.clients import client
-from os2mint_omada.clients import graphql_client
-from os2mint_omada.clients import mo_client
-from os2mint_omada.config import settings
+from os2mint_omada.backing.mo.service import MOService
+from os2mint_omada.backing.omada.service import OmadaService
+from os2mint_omada.config import configure_logging
+from os2mint_omada.config import Settings
+from os2mint_omada.events import mo_router
+from os2mint_omada.events import omada_router
+from os2mint_omada.models import Context
+from os2mint_omada.sync import Syncer
 
 
-def create_app() -> FastAPI:
+def create_app(*args: Any, **kwargs: Any) -> FastAPI:
+    """FastAPI application factory.
+
+    Args:
+        *args: Additional arguments passed to the settings module.
+        **kwargs: Additional keyword arguments passed to the settings module.
+
+    Returns: FastAPI application.
+    """
+    # Config
+    settings = Settings(*args, **kwargs)
+    configure_logging(settings.log_level)
+    context: Context = dict(settings=settings)
+
+    # AMQP
+    mo_amqp_system = MOAMQPSystem(
+        settings=settings.mo.amqp,
+        router=mo_router,
+        context=context,
+    )
+    omada_amqp_system = AMQPSystem(
+        settings=settings.omada.amqp,
+        router=omada_router,
+        context=context,
+    )
+
+    # App
     app = FastAPI()
+    app.state.context = context
+    # Ideally, FastAPI would support the `lifespan=` keyword-argument like Starlette,
+    # but that is not supported: https://github.com/tiangolo/fastapi/issues/2943.
+    app.router.lifespan_context = partial(
+        lifespan, settings, context, mo_amqp_system, omada_amqp_system
+    )
 
+    # Routes
     app.include_router(api.router)
 
-    @app.on_event("startup")
-    async def setup_logging() -> None:
-        config.set_log_level(settings.log_level)
-
-    @app.on_event("shutdown")
-    async def close_clients() -> None:
-        await asyncio.gather(
-            client.aclose(),
-            graphql_client.aclose(),
-            mo_client.aclose(),
-        )
+    # Metrics
+    if settings.enable_metrics:
+        Instrumentator().instrument(app).expose(app)
 
     return app
+
+
+@asynccontextmanager
+async def lifespan(
+    settings: Settings,
+    context: Context,
+    mo_amqp_system: MOAMQPSystem,
+    omada_amqp_system: AMQPSystem,
+    app: FastAPI,
+) -> AsyncGenerator:
+    async with AsyncExitStack() as stack:
+        mo_service = context["mo_service"] = MOService(
+            settings=settings.mo, amqp_system=mo_amqp_system
+        )
+        omada_service = context["omada_service"] = OmadaService(
+            settings=settings.omada, amqp_system=omada_amqp_system
+        )
+        context["syncer"] = Syncer(
+            settings=settings.mo,
+            mo_service=mo_service,
+            omada_service=omada_service,
+        )
+
+        # Start services last to ensure the context is set up before handling events
+        await stack.enter_async_context(mo_service)
+        await stack.enter_async_context(omada_service)
+
+        # Yield to keep the AMQP system open until the ASGI application is closed.
+        # Control will be returned to here when the ASGI application is shut down.
+        yield
