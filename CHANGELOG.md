@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.0.1 - 2022-07-13
+------------------
+
+[#49604] Remove nested settings factory
+[#49604] Fix Omada pseudo infinity
+[#49604] Remove visibility
+
 1.0.0 - 2022-07-13
 ------------------
 
