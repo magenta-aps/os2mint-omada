@@ -244,10 +244,13 @@ class Syncer:
         omada_users_raw = await self.omada_service.api.get_users_by_cpr_numbers(
             cpr_numbers=[omada_user.cpr_number]
         )
-        omada_users = parse_obj_as(list[ManualOmadaUser], omada_users_raw)
+        omada_users = parse_obj_as(list[OmadaUser | ManualOmadaUser], omada_users_raw)
+        manual_omada_users = [u for u in omada_users if isinstance(u, ManualOmadaUser)]
 
-        # Synchronise to MO
+        # Synchronise employee to MO
         employee = await self.ensure_employee(omada_user=omada_user, employee=employee)
+
+        # Synchronise engagements to MO
         employee_data = await self.mo_service.get_employee_data(
             uuid=employee.uuid,  # uuid from the (possibly) newly-created employee
             address_types=address_types.values(),
@@ -255,7 +258,7 @@ class Syncer:
         )
         assert employee_data is not None
         await self.ensure_engagements(
-            omada_users=omada_users,
+            omada_users=manual_omada_users,
             employee_data=employee_data,
             job_functions=job_functions,
             job_function_default=self.settings.manual_job_function_default,
