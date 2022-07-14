@@ -105,10 +105,10 @@ async def test_get_employee(
             it_systems=[it_system_uuid],
         )
 
-        assert employee is not None
-        assert one(employee.addresses).person is not None
-        assert one(employee.addresses).person.uuid == employee_uuid
-        assert one(employee.engagements).person.uuid == employee_uuid
-        assert one(employee.engagements).org_unit.uuid == org_unit_uuid
-        assert one(employee.itusers).person.uuid == employee_uuid
-        assert one(employee.itusers).itsystem.uuid == it_system_uuid
+    assert employee is not None
+    assert one(employee.addresses).person is not None
+    assert one(employee.addresses).person.uuid == employee_uuid
+    assert one(employee.engagements).person.uuid == employee_uuid
+    assert one(employee.engagements).org_unit.uuid == org_unit_uuid
+    assert one(employee.itusers).person.uuid == employee_uuid
+    assert one(employee.itusers).itsystem.uuid == it_system_uuid

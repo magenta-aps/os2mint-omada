@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from datetime import datetime
+import datetime
 from typing import Callable
 from typing import cast
 from uuid import uuid4

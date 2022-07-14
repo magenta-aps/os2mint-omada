@@ -19,7 +19,7 @@ from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 
-from os2mint_omada.backing.mo.models import MOEmployee
+from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.backing.omada.models import IdentityCategory
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
@@ -106,9 +106,9 @@ def alice() -> TestUser:
 # def alice(
 #     facets: dict[str, dict[str, UUID]],
 #     it_systems: dict[str, UUID],
-# ) -> tuple[Employee, MOEmployee]:
+# ) -> tuple[Employee, EmployeeData]:
 #     uuid = UUID("ec9fe65a-428d-4c70-a85f-36c2982baf2e")
-#     mo_employee = MOEmployee(
+#     employee_data = EmployeeData(
 #         uuid=uuid,
 #         engagements=[
 #             Engagement(
@@ -153,7 +153,7 @@ def alice() -> TestUser:
 #         ],
 #     )
 #
-#     return employee, mo_employee
+#     return employee, employee_data
 
 
 class FakeSyncer(Syncer):
@@ -304,11 +304,11 @@ async def test_ensure_engagements(
         ),
     ]
 
-    mo_employee = MOEmployee.construct(uuid=alice.uuid, engagements=engagements)
+    employee_data = EmployeeData.construct(uuid=alice.uuid, engagements=engagements)
 
     await fake_syncer.ensure_engagements(
         omada_users=omada_users,
-        mo_employee=mo_employee,
+        employee_data=employee_data,
         job_functions=job_functions,
         job_function_default="not_applicable",
         engagement_type_uuid=engagement_types["manually_created"],
@@ -380,11 +380,11 @@ async def test_ensure_addresses(
         ),
     ]
 
-    mo_employee = MOEmployee.construct(uuid=alice.uuid, addresses=addresses)
+    employee_data = EmployeeData.construct(uuid=alice.uuid, addresses=addresses)
 
     await fake_syncer.ensure_addresses(
         omada_users=omada_users,
-        mo_employee=mo_employee,
+        employee_data=employee_data,
         address_types=address_types,
         visibility_uuid=visibilities["Intern"],
     )

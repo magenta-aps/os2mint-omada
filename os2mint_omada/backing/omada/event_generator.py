@@ -29,12 +29,24 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
     def __init__(
         self, settings: OmadaSettings, api: OmadaAPI, amqp_system: AMQPSystem
     ) -> None:
+        """Omada event generator.
+
+        The omada event generator periodically retrieves a list of all users in Omada,
+        and compares it with the list it retrieved the last time, to calculate events
+        which are sent to AMQP.
+
+        Args:
+            settings: Omada-specific settings.
+            api: OmadaAPI instance.
+            amqp_system: Omada AMQP system to send events to.
+        """
         self.settings = settings
         self.api = api
         self.amqp_system = amqp_system
 
     async def __aenter__(self) -> OmadaEventGenerator:
-        logger.info("Starting Omada event manager")
+        """Start the scheduler task."""
+        logger.info("Starting Omada event scheduler")
         self._scheduler_task: Task = asyncio.create_task(self._scheduler())
         return await super().__aenter__()
 
@@ -44,11 +56,13 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         __exc_value: BaseException | None,
         __traceback: TracebackType | None,
     ) -> bool | None:
-        logger.info("Stopping Omada event manager")
+        """Stop the scheduler task."""
+        logger.info("Stopping Omada event scheduler")
         self._scheduler_task.cancel()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 
     async def _scheduler(self) -> None:
+        """The scheduler periodically and invokes the event generation logic."""
         logger.info("Starting Omada scheduler", interval=self.settings.interval)
         while True:
             try:
@@ -63,6 +77,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 break
 
     async def generate(self) -> None:
+        """Generate Omada events based on the live Omada API view and saved state."""
         # Retrieve raw lists of users from the previous run and API
         old_users_list = self._load_users()
         new_users_list = await self.api.get_users()
@@ -103,10 +118,12 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         self._save_users(new_users_list)
 
     def _save_users(self, users: list[RawOmadaUser]) -> None:
+        """Save known Omada users (dicts) to disk."""
         with self.settings.persistence_file.open("w") as file:
             json.dump(users, file)
 
     def _load_users(self) -> list[RawOmadaUser]:
+        """Load known Omada users (dicts) from disk."""
         try:
             with self.settings.persistence_file.open("r") as file:
                 users = json.load(file)

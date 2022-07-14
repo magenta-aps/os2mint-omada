@@ -25,7 +25,7 @@ from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
 
-from os2mint_omada.backing.mo.models import MOEmployee
+from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.backing.mo.service import ITSystems
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.models import ManualOmadaUser
@@ -41,10 +41,12 @@ logger = structlog.get_logger(__name__)
 class ComparableMixin(BaseModel):
     @validator("uuid", check_fields=False)
     def strip_uuid(cls, uuid: UUID) -> None:
+        """Strip UUID to allow for convenient comparison of models."""
         return None
 
     @validator("validity", check_fields=False)
     def validity_at_midnight(cls, validity: Validity) -> Validity:
+        """Normalise validity dates to allow for convenient comparison of models."""
         return Validity(
             from_date=at_midnight(validity.from_date),
             to_date=at_midnight(validity.to_date),
@@ -54,12 +56,25 @@ class ComparableMixin(BaseModel):
 class StripUserKeyMixin(BaseModel):
     @validator("user_key", check_fields=False)
     def strip_user_key(cls, user_key: Any | None) -> None:
+        """Strip user key to allow for convenient comparison of models.
+
+        Should only be used on objects where the user key does not contain actual
+        relevant data, but is simply a copy of the UUID (as automatically set by MOBase
+        if absent).
+        """
         return None
 
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
     @classmethod
     def from_omada(cls, omada_user: ManualOmadaUser) -> ComparableEmployee:
+        """Construct (comparable) MO employee from a manual omada user.
+
+        Args:
+            omada_user: Manual omada user.
+
+        Returns: Comparable MO employee.
+        """
         return cls(
             givenname=omada_user.first_name,
             surname=omada_user.last_name,
@@ -79,6 +94,20 @@ class ComparableEngagement(ComparableMixin, Engagement):
         engagement_type_uuid: UUID,
         primary_type_uuid: UUID,
     ) -> ComparableEngagement:
+        """Construct (comparable) MO engagement from a manual omada user.
+
+        Args:
+            omada_user: Manual omada user.
+            person_uuid: Employee of the engagement.
+            org_unit_uuid: Org unit of the engagement.
+            job_functions: Map of all engagement job functions in MO.
+            job_function_default: Fallback job function used if the one defined on the
+             Omada user does not exist in MO.
+            engagement_type_uuid: Engagement type of the engagement.
+            primary_type_uuid: Primary class of the engagement.
+
+        Returns: Comparable MO engagement.
+        """
         try:
             job_function_uuid = job_functions[omada_user.job_title]
         except KeyError:
@@ -103,10 +132,21 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         cls,
         omada_user: OmadaUser,
         omada_attr: str,
-        mo_employee: MOEmployee,
+        employee_data: EmployeeData,
         address_type_uuid: UUID,
         visibility_uuid: UUID,
     ) -> ComparableAddress | None:
+        """Construct (comparable) MO address for a specific attribute on an Omada user.
+
+        Args:
+            omada_user: Omada user.
+            omada_attr: Attribute on the Omada user to use for the address value.
+            employee_data: Data of the MO employee of the address.
+            address_type_uuid: Type class of the address.
+            visibility_uuid: Visibility class of the address.
+
+        Returns: Comparable MO address if the Omada attribute is set, otherwise None.
+        """
         # Omada often returns empty strings for non-existent attributes, which is
         # falsy - and therefore also ignored, like None values.
         omada_value = getattr(omada_user, omada_attr)
@@ -115,7 +155,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         return cls(
             value=omada_value,
             address_type=AddressType(uuid=address_type_uuid),
-            person=PersonRef(uuid=mo_employee.uuid),
+            person=PersonRef(uuid=employee_data.uuid),
             visibility=Visibility(uuid=visibility_uuid),
             validity=Validity(
                 from_date=omada_user.valid_from,
@@ -130,13 +170,23 @@ class ComparableITUser(ComparableMixin, ITUser):
         cls,
         omada_user: OmadaUser,
         omada_attr: str,
+        employee_data: EmployeeData,
         it_system_uuid: UUID,
-        mo_employee: MOEmployee,
     ) -> ComparableITUser:
+        """Construct (comparable) MO IT user for a specific attribute on an Omada user.
+
+        Args:
+            omada_user: Omada user.
+            omada_attr: Attribute on the Omada user to use as the IT user account name.
+            employee_data: Data of the MO employee of the IT user.
+            it_system_uuid: IT system of the IT user.
+
+        Returns: Comparable MO IT user for the Omada attribute.
+        """
         return cls(
             user_key=str(getattr(omada_user, omada_attr)),
             itsystem=ITSystemRef(uuid=it_system_uuid),
-            person=PersonRef(uuid=mo_employee.uuid),
+            person=PersonRef(uuid=employee_data.uuid),
             validity=Validity(
                 from_date=omada_user.valid_from,
                 to_date=omada_user.valid_to,
@@ -148,11 +198,30 @@ class Syncer:
     def __init__(
         self, settings: MoSettings, mo_service: MOService, omada_service: OmadaService
     ) -> None:
+        """The logic responsible for taking actions to synchronise MO with Omada.
+
+        Args:
+            settings: MO-specific settings.
+            mo_service: MO backing service.
+            omada_service: Omada backing service.
+        """
         self.settings = settings
         self.mo_service = mo_service
         self.omada_service = omada_service
 
     async def sync_manual_employee(self, omada_user: ManualOmadaUser) -> None:
+        """Synchronise a manual Omada user with MO employee and engagements.
+
+        Note that the employee objects themselves are never terminated, as that is
+        usually not done (some argue it being slightly morbid). Instead, the
+        associated engagements will be created/updated/terminated in accordance with
+        the data present in Omada.
+
+        Args:
+            omada_user: Manual Omada user.
+
+        Returns: None.
+        """
         logger.info("Synchronising manual employee", omada_user=omada_user)
         # Setup MO prerequisites
         address_types = await self.mo_service.get_classes("employee_address_type")
@@ -179,15 +248,15 @@ class Syncer:
 
         # Synchronise to MO
         employee = await self.ensure_employee(omada_user=omada_user, employee=employee)
-        mo_employee = await self.mo_service.get_employee_data(
+        employee_data = await self.mo_service.get_employee_data(
             uuid=employee.uuid,  # uuid from the (possibly) newly-created employee
             address_types=address_types.values(),
             it_systems=it_systems.values(),
         )
-        assert mo_employee is not None
+        assert employee_data is not None
         await self.ensure_engagements(
             omada_users=omada_users,
-            mo_employee=mo_employee,
+            employee_data=employee_data,
             job_functions=job_functions,
             job_function_default=self.settings.manual_job_function_default,
             engagement_type_uuid=engagement_type_uuid,
@@ -197,6 +266,14 @@ class Syncer:
     async def ensure_employee(
         self, omada_user: ManualOmadaUser, employee: Employee | None
     ) -> Employee:
+        """Ensure that the MO employee is synchronised with the Omada user.
+
+        Args:
+            omada_user: Manual Omada user.
+            employee: (Potentially) pre-existing MO employee. Can be None.
+
+        Returns: Updated employee, which can be the given employee object unmodified.
+        """
         logger.info("Ensuring employee", omada_user=omada_user, employee=employee)
         # Actual employee in MO
         if employee is not None:
@@ -221,18 +298,35 @@ class Syncer:
     async def ensure_engagements(
         self,
         omada_users: list[ManualOmadaUser],
-        mo_employee: MOEmployee,
+        employee_data: EmployeeData,
         job_functions: dict[str, UUID],
         job_function_default: str,
         engagement_type_uuid: UUID,
         primary_type_uuid: UUID,
     ) -> None:
+        """Ensure that the MO engagements are synchronised with the Omada users.
+
+        Synchronisation is done on ALL Omada user entries for the employee, since total
+        knowledge of all of a user's Omada entries is needed to avoid potentially
+        terminating engagements related to a different Omada user entry.
+
+        Args:
+            omada_users: List of Omada users to synchronise.
+            employee_data: Existing MO employee data.
+            job_functions: Map of all engagement job functions in MO.
+            job_function_default: Fallback job function used if the one defined on a
+             Omada user does not exist in MO.
+            engagement_type_uuid: Engagement type of the engagements.
+            primary_type_uuid: Primary class of the engagements.
+
+        Returns: None.
+        """
         logger.info("Ensuring engagement")
 
         # Actual engagements in MO
         actual: dict[ComparableEngagement, Engagement] = {
             ComparableEngagement(**engagement.dict()): engagement
-            for engagement in mo_employee.engagements
+            for engagement in employee_data.engagements
         }
 
         # Expected engagements from Omada
@@ -255,7 +349,7 @@ class Syncer:
 
             return ComparableEngagement.from_omada(
                 omada_user=omada_user,
-                person_uuid=mo_employee.uuid,
+                person_uuid=employee_data.uuid,
                 org_unit_uuid=org_unit_uuid,
                 job_functions=job_functions,
                 job_function_default=job_function_default,
@@ -292,25 +386,32 @@ class Syncer:
             )
             await self.mo_service.model.upload(missing_mo_engagements)
 
-    async def sync_employee_data(self, uuid: UUID) -> None:
-        logger.info("Synchronising user", uuid=uuid)
+    async def sync_employee_data(self, employee_uuid: UUID) -> None:
+        """Synchronise objects for an Omada user with MO.
+
+        Args:
+            employee_uuid: MO employee UUID.
+
+        Returns: None.
+        """
+        logger.info("Synchronising user", employee_uuid=employee_uuid)
         # Get current user data from MO
         address_types = await self.mo_service.get_classes("employee_address_type")
         visibility_classes = await self.mo_service.get_classes("visibility")
         visibility_uuid = visibility_classes[self.settings.address_visibility]
         it_systems = await self.mo_service.get_it_systems()
-        mo_employee = await self.mo_service.get_employee_data(
-            uuid=uuid,
+        employee_data = await self.mo_service.get_employee_data(
+            uuid=employee_uuid,
             address_types=address_types.values(),
             it_systems=it_systems.values(),
         )
-        if mo_employee is None:
-            logger.info("No employee in MO: skipping", uuid=uuid)
+        if employee_data is None:
+            logger.info("No employee in MO: skipping", employee_uuid=employee_uuid)
             return
 
         # Get current user data from Omada. Note that we are fetching Omada users for
         # ALL engagements to avoid deleting too many addresses and IT systems.
-        service_numbers = (e.user_key for e in mo_employee.engagements)
+        service_numbers = (e.user_key for e in employee_data.engagements)
         omada_users_raw = await self.omada_service.api.get_users_by_service_numbers(
             service_numbers
         )
@@ -319,28 +420,42 @@ class Syncer:
         # Synchronise to MO
         await self.ensure_addresses(
             omada_users=omada_users,
-            mo_employee=mo_employee,
+            employee_data=employee_data,
             address_types=address_types,
             visibility_uuid=visibility_uuid,
         )
         await self.ensure_it_users(
             omada_users=omada_users,
-            mo_employee=mo_employee,
+            employee_data=employee_data,
             it_systems=it_systems,
         )
 
     async def ensure_addresses(
         self,
         omada_users: list[OmadaUser],
-        mo_employee: MOEmployee,
+        employee_data: EmployeeData,
         address_types: dict[str, UUID],
         visibility_uuid: UUID,
     ) -> None:
-        logger.info("Ensuring addresses", employee_uuid=mo_employee.uuid)
+        """Ensure that the MO addresses are synchronised with the Omada users.
+
+        Synchronisation is done on ALL Omada user entries for the employee, since total
+        knowledge of all of a user's Omada entries is needed to avoid potentially
+        terminating addresses related to a different Omada user entry.
+
+        Args:
+            omada_users: List of Omada users to synchronise.
+            employee_data: Existing MO employee data.
+            address_types: Address types for employee addresses.
+            visibility_uuid: Visibility class of the addresses.
+
+        Returns: None.
+        """
+        logger.info("Ensuring addresses", employee_uuid=employee_data.uuid)
         # Actual addresses in MO
         actual: dict[ComparableAddress, Address] = {
             ComparableAddress(**address.dict()): address
-            for address in mo_employee.addresses
+            for address in employee_data.addresses
         }
 
         # Expected addresses from Omada
@@ -348,7 +463,7 @@ class Syncer:
             ComparableAddress.from_omada(
                 omada_user=omada_user,
                 omada_attr=omada_attr,
-                mo_employee=mo_employee,
+                employee_data=employee_data,
                 address_type_uuid=address_types[mo_address_user_key],
                 visibility_uuid=visibility_uuid,
             )
@@ -379,14 +494,27 @@ class Syncer:
     async def ensure_it_users(
         self,
         omada_users: list[OmadaUser],
-        mo_employee: MOEmployee,
+        employee_data: EmployeeData,
         it_systems: ITSystems,
     ) -> None:
-        logger.info("Ensuring IT users", employee_uuid=mo_employee.uuid)
+        """Ensure that MO IT users are synchronised with the Omada users.
+
+        Synchronisation is done on ALL Omada user entries for the employee, since total
+        knowledge of all of a user's Omada entries is needed to avoid potentially
+        terminating it users related to a different Omada user entry.
+
+        Args:
+            omada_users: List of Omada users to synchronise.
+            employee_data: Existing MO employee data.
+            it_systems: IT systems configured in MO.
+
+        Returns: None.
+        """
+        logger.info("Ensuring IT users", employee_uuid=employee_data.uuid)
         # Actual IT users in MO
         actual: dict[ComparableITUser, ITUser] = {
             ComparableITUser(**it_user.dict()): it_user
-            for it_user in mo_employee.itusers
+            for it_user in employee_data.itusers
         }
 
         # Expected IT users from Omada
@@ -394,8 +522,8 @@ class Syncer:
             ComparableITUser.from_omada(
                 omada_user=omada_user,
                 omada_attr=omada_attr,
+                employee_data=employee_data,
                 it_system_uuid=it_systems[mo_it_system_user_key],
-                mo_employee=mo_employee,
             )
             for omada_user in omada_users
             for omada_attr, mo_it_system_user_key in self.settings.it_user_map.items()

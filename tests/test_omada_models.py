@@ -7,57 +7,25 @@ from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 
 
-@pytest.fixture
-def omada_user() -> dict:
-    return {
-        "IDENTITYCATEGORY": {
-            "Id": 560,
-            "UId": "ac0c67fc-5f47-4112-94e6-446bfb68326a",
-        },
-        "C_TJENESTENR": "DRV2639",
-        "C_OBJECTGUID_I_AD": "9e5aee86-1461-4072-9883-ed43c82db42c",
-        "C_LOGIN": "DR00777",
-        "EMAIL": "bob@example.com",
-        "EMAIL2": "",
-        "C_DIREKTE_TLF": "12341234",
-        "CELLPHONE": "",
-        "C_INST_PHONE": "",
-        "VALIDFROM": "2016-06-15T00:00:00+02:00",
-        "VALIDTO": "2022-12-03T00:00:00+01:00",
-    }
+def test_omada_user(raw_omada_user: dict) -> None:
+    """Test that the model can parse one instance of a raw normal user."""
+    assert OmadaUser.parse_obj(raw_omada_user)
 
 
-@pytest.fixture
-def omada_user_manual(omada_user: dict) -> dict:
-    manual_fields = {
-        "IDENTITYCATEGORY": {
-            "Id": 561,
-            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
-        },
-        "C_FORNAVNE": "Anders W.",
-        "LASTNAME": "Lemming",
-        "C_CPRNR": "1707821597",
-        "JOBTITLE": "Worker",
-        "C_ORGANISATIONSKODE": "5a23d722-1be4-4f00-a200-000001500001",
-    }
-    return omada_user | manual_fields
+def test_omada_user_manual(raw_omada_user_manual: dict) -> None:
+    """Test that the model can parse one instance of a raw manual user."""
+    assert ManualOmadaUser.parse_obj(raw_omada_user_manual)
 
 
-def test_omada_user(omada_user: dict) -> None:
-    assert OmadaUser.parse_obj(omada_user)
-
-
-def test_omada_user_manual(omada_user_manual: dict) -> None:
-    assert ManualOmadaUser.parse_obj(omada_user_manual)
-
-
-def test_omada_user_manual_non_manual(omada_user_manual: dict) -> None:
-    omada_user_manual["IDENTITYCATEGORY"]["Id"] = 123
+def test_omada_user_manual_non_manual(raw_omada_user_manual: dict) -> None:
+    """Test that parsing a non-manual user as manual fails validation."""
+    raw_omada_user_manual["IDENTITYCATEGORY"]["Id"] = 123
     with pytest.raises(ValidationError):
-        ManualOmadaUser.parse_obj(omada_user_manual)
+        ManualOmadaUser.parse_obj(raw_omada_user_manual)
 
 
-def test_omada_pseudo_infinity(omada_user: dict) -> None:
-    omada_user["VALIDTO"] = "9999-12-31T01:00:00+01:00"
-    parsed = OmadaUser.parse_obj(omada_user)
+def test_omada_pseudo_infinity(raw_omada_user: dict) -> None:
+    """Test that Omada's 'pseudo-infinity' of 31/12/9999 is converted correctly."""
+    raw_omada_user["VALIDTO"] = "9999-12-31T01:00:00+01:00"
+    parsed = OmadaUser.parse_obj(raw_omada_user)
     assert parsed.valid_to is None

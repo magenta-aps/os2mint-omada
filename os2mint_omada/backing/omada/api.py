@@ -24,12 +24,17 @@ logger = structlog.get_logger(__name__)
 
 class OmadaAPI(AbstractAsyncContextManager):
     def __init__(self, settings: OmadaSettings) -> None:
+        """Facade for the Omada API.
+
+        Args:
+            settings: Omada-specific settings.
+        """
         super().__init__()
         self.settings = settings
-
         self.stack = AsyncExitStack()
 
     async def __aenter__(self) -> OmadaAPI:
+        """Setup and start the client for persistent connection to the Omada API."""
         settings = self.settings
 
         # HTTPX Client
@@ -57,6 +62,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         __exc_value: BaseException | None,
         __traceback: TracebackType | None,
     ) -> bool | None:
+        """Close the connection to the Oamda API."""
         logger.info("Closing Omada API")
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
@@ -75,16 +81,32 @@ class OmadaAPI(AbstractAsyncContextManager):
         return False
 
     async def get_users(self, params: dict | None = None) -> list[RawOmadaUser]:
+        """Retrieve IT users from Omada.
+
+        Args:
+            params: Additional parameters passed to the HTTPX client request.
+
+        Returns: List of raw omada users (dicts).
+        """
         url = self.settings.url
         logger.info("Getting Omada IT users", odata_url=url, params=params)
         response = await self.client.get(url, params=params)
         response.raise_for_status()
         users = response.json()["value"]
+        logger.debug("Retrieved Omada IT users", users=users)
         return users
 
     async def _get_users_by(
         self, key: str, values: Iterable[str]
     ) -> list[RawOmadaUser]:
+        """Convenience wrapper for filtering on multiple criteria simultaneously.
+
+        Args:
+            key: Filter key.
+            values: Filter value.
+
+        Returns: List of raw omada users matching the filter.
+        """
         # Omada does not support OR or IN operators, so we have to do it like this
         get_users = (
             self.get_users(params={"$filter": f"{key} eq '{value}'"})
@@ -96,9 +118,23 @@ class OmadaAPI(AbstractAsyncContextManager):
     async def get_users_by_service_numbers(
         self, service_numbers: Iterable[str]
     ) -> list[RawOmadaUser]:
+        """Retrieve IT users with the given service number ("C_TJENESTENR").
+
+        Args:
+            service_numbers: Service number to retrieve users for.
+
+        Returns: List of raw omada users with the given service number.
+        """
         return await self._get_users_by("C_TJENESTENR", service_numbers)
 
     async def get_users_by_cpr_numbers(
         self, cpr_numbers: Iterable[str]
     ) -> list[RawOmadaUser]:
+        """Retrieve IT users with the given CPR number ("C_CPRNR").
+
+        Args:
+            cpr_numbers: CPR number to retrieve users for.
+
+        Returns: List of raw omada users with the given CPR number.
+        """
         return await self._get_users_by("C_CPRNR", cpr_numbers)

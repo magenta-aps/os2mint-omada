@@ -21,12 +21,13 @@ class Type(str, Enum):
 
 
 class RoutingKey(BaseModel):
-    """Omada AMQP routing key."""
+    """Omada AMQP routing key, containing the event and payload type."""
 
     event: Event
     type: Type
 
     def __str__(self) -> str:
+        """AMQP routing keys are usually expressed in dot-notation."""
         return f"omada.user.{self.event}.{self.type}"
 
 
@@ -37,7 +38,7 @@ class RawRoutingKey(RoutingKey):
 
 
 class IdentityCategory(str, Enum):
-    """TODO"""
+    """Omada AMQP parsed user identity category type."""
 
     NORMAL = "normal"
     MANUAL = "manual"
@@ -50,4 +51,5 @@ class ParsedRoutingKey(RoutingKey):
     identity_category: IdentityCategory
 
     def __str__(self) -> str:
+        """Append identity category to the routing key's dot-notation."""
         return f"{super().__str__()}.{self.identity_category}"
