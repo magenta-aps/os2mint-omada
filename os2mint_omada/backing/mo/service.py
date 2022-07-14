@@ -433,11 +433,15 @@ class MOService(AbstractAsyncContextManager):
         Returns: UUID of the org unit if it exists, otherwise raises KeyError.
         """
         logger.info("Getting org unit with uuid", uuid=uuid)
+        # TODO: (#51523) The GraphQL API always returns an org unit (albeit with empty
+        #  `objects`) when querying uuids.
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
               org_units(uuids: $uuids) {
-                uuid
+                objects {
+                  uuid
+                }
               }
             }
             """
@@ -451,6 +455,7 @@ class MOService(AbstractAsyncContextManager):
         )
         try:
             org_unit = one(result["org_units"])
+            obj = one(org_unit["objects"])
         except ValueError as e:
             raise KeyError from e
-        return UUID(org_unit["uuid"])
+        return UUID(obj["uuid"])
