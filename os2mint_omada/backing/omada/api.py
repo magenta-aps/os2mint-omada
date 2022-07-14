@@ -93,6 +93,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         response = await self.client.get(url, params=params)
         response.raise_for_status()
         users = response.json()["value"]
+        logger.debug("Retrieved Omada IT users", users=users)
         return users
 
     async def _get_users_by(
