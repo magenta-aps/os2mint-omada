@@ -489,7 +489,7 @@ class MOService(AbstractAsyncContextManager):
             "/service/details/terminate",
             json=dict(
                 type=model.type_,
-                uuid=model.uuid,
+                uuid=str(model.uuid),  # UUID is not JSON serializable
                 validity={"to": from_date},
             ),
         )
