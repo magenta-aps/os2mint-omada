@@ -3,14 +3,6 @@
 from datetime import datetime
 from datetime import time
 from typing import cast
-from typing import TypeVar
-
-from ramodels.mo._shared import Validity
-from ramodels.mo.details import Address
-from ramodels.mo.details import Engagement
-from ramodels.mo.details import ITUser
-
-MOBaseWithValidity = TypeVar("MOBaseWithValidity", Address, Engagement, ITUser)
 
 
 def at_midnight(date: datetime | None) -> datetime | None:
@@ -32,26 +24,3 @@ def midnight() -> datetime:
     Returns: Datetime object of the current day's midnight.
     """
     return cast(datetime, at_midnight(datetime.utcnow()))
-
-
-def as_terminated(
-    model: MOBaseWithValidity, from_date: datetime | None = None
-) -> MOBaseWithValidity:
-    """Terminate a MO object by setting its validity.
-
-    Args:
-        model: Object to terminate.
-        from_date: Termination date. If not given, today will be used.
-
-    Returns: A copy of the given object with its validity changed for termination.
-    """
-    return model.parse_obj(  # pydantic doesn't validate on .copy()
-        model.copy(
-            update=dict(
-                validity=Validity(
-                    from_date=model.validity.from_date,
-                    to_date=from_date if from_date is not None else midnight(),
-                ),
-            )
-        )
-    )

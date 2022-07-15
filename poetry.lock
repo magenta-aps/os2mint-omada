@@ -15,14 +15,14 @@ develop = ["aiomisc (>=16.0,<17.0)", "coverage (!=4.3)", "coveralls", "pylava", 
 
 [[package]]
 name = "aiormq"
-version = "6.3.3"
+version = "6.3.4"
 description = "Pure python AMQP asynchronous client library"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-pamqp = "3.1.0"
+pamqp = "3.2.0"
 yarl = "*"
 
 [package.extras]
@@ -58,7 +58,7 @@ tests = ["pytest", "pytest-asyncio", "mypy (>=0.800)"]
 
 [[package]]
 name = "atomicwrites"
-version = "1.4.0"
+version = "1.4.1"
 description = "Atomic file writes."
 category = "main"
 optional = false
@@ -88,6 +88,14 @@ python-versions = "*"
 
 [package.dependencies]
 cryptography = ">=3.2"
+
+[[package]]
+name = "backoff"
+version = "2.1.2"
+description = "Function decoration for backoff and retry"
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
 
 [[package]]
 name = "black"
@@ -139,7 +147,7 @@ python-versions = ">=3.6.1"
 
 [[package]]
 name = "classify-imports"
-version = "4.0.2"
+version = "4.1.0"
 description = "Utilities for refactoring imports in python-like syntax."
 category = "dev"
 optional = false
@@ -199,22 +207,11 @@ test = ["pytest (>=6.2.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pr
 
 [[package]]
 name = "distlib"
-version = "0.3.4"
+version = "0.3.5"
 description = "Distribution utilities"
 category = "dev"
 optional = false
 python-versions = "*"
-
-[[package]]
-name = "exceptiongroup"
-version = "1.0.0rc8"
-description = "Backport of PEP 654 (exception groups)"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.extras]
-test = ["pytest (>=6)"]
 
 [[package]]
 name = "fastapi"
@@ -272,13 +269,14 @@ python-dateutil = ">=2.7"
 
 [[package]]
 name = "gql"
-version = "3.3.0"
+version = "3.4.0"
 description = "GraphQL client for Python"
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
+backoff = ">=1.11.1,<3.0"
 graphql-core = ">=3.2,<3.3"
 yarl = ">=1.6,<2.0"
 
@@ -358,35 +356,6 @@ python-versions = "*"
 cryptography = ">=36.0.0,<36.1.0"
 httpx = ">=0.21"
 pyspnego = ">=0.3.0,<0.4.0"
-
-[[package]]
-name = "hypothesis"
-version = "6.49.1"
-description = "A library for property-based testing"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-attrs = ">=19.2.0"
-exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
-sortedcontainers = ">=2.1.0,<3.0.0"
-
-[package.extras]
-all = ["black (>=19.10b0)", "click (>=7.0)", "django (>=2.2)", "dpcontracts (>=0.4)", "lark-parser (>=0.6.5)", "libcst (>=0.3.16)", "numpy (>=1.9.0)", "pandas (>=0.25)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "importlib-metadata (>=3.6)", "backports.zoneinfo (>=0.2.1)", "tzdata (>=2022.1)"]
-cli = ["click (>=7.0)", "black (>=19.10b0)", "rich (>=9.0.0)"]
-codemods = ["libcst (>=0.3.16)"]
-dateutil = ["python-dateutil (>=1.4)"]
-django = ["django (>=2.2)"]
-dpcontracts = ["dpcontracts (>=0.4)"]
-ghostwriter = ["black (>=19.10b0)"]
-lark = ["lark-parser (>=0.6.5)"]
-numpy = ["numpy (>=1.9.0)"]
-pandas = ["pandas (>=0.25)"]
-pytest = ["pytest (>=4.6)"]
-pytz = ["pytz (>=2014.1)"]
-redis = ["redis (>=3.0.0)"]
-zoneinfo = ["backports.zoneinfo (>=0.2.1)", "tzdata (>=2022.1)"]
 
 [[package]]
 name = "identify"
@@ -486,7 +455,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "pamqp"
-version = "3.1.0"
+version = "3.2.0"
 description = "RabbitMQ Focused AMQP low-level library"
 category = "main"
 optional = false
@@ -530,7 +499,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pre-commit"
-version = "2.19.0"
+version = "2.20.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 category = "dev"
 optional = false
@@ -792,14 +761,14 @@ structlog = ">=21.5.0,<22.0.0"
 
 [[package]]
 name = "reorder-python-imports"
-version = "3.3.0"
+version = "3.8.1"
 description = "Tool for reordering python imports"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-classify-imports = "*"
+classify-imports = ">=4.1"
 
 [[package]]
 name = "respx"
@@ -841,14 +810,6 @@ description = "Sniff out which async library your code is running under"
 category = "main"
 optional = false
 python-versions = ">=3.5"
-
-[[package]]
-name = "sortedcontainers"
-version = "2.4.0"
-description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
-category = "dev"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "starlette"
@@ -986,17 +947,14 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "85e11de42caedfe3ab32197a80808941daa6037c587b8831b882c803c290aee0"
+content-hash = "eaf0bf1c08a516d2f7475cf227b404a4e1464de7d54b19ef5284253320adb972"
 
 [metadata.files]
 aio-pika = [
     {file = "aio-pika-8.0.3.tar.gz", hash = "sha256:3cfe5d994a079a6836383f610990499e60b00503814bc208c2392153261573f5"},
     {file = "aio_pika-8.0.3-py3-none-any.whl", hash = "sha256:ce3b1501abd4c93ef2b01f7b8245e432d2ea5eb4a1286c4b5ff5d72e22feffd7"},
 ]
-aiormq = [
-    {file = "aiormq-6.3.3-py3-none-any.whl", hash = "sha256:fe608df34bd699bc19a25fbb0feecf75a8a6d9b342bad07660edc2196abeba6e"},
-    {file = "aiormq-6.3.3.tar.gz", hash = "sha256:7cb02133fa9b2b7d7da63633061b22b660e06c4b2ba881b2cb500e89907a25b4"},
-]
+aiormq = []
 anyio = [
     {file = "anyio-3.6.1-py3-none-any.whl", hash = "sha256:cb29b9c70620506a9a8f87a309591713446953302d7d995344d0d7c6c0c9a7be"},
     {file = "anyio-3.6.1.tar.gz", hash = "sha256:413adf95f93886e442aea925f3ee43baa5a765a64a0f52c6081894f9992fdd0b"},
@@ -1005,10 +963,7 @@ asgiref = [
     {file = "asgiref-3.5.2-py3-none-any.whl", hash = "sha256:1d2880b792ae8757289136f1db2b7b99100ce959b2aa57fd69dab783d05afac4"},
     {file = "asgiref-3.5.2.tar.gz", hash = "sha256:4a29362a6acebe09bf1d6640db38c1dc3d9217c68e6f9f6204d72667fc19a424"},
 ]
-atomicwrites = [
-    {file = "atomicwrites-1.4.0-py2.py3-none-any.whl", hash = "sha256:6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197"},
-    {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
-]
+atomicwrites = []
 attrs = [
     {file = "attrs-21.4.0-py2.py3-none-any.whl", hash = "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4"},
     {file = "attrs-21.4.0.tar.gz", hash = "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"},
@@ -1017,6 +972,7 @@ authlib = [
     {file = "Authlib-1.0.1-py2.py3-none-any.whl", hash = "sha256:1286e2d5ef5bfe5a11cc2d0a0d1031f0393f6ce4d61f5121cfe87fa0054e98bd"},
     {file = "Authlib-1.0.1.tar.gz", hash = "sha256:6e74a4846ac36dfc882b3cc2fbd3d9eb410a627f2f2dc11771276655345223b1"},
 ]
+backoff = []
 black = [
     {file = "black-22.6.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f586c26118bc6e714ec58c09df0157fe2d9ee195c764f630eb0d8e7ccce72e69"},
     {file = "black-22.6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b270a168d69edb8b7ed32c193ef10fd27844e5c60852039599f9184460ce0807"},
@@ -1116,10 +1072,7 @@ cfgv = [
     {file = "cfgv-3.3.1-py2.py3-none-any.whl", hash = "sha256:c6a0883f3917a037485059700b9e75da2464e6c27051014ad85ba6aaa5884426"},
     {file = "cfgv-3.3.1.tar.gz", hash = "sha256:f5a830efb9ce7a445376bb66ec94c638a9787422f96264c98edc6bdeed8ab736"},
 ]
-classify-imports = [
-    {file = "classify_imports-4.0.2-py2.py3-none-any.whl", hash = "sha256:09bbc28481a9f464aca30b054f74243c035324aa93cdf72f56e5fe78412fe52e"},
-    {file = "classify_imports-4.0.2.tar.gz", hash = "sha256:a1880ba36cca1a3e6efc338698685c3c93019c92ecb7cc246636abb42c621e7f"},
-]
+classify-imports = []
 click = [
     {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
     {file = "click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
@@ -1151,14 +1104,7 @@ cryptography = [
     {file = "cryptography-36.0.2-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:e167b6b710c7f7bc54e67ef593f8731e1f45aa35f8a8a7b72d6e42ec76afd4b3"},
     {file = "cryptography-36.0.2.tar.gz", hash = "sha256:70f8f4f7bb2ac9f340655cbac89d68c527af5bb4387522a8413e841e3e6628c9"},
 ]
-distlib = [
-    {file = "distlib-0.3.4-py2.py3-none-any.whl", hash = "sha256:6564fe0a8f51e734df6333d08b8b94d4ea8ee6b99b5ed50613f731fd4089f34b"},
-    {file = "distlib-0.3.4.zip", hash = "sha256:e4b58818180336dc9c529bfb9a0b58728ffc09ad92027a3f30b7cd91e3458579"},
-]
-exceptiongroup = [
-    {file = "exceptiongroup-1.0.0rc8-py3-none-any.whl", hash = "sha256:ab0a968e1ef769e55d9a596f4a89f7be9ffedbc9fdefdb77cc68cf5c33ce1035"},
-    {file = "exceptiongroup-1.0.0rc8.tar.gz", hash = "sha256:6990c24f06b8d33c8065cfe43e5e8a4bfa384e0358be036af9cc60b6321bd11a"},
-]
+distlib = []
 fastapi = [
     {file = "fastapi-0.78.0-py3-none-any.whl", hash = "sha256:15fcabd5c78c266fa7ae7d8de9b384bfc2375ee0503463a6febbe3bab69d6f65"},
     {file = "fastapi-0.78.0.tar.gz", hash = "sha256:3233d4a789ba018578658e2af1a4bb5e38bdd122ff722b313666a9b2c6786a83"},
@@ -1175,10 +1121,7 @@ freezegun = [
     {file = "freezegun-1.2.1-py3-none-any.whl", hash = "sha256:15103a67dfa868ad809a8f508146e396be2995172d25f927e48ce51c0bf5cb09"},
     {file = "freezegun-1.2.1.tar.gz", hash = "sha256:b4c64efb275e6bc68dc6e771b17ffe0ff0f90b81a2a5189043550b6519926ba4"},
 ]
-gql = [
-    {file = "gql-3.3.0-py2.py3-none-any.whl", hash = "sha256:77fbc0a47c2df4edb8a98afa8c9c23aead5e0b4ab26d424e2dcfeb3fa2a2319d"},
-    {file = "gql-3.3.0.tar.gz", hash = "sha256:efa405aebe0e7b2fe342b43cfc70fd57e2e385fcae04f79c509366ad48a64381"},
-]
+gql = []
 graphql-core = [
     {file = "graphql-core-3.2.1.tar.gz", hash = "sha256:9d1bf141427b7d54be944587c8349df791ce60ade2e3cccaf9c56368c133c201"},
     {file = "graphql_core-3.2.1-py3-none-any.whl", hash = "sha256:f83c658e4968998eed1923a2e3e3eddd347e005ac0315fbb7ca4d70ea9156323"},
@@ -1198,10 +1141,6 @@ httpx = [
 httpx-ntlm = [
     {file = "httpx_ntlm-1.0.0-py3-none-any.whl", hash = "sha256:8205dc92b4826dd2cd429c15fe7bf7f2adbbcd86e118b4f4ce38b486a1880632"},
     {file = "httpx_ntlm-1.0.0.tar.gz", hash = "sha256:a6ffcec6070ed095a4da7099a7e6ca94e757ecda95e95e716510f2e5d775dea4"},
-]
-hypothesis = [
-    {file = "hypothesis-6.49.1-py3-none-any.whl", hash = "sha256:a28a74e700960065f9fc972983c56f7c0821989c6c06a6fbcc42abe3a47e9986"},
-    {file = "hypothesis-6.49.1.tar.gz", hash = "sha256:0310d446fb87415e31798e8267288acc22f0be4a0530128a3a694190fcc43e5b"},
 ]
 identify = [
     {file = "identify-2.5.1-py2.py3-none-any.whl", hash = "sha256:0dca2ea3e4381c435ef9c33ba100a78a9b40c0bab11189c7cf121f75815efeaa"},
@@ -1321,9 +1260,7 @@ packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
 ]
-pamqp = [
-    {file = "pamqp-3.1.0.tar.gz", hash = "sha256:e4f0886d72c6166637a5513626148bf5a7e818073a558980e9aaed8b4ccf30da"},
-]
+pamqp = []
 pathspec = [
     {file = "pathspec-0.9.0-py2.py3-none-any.whl", hash = "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a"},
     {file = "pathspec-0.9.0.tar.gz", hash = "sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1"},
@@ -1336,10 +1273,7 @@ pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
-pre-commit = [
-    {file = "pre_commit-2.19.0-py2.py3-none-any.whl", hash = "sha256:10c62741aa5704faea2ad69cb550ca78082efe5697d6f04e5710c3c229afdd10"},
-    {file = "pre_commit-2.19.0.tar.gz", hash = "sha256:4233a1e38621c87d9dda9808c6606d7e7ba0e087cd56d3fe03202a01d2919615"},
-]
+pre-commit = []
 prometheus-client = [
     {file = "prometheus_client-0.13.1-py3-none-any.whl", hash = "sha256:357a447fd2359b0a1d2e9b311a0c5778c330cfbe186d880ad5a6b39884652316"},
     {file = "prometheus_client-0.13.1.tar.gz", hash = "sha256:ada41b891b79fca5638bd5cfe149efa86512eaa55987893becd2c6d8d0a5dfc5"},
@@ -1490,10 +1424,7 @@ ramqp = [
     {file = "ramqp-6.1.0-py3-none-any.whl", hash = "sha256:e47e5a234ceaa0910a2f7914cad5f7abdf51ce92ee9482c1029e6f50b76f3dde"},
     {file = "ramqp-6.1.0.tar.gz", hash = "sha256:1e0f3fe7372c4c680a77b36a4d3a9ac3b06d215115b50d7fb1a9c8893fb0a5e6"},
 ]
-reorder-python-imports = [
-    {file = "reorder_python_imports-3.3.0-py2.py3-none-any.whl", hash = "sha256:2bb9b6507e9e9d6f691a3eed1309c947327dd7ca0c231a6fd7d87248146d462d"},
-    {file = "reorder_python_imports-3.3.0.tar.gz", hash = "sha256:01fc01665fc51e236f7ef26b080a2134259937dca5ea3aaadac022cb87444f0e"},
-]
+reorder-python-imports = []
 respx = [
     {file = "respx-0.19.2-py2.py3-none-any.whl", hash = "sha256:417f986fec599b9cc6531e93e494b7a75d1cb7bccff9dde5b53edc51f7954494"},
     {file = "respx-0.19.2.tar.gz", hash = "sha256:f3d210bb4de0ccc4c5afabeb87c3c1b03b3765a9c1a73eb042a07bb18ac33705"},
@@ -1509,10 +1440,6 @@ six = [
 sniffio = [
     {file = "sniffio-1.2.0-py3-none-any.whl", hash = "sha256:471b71698eac1c2112a40ce2752bb2f4a4814c22a54a3eed3676bc0f5ca9f663"},
     {file = "sniffio-1.2.0.tar.gz", hash = "sha256:c4666eecec1d3f50960c6bdf61ab7bc350648da6c126e3cf6898d8cd4ddcd3de"},
-]
-sortedcontainers = [
-    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
-    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
 ]
 starlette = [
     {file = "starlette-0.19.1-py3-none-any.whl", hash = "sha256:5a60c5c2d051f3a8eb546136aa0c9399773a689595e099e0877704d5888279bf"},

@@ -5,11 +5,14 @@ from __future__ import annotations
 import asyncio
 from contextlib import AbstractAsyncContextManager
 from contextlib import AsyncExitStack
+from datetime import datetime
+from datetime import timedelta
 from types import TracebackType
 from typing import Collection
 from typing import Iterable
 from typing import NewType
 from typing import Type
+from typing import TypeVar
 from uuid import UUID
 
 import structlog
@@ -19,14 +22,19 @@ from more_itertools import one
 from raclients.graph.client import GraphQLClient
 from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
+from ramodels.mo.details import Address
+from ramodels.mo.details import Engagement
+from ramodels.mo.details import ITUser
 from ramqp.mo import MOAMQPSystem
 
 from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.config import MoSettings
+from os2mint_omada.util import midnight
 
 logger = structlog.get_logger(__name__)
 
 ITSystems = NewType("ITSystems", dict[str, UUID])
+MOBaseWithValidity = TypeVar("MOBaseWithValidity", Address, Engagement, ITUser)
 
 
 class MOService(AbstractAsyncContextManager):
@@ -433,11 +441,15 @@ class MOService(AbstractAsyncContextManager):
         Returns: UUID of the org unit if it exists, otherwise raises KeyError.
         """
         logger.info("Getting org unit with uuid", uuid=uuid)
+        # TODO: (#51523) The GraphQL API always returns an org unit (albeit with empty
+        #  `objects`) when querying uuids.
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
               org_units(uuids: $uuids) {
-                uuid
+                objects {
+                  uuid
+                }
               }
             }
             """
@@ -451,6 +463,33 @@ class MOService(AbstractAsyncContextManager):
         )
         try:
             org_unit = one(result["org_units"])
+            obj = one(org_unit["objects"])
         except ValueError as e:
             raise KeyError from e
-        return UUID(org_unit["uuid"])
+        return UUID(obj["uuid"])
+
+    async def terminate(
+        self, model: MOBaseWithValidity, from_date: datetime | None = None
+    ) -> None:
+        """Terminate a MO object.
+
+        Args:
+            model: Object to terminate.
+            from_date: Termination date. If not given, today will be used.
+
+        Notes:
+            TODO: Yesterday is currently used pending fix of OS2mo bug #51539.
+
+        Returns: None.
+        """
+        if from_date is None:
+            from_date = midnight() - timedelta(days=1)  # TODO #51539
+        logger.info("Terminating object", object=model, from_date=from_date)
+        await self.model.post(
+            "/service/details/terminate",
+            json=dict(
+                type=model.type_,
+                uuid=model.uuid,
+                validity={"to": from_date},
+            ),
+        )

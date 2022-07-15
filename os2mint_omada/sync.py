@@ -32,7 +32,6 @@ from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.backing.omada.service import OmadaService
 from os2mint_omada.config import MoSettings
-from os2mint_omada.util import as_terminated
 from os2mint_omada.util import at_midnight
 
 logger = structlog.get_logger(__name__)
@@ -244,10 +243,13 @@ class Syncer:
         omada_users_raw = await self.omada_service.api.get_users_by_cpr_numbers(
             cpr_numbers=[omada_user.cpr_number]
         )
-        omada_users = parse_obj_as(list[ManualOmadaUser], omada_users_raw)
+        omada_users = parse_obj_as(list[OmadaUser | ManualOmadaUser], omada_users_raw)
+        manual_omada_users = [u for u in omada_users if isinstance(u, ManualOmadaUser)]
 
-        # Synchronise to MO
+        # Synchronise employee to MO
         employee = await self.ensure_employee(omada_user=omada_user, employee=employee)
+
+        # Synchronise engagements to MO
         employee_data = await self.mo_service.get_employee_data(
             uuid=employee.uuid,  # uuid from the (possibly) newly-created employee
             address_types=address_types.values(),
@@ -255,7 +257,7 @@ class Syncer:
         )
         assert employee_data is not None
         await self.ensure_engagements(
-            omada_users=omada_users,
+            omada_users=manual_omada_users,
             employee_data=employee_data,
             job_functions=job_functions,
             job_function_default=self.settings.manual_job_function_default,
@@ -367,13 +369,8 @@ class Syncer:
         excess_engagements = actual.keys() - expected
         if excess_engagements:
             excess_mo_engagements = [actual[e] for e in excess_engagements]
-            logger.info(
-                "Terminating excess engagements", engagements=excess_mo_engagements
-            )
-            terminated_mo_engagements = (
-                as_terminated(e) for e in excess_mo_engagements
-            )
-            await self.mo_service.model.upload(terminated_mo_engagements)
+            terminate = (self.mo_service.terminate(e) for e in excess_mo_engagements)
+            await asyncio.gather(*terminate)
 
         # Create missing
         missing_engagements = expected - actual.keys()
@@ -478,9 +475,8 @@ class Syncer:
         excess_addresses = actual.keys() - expected
         if excess_addresses:
             excess_mo_addresses = [actual[a] for a in excess_addresses]  # with UUID
-            logger.info("Terminating excess addresses", addresses=excess_mo_addresses)
-            terminated_mo_addresses = (as_terminated(a) for a in excess_mo_addresses)
-            await self.mo_service.model.upload(terminated_mo_addresses)
+            terminate = (self.mo_service.terminate(a) for a in excess_mo_addresses)
+            await asyncio.gather(*terminate)
 
         # Create missing
         missing_addresses = expected - actual.keys()
@@ -533,9 +529,8 @@ class Syncer:
         excess_it_users = actual.keys() - expected
         if excess_it_users:
             excess_mo_users = [actual[u] for u in excess_it_users]  # with UUID
-            logger.info("Terminating excess IT users", users=excess_mo_users)
-            terminated_mo_it_users = (as_terminated(u) for u in excess_mo_users)
-            await self.mo_service.model.upload(terminated_mo_it_users)
+            terminate = (self.mo_service.terminate(u) for u in excess_mo_users)
+            await asyncio.gather(*terminate)
 
         # Create missing
         missing_it_users = expected - actual.keys()
