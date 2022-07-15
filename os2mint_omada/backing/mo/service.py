@@ -16,6 +16,7 @@ from typing import TypeVar
 from uuid import UUID
 
 import structlog
+from fastapi.encoders import jsonable_encoder
 from gql import gql
 from gql.client import AsyncClientSession
 from more_itertools import one
@@ -487,9 +488,11 @@ class MOService(AbstractAsyncContextManager):
         logger.info("Terminating object", object=model, from_date=from_date)
         await self.model.post(
             "/service/details/terminate",
-            json=dict(
-                type=model.type_,
-                uuid=str(model.uuid),  # UUID is not JSON serializable
-                validity={"to": from_date},
+            json=jsonable_encoder(
+                dict(
+                    type=model.type_,
+                    uuid=model.uuid,
+                    validity={"to": from_date},
+                )
             ),
         )
