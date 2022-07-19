@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.1.3 - 2022-07-19
+------------------
+
+[#49604] Bump ramodels for more relaxed Employee CPR checking
+
 1.1.2 - 2022-07-18
 ------------------
 
