@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.2.1 - 2022-07-21
+------------------
+
+[#49604] Prefer parsing to ManualOmadaUser if possible
+
 1.2.0 - 2022-07-21
 ------------------
 
