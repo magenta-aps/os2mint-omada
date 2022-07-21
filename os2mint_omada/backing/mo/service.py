@@ -28,7 +28,6 @@ from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
 from ramqp.mo import MOAMQPSystem
 
-from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.config import MoSettings
 from os2mint_omada.util import midnight
 
@@ -284,34 +283,82 @@ class MOService(AbstractAsyncContextManager):
         obj = one(employee_dict["objects"])
         return Employee.parse_obj(obj)
 
-    async def get_employee_data(
-        self,
-        uuid: UUID,
-        address_types: Iterable[UUID],
-        it_systems: Collection[UUID],
-    ) -> EmployeeData | None:
-        """Retrieve data related to an employee.
-
-        The fields on each retrieved object corresponds to the fields necessary to
-        upload it back to the MO service API (with changes) through the model client.
+    async def get_employee_addresses(
+        self, uuid: UUID, address_types: Iterable[UUID]
+    ) -> list[Address]:
+        """Retrieve addresses related to an employee.
 
         Args:
             uuid: Employee UUID.
             address_types: Only retrieve the given address types, to avoid terminating
              addresses irrelevant to Omada.
-            it_systems: Only retrieve IT users for the given IT systems, to avoid
-             terminating IT users irrelevant to Omada.
 
-        Returns: EmployeeData object, containing the parsed GraphQL result if the
-         employee exists, otherwise None.
+        Returns: List of related addresses.
         """
-        logger.info("Getting MO employee data", uuid=uuid)
+        logger.info("Getting MO addresses", employee_uuid=uuid)
         query = gql(
             """
-            query EmployeeDataQuery($uuids: [UUID!], $address_types: [UUID!]) {
-              employees(uuids: $uuids) {
+            query AddressesQuery($employee_uuids: [UUID!], $address_types: [UUID!]) {
+              employees(uuids: $employee_uuids) {
                 objects {
-                  uuid
+                  addresses(address_types: $address_types) {
+                    uuid
+                    value
+                    address_type {
+                      uuid
+                    }
+                    person: employee {
+                      uuid
+                    }
+                    visibility {
+                      uuid
+                    }
+                    validity {
+                      from
+                      to
+                    }
+                  }
+                }
+              }
+            }
+            """
+        )
+        result = await self.graphql.execute(
+            query,
+            variable_values={
+                # UUIDs are not JSON serializable, so they are converted to strings
+                "employee_uuids": [str(uuid)],
+                "address_types": [str(t) for t in address_types],
+            },
+        )
+        try:
+            employee = one(result["employees"])
+        except ValueError:
+            return []
+        obj = one(employee["objects"])
+        addresses = obj["addresses"]
+
+        def convert(address: dict) -> Address:
+            """Convert GraphQL address to be RA-Models compatible."""
+            address["person"] = one(address["person"])
+            return Address.parse_obj(address)
+
+        return [convert(address) for address in addresses]
+
+    async def get_employee_engagements(self, uuid: UUID) -> list[Engagement]:
+        """Retrieve engagements related to an employee.
+
+        Args:
+            uuid: Employee UUID.
+
+        Returns: List of related IT users.
+        """
+        logger.info("Getting MO engagements", employee_uuid=uuid)
+        query = gql(
+            """
+            query EngagementsQuery($employee_uuids: [UUID!]) {
+              employees(uuids: $employee_uuids) {
+                objects {
                   engagements {
                     uuid
                     user_key
@@ -333,23 +380,51 @@ class MOService(AbstractAsyncContextManager):
                       to
                     }
                   }
-                  addresses(address_types: $address_types) {
-                    uuid
-                    value
-                    address_type {
-                      uuid
-                    }
-                    person: employee {
-                      uuid
-                    }
-                    visibility {
-                      uuid
-                    }
-                    validity {
-                      from
-                      to
-                    }
-                  }
+                }
+              }
+            }
+            """
+        )
+        result = await self.graphql.execute(
+            query,
+            variable_values={
+                # UUIDs are not JSON serializable, so they are converted to strings
+                "employee_uuids": [str(uuid)],
+            },
+        )
+        try:
+            employee = one(result["employees"])
+        except ValueError:
+            return []
+        obj = one(employee["objects"])
+        engagements = obj["engagements"]
+
+        def convert(engagement: dict) -> Engagement:
+            """Convert GraphQL engagement to be RA-Models compatible."""
+            engagement["person"] = one(engagement["person"])
+            engagement["org_unit"] = {"uuid": engagement.pop("org_unit_uuid")}
+            return Engagement.parse_obj(engagement)
+
+        return [convert(engagement) for engagement in engagements]
+
+    async def get_employee_it_users(
+        self, uuid: UUID, it_systems: Collection[UUID]
+    ) -> list[ITUser]:
+        """Retrieve IT users related to an employee.
+
+        Args:
+            uuid: Employee UUID.
+            it_systems: Only retrieve IT users for the given IT systems, to avoid
+             terminating IT users irrelevant to Omada.
+
+        Returns: List of related IT users.
+        """
+        logger.info("Getting MO IT users", employee_uuid=uuid)
+        query = gql(
+            """
+            query ITUsersQuery($employee_uuids: [UUID!]) {
+              employees(uuids: $employee_uuids) {
+                objects {
                   itusers {
                     uuid
                     user_key
@@ -371,22 +446,45 @@ class MOService(AbstractAsyncContextManager):
             query,
             variable_values={
                 # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-                "address_types": [str(u) for u in address_types],
+                "employee_uuids": [str(uuid)],
             },
         )
         try:
-            employee_dict = one(result["employees"])
+            employee = one(result["employees"])
         except ValueError:
-            return None
-        obj = one(employee_dict["objects"])
-        employee_data = EmployeeData.parse_obj(obj)
-        # Filter IT users. Ideally this would be done directly in GraphQL, but it is
-        # not currently supported.
-        for it_user in employee_data.itusers.copy():
-            if it_user.itsystem.uuid not in it_systems:
-                employee_data.itusers.remove(it_user)
-        return employee_data
+            return []
+        obj = one(employee["objects"])
+        it_users = obj["itusers"]
+
+        def convert(it_user: dict) -> ITUser:
+            """Convert GraphQL IT user to be RA-Models compatible."""
+            it_user["person"] = one(it_user["person"])
+            it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
+            return ITUser.parse_obj(it_user)
+
+        it_users_converted = [convert(it_user) for it_user in it_users]
+        # Ideally IT users would be filtered directly in GraphQL, but it is not
+        # currently supported.
+        return [u for u in it_users_converted if u.itsystem.uuid in it_systems]
+
+    async def get_employees(self) -> list[UUID]:
+        """Retrieve a list of all employee UUIDs in MO.
+
+        Returns: List of MO employee UUIDs.
+        """
+        logger.info("Getting all MO employees")
+        query = gql(
+            """
+            query EmployeesQuery {
+              employees {
+                uuid
+              }
+            }
+            """
+        )
+        result = await self.graphql.execute(query)
+        employees = result["employees"]
+        return [UUID(e["uuid"]) for e in employees]
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         """Find organisational unit with the given IT system user user_key.
@@ -442,15 +540,11 @@ class MOService(AbstractAsyncContextManager):
         Returns: UUID of the org unit if it exists, otherwise raises KeyError.
         """
         logger.info("Getting org unit with uuid", uuid=uuid)
-        # TODO: (#51523) The GraphQL API always returns an org unit (albeit with empty
-        #  `objects`) when querying uuids.
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
               org_units(uuids: $uuids) {
-                objects {
-                  uuid
-                }
+                uuid
               }
             }
             """
@@ -464,10 +558,9 @@ class MOService(AbstractAsyncContextManager):
         )
         try:
             org_unit = one(result["org_units"])
-            obj = one(org_unit["objects"])
         except ValueError as e:
             raise KeyError from e
-        return UUID(obj["uuid"])
+        return UUID(org_unit["uuid"])
 
     async def terminate(
         self, model: MOBaseWithValidity, from_date: datetime | None = None

@@ -54,14 +54,14 @@ Lint Python:
 # ---------------------------------------------------------------------------
 # Test
 # ---------------------------------------------------------------------------
-.test-template: &test
-  extends: .test-python
-  stage: test
-  needs: []
-
-Test on Python 3.10:
-  <<: *test
-  image: python:3.10
+#.test-template: &test
+#  extends: .test-python
+#  stage: test
+#  needs: []
+#
+#Test on Python 3.10:
+#  <<: *test
+#  image: python:3.10
 
 
 # ---------------------------------------------------------------------------

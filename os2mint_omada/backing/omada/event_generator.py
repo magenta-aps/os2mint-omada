@@ -17,7 +17,8 @@ from ramqp import AMQPSystem
 from os2mint_omada.backing.omada.api import OmadaAPI
 from os2mint_omada.backing.omada.models import RawOmadaUser
 from os2mint_omada.backing.omada.routing_keys import Event
-from os2mint_omada.backing.omada.routing_keys import RawRoutingKey
+from os2mint_omada.backing.omada.routing_keys import PayloadType
+from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.config import OmadaSettings
 
 logger = structlog.get_logger(__name__)
@@ -98,34 +99,38 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 continue
             # Otherwise, determine change type
             if old is None:
-                routing_key = RawRoutingKey(event=Event.CREATE)
+                event = Event.CREATE
                 payload = new
             elif new is None:
-                routing_key = RawRoutingKey(event=Event.DELETE)
+                event = Event.DELETE
                 payload = old
             else:
-                routing_key = RawRoutingKey(event=Event.UPDATE)
+                event = Event.UPDATE
                 payload = new
             # Publish to AMQP
             logger.info(
                 "Detected Omada event",
-                change=str(routing_key),
+                change=event,
                 user_key=key,
                 user_identifier=self.user_identifier,
             )
-            await self.amqp_system.publish_message(routing_key, payload=payload)
+            await self.amqp_system.publish_message(
+                routing_key=RoutingKey(type=PayloadType.RAW, event=event),
+                payload=payload,
+            )
 
         self._save_users(new_users_list)
 
     def _save_users(self, users: list[RawOmadaUser]) -> None:
         """Save known Omada users (dicts) to disk."""
+        logger.debug("Saving known Omada users", num_users=len(users))
         with self.settings.persistence_file.open("w") as file:
             json.dump(users, file)
 
     def _load_users(self) -> list[RawOmadaUser]:
         """Load known Omada users (dicts) from disk."""
         try:
-            with self.settings.persistence_file.open("r") as file:
+            with self.settings.persistence_file.open() as file:
                 users = json.load(file)
         except FileNotFoundError:
             users = []
