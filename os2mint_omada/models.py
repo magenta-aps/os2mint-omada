@@ -5,7 +5,6 @@ from typing import TypedDict
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.service import OmadaService
 from os2mint_omada.config import Settings
-from os2mint_omada.sync import Syncer
 
 
 class Context(TypedDict, total=False):
@@ -15,4 +14,3 @@ class Context(TypedDict, total=False):
 
     mo_service: MOService
     omada_service: OmadaService
-    syncer: Syncer

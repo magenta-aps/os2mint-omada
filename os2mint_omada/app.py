@@ -19,7 +19,6 @@ from os2mint_omada.config import Settings
 from os2mint_omada.events import mo_router
 from os2mint_omada.events import omada_router
 from os2mint_omada.models import Context
-from os2mint_omada.sync import Syncer
 
 
 def create_app(*args: Any, **kwargs: Any) -> FastAPI:
@@ -81,11 +80,6 @@ async def lifespan(
         )
         omada_service = context["omada_service"] = OmadaService(
             settings=settings.omada, amqp_system=omada_amqp_system
-        )
-        context["syncer"] = Syncer(
-            settings=settings.mo,
-            mo_service=mo_service,
-            omada_service=omada_service,
         )
 
         # Start services last to ensure the context is set up before handling events

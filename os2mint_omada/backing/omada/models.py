@@ -6,6 +6,7 @@ from typing import NewType
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Extra
 from pydantic import Field
 from pydantic import validator
 
@@ -52,13 +53,16 @@ class OmadaUser(BaseModel):
     class Config:
         # Allow fields to be populated by both alias and model attribute name
         allow_population_by_field_name = True
+        # Allow extra attributes so potential "manual" fields are preserved, allowing
+        # the object to be converted to a ManualOmadaUser later.
+        extra = Extra.allow
 
 
 class ManualOmadaUser(OmadaUser):
     """Omada API user with additional fields for 'manual' users.
 
-    Manual users not only have addresses and IT users synchronised, but the employee
-    object itself, as well as associated engagements, are _created_ in MO.
+    Manual users not only have addresses and IT users synchronised, but also the
+    employee object itself, as well as associated engagements.
     """
 
     first_name: str = Field(alias="C_FORNAVNE")
