@@ -96,7 +96,7 @@ class EngagementSyncer(Syncer):
         raw_omada_users = await self.omada_service.api.get_users_by_cpr_numbers(
             cpr_numbers=[mo_employee.cpr_no]
         )
-        omada_users = parse_obj_as(list[OmadaUser | ManualOmadaUser], raw_omada_users)
+        omada_users = parse_obj_as(list[ManualOmadaUser | OmadaUser], raw_omada_users)
         manual_omada_users = [u for u in omada_users if isinstance(u, ManualOmadaUser)]
 
         # Get MO classes configuration
