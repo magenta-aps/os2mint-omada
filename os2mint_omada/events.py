@@ -96,6 +96,7 @@ async def parse_raw_delete(**kwargs: Any) -> None:
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_employee(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -123,6 +124,7 @@ async def sync_omada_employee(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_engagements(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -159,6 +161,7 @@ async def sync_omada_engagements(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_addresses(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -191,6 +194,7 @@ async def sync_omada_addresses(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_it_users(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:

@@ -24,8 +24,8 @@ facets:
       title: "N/A"
       scope: "TEXT"
   engagement_type:
-    manually_created:
-      title: "Manuelt oprettet"
+    omada_manually_created:
+      title: "(Omada) Manuelt oprettet"
       scope: "TEXT"
   primary_type:
     primary:

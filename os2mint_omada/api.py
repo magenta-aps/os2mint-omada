@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import asyncio
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter
@@ -8,8 +9,12 @@ from fastapi import Response
 from starlette import status
 from starlette.requests import Request
 
+from os2mint_omada.backing.mo.service import MOService
+from os2mint_omada.backing.omada.service import OmadaService
+from os2mint_omada.config import MoSettings
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
+from os2mint_omada.sync.engagement import EngagementSyncer
 from os2mint_omada.sync.it_user import ITUserSyncer
 
 router = APIRouter()
@@ -37,20 +42,54 @@ async def readiness_probe(response: Response, request: Request) -> None:
 
 @router.post("/sync/mo", status_code=status.HTTP_204_NO_CONTENT)
 async def sync_mo(request: Request) -> None:
-    """Force-synchronise all MO employees."""
+    """Force-synchronise all MO employees with Omada."""
     logger.info("Synchronising all MO employees")
     context: Context = request.app.state.context
     employees = await context["mo_service"].get_employees()
-    for employee_uuid in employees:
-        # Engagements are not synchronised to avoid deleting all of them for non-Omada
-        # users.
-        await AddressSyncer(
-            settings=context["settings"].mo,
-            mo_service=context["mo_service"],
-            omada_service=context["omada_service"],
-        ).sync(employee_uuid)
-        await ITUserSyncer(
-            settings=context["settings"].mo,
-            mo_service=context["mo_service"],
-            omada_service=context["omada_service"],
-        ).sync(employee_uuid)
+    for i, employee_uuid in enumerate(employees):
+        logger.debug("Synchronising MO user", current=i, total=len(employees))
+        try:
+            await sync_employee(
+                employee_uuid=employee_uuid,
+                mo_settings=context["settings"].mo,
+                mo_service=context["mo_service"],
+                omada_service=context["omada_service"],
+            )
+        except Exception:
+            logger.exception(
+                "Failed to synchronise MO user", employee_uuid=employee_uuid
+            )
+
+
+async def sync_employee(
+    employee_uuid: UUID,
+    mo_settings: MoSettings,
+    mo_service: MOService,
+    omada_service: OmadaService,
+) -> None:
+    """Synchronise a MO employee with Omada.
+
+    Args:
+        employee_uuid: MO employee UUID.
+        mo_settings: MO-specific settings.
+        mo_service: MO service.
+        omada_service: Omada service.
+
+    Returns: None.
+    """
+    logger.info("Synchronising MO employee", employee_uuid=employee_uuid)
+    await EngagementSyncer(
+        settings=mo_settings,
+        mo_service=mo_service,
+        omada_service=omada_service,
+    ).sync(employee_uuid)
+    await AddressSyncer(
+        settings=mo_settings,
+        mo_service=mo_service,
+        omada_service=omada_service,
+    ).sync(employee_uuid)
+    await ITUserSyncer(
+        settings=mo_settings,
+        mo_service=mo_service,
+        omada_service=omada_service,
+    ).sync(employee_uuid)

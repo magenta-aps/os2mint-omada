@@ -102,18 +102,28 @@ class EngagementSyncer(Syncer):
         # Get MO classes configuration
         job_functions = await self.mo_service.get_classes("engagement_job_function")
         engagement_types = await self.mo_service.get_classes("engagement_type")
-        engagement_type_uuid = engagement_types[self.settings.manual_engagement_type]
+        manual_engagement_type_uuid = engagement_types[
+            self.settings.manual_engagement_type
+        ]
         primary_types = await self.mo_service.get_classes("primary_type")
         primary_type_uuid = primary_types[self.settings.manual_primary_class]
+
+        # Only process engagements we know Omada is authoritative for (created by us)
+        # to avoid deleting those that have nothing to do with Omada.
+        omada_engagements = [
+            e
+            for e in mo_engagements
+            if e.engagement_type.uuid == manual_engagement_type_uuid
+        ]
 
         # Synchronise engagements to MO
         await self.ensure_engagements(
             omada_users=manual_omada_users,
             employee_uuid=employee_uuid,
-            engagements=mo_engagements,
+            engagements=omada_engagements,
             job_functions=job_functions,
             job_function_default=self.settings.manual_job_function_default,
-            engagement_type_uuid=engagement_type_uuid,
+            engagement_type_uuid=manual_engagement_type_uuid,
             primary_type_uuid=primary_type_uuid,
         )
 
