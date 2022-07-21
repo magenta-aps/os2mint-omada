@@ -293,7 +293,7 @@ class MOService(AbstractAsyncContextManager):
             address_types: Only retrieve the given address types, to avoid terminating
              addresses irrelevant to Omada.
 
-        Returns: List of related addresses.
+        Returns: List of addresses related to the employee.
         """
         logger.info("Getting MO addresses", employee_uuid=uuid)
         query = gql(
@@ -351,7 +351,7 @@ class MOService(AbstractAsyncContextManager):
         Args:
             uuid: Employee UUID.
 
-        Returns: List of related IT users.
+        Returns: List of engagements related to the employee.
         """
         logger.info("Getting MO engagements", employee_uuid=uuid)
         query = gql(
@@ -417,7 +417,7 @@ class MOService(AbstractAsyncContextManager):
             it_systems: Only retrieve IT users for the given IT systems, to avoid
              terminating IT users irrelevant to Omada.
 
-        Returns: List of related IT users.
+        Returns: List of IT users related to the employee.
         """
         logger.info("Getting MO IT users", employee_uuid=uuid)
         query = gql(
@@ -462,10 +462,10 @@ class MOService(AbstractAsyncContextManager):
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
             return ITUser.parse_obj(it_user)
 
-        it_users_converted = [convert(it_user) for it_user in it_users]
+        converted_it_users = [convert(it_user) for it_user in it_users]
         # Ideally IT users would be filtered directly in GraphQL, but it is not
         # currently supported.
-        return [u for u in it_users_converted if u.itsystem.uuid in it_systems]
+        return [u for u in converted_it_users if u.itsystem.uuid in it_systems]
 
     async def get_employees(self) -> list[UUID]:
         """Retrieve a list of all employee UUIDs in MO.

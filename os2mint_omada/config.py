@@ -45,8 +45,9 @@ class MoSettings(BaseModel):
     # Fallback job function for engagements created for manual users if the job title
     # from Omada does not exist in MO.
     manual_job_function_default: str = "not_applicable"
-    # Engagement type for engagements created for manual users
-    manual_engagement_type: str = "manually_created"
+    # Engagement type for engagements created for manual users. Only engagements of
+    # this type are touched by the integration.
+    manual_engagement_type: str = "omada_manually_created"
     # Primary class for engagements created for manual users
     manual_primary_class: str = "primary"
 
