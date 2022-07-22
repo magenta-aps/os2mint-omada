@@ -482,7 +482,13 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(query)
+        result = await self.graphql.execute(
+            query,
+            # Ridiculous timeout until MO supports pagination/streaming
+            extra_args=dict(
+                timeout=300,
+            ),
+        )
         employees = result["employees"]
         return [UUID(e["uuid"]) for e in employees]
 
