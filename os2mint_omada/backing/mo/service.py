@@ -62,7 +62,14 @@ class MOService(AbstractAsyncContextManager):
         )
 
         # GraphQL Client
-        graphql = GraphQLClient(url=f"{settings.url}/graphql", **client_kwargs)
+        graphql = GraphQLClient(
+            url=f"{settings.url}/graphql",
+            **client_kwargs,
+            # Ridiculous timeout to support fetching all employee uuids until MO
+            # supports pagination/streaming of GraphQL responses.
+            httpx_client_kwargs=dict(timeout=300),
+            execute_timeout=300,
+        )
         self.graphql: AsyncClientSession = await self.stack.enter_async_context(graphql)
 
         # Model Client
@@ -482,13 +489,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
-            query,
-            # Ridiculous timeout until MO supports pagination/streaming
-            extra_args=dict(
-                timeout=300,
-            ),
-        )
+        result = await self.graphql.execute(query)
         employees = result["employees"]
         return [UUID(e["uuid"]) for e in employees]
 
