@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.3.1 - 2022-07-22
+------------------
+
+[#49604] Ridiculous timeout until MO supports pagination/streaming
+
 1.3.0 - 2022-07-21
 ------------------
 
