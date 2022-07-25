@@ -23,6 +23,7 @@ from more_itertools import one
 from raclients.graph.client import GraphQLClient
 from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
+from ramodels.mo import Validity
 from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
@@ -568,6 +569,40 @@ class MOService(AbstractAsyncContextManager):
         except ValueError as e:
             raise KeyError from e
         return UUID(org_unit["uuid"])
+
+    async def get_org_unit_validity(self, uuid: UUID) -> Validity:
+        """Get organisational unit's validity.
+
+        Args:
+            uuid: UUID of the org unit.
+
+        Returns: The org unit's validity.
+        """
+        logger.info("Getting org unit validity", uuid=uuid)
+        query = gql(
+            """
+            query OrgUnitValidityQuery($uuids: [UUID!]) {
+              org_units(uuids: $uuids) {
+                objects {
+                  validity {
+                    from_date: from
+                    to_date: to
+                  }
+                }
+              }
+            }
+            """
+        )
+        result = await self.graphql.execute(
+            query,
+            variable_values={
+                # UUIDs are not JSON serializable, so they are converted to strings
+                "uuids": [str(uuid)],
+            },
+        )
+        org_unit = one(result["org_units"])
+        obj = one(org_unit["objects"])
+        return Validity(**obj["validity"])
 
     async def terminate(
         self, model: MOBaseWithValidity, from_date: datetime | None = None
