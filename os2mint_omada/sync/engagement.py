@@ -30,6 +30,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
         omada_user: ManualOmadaUser,
         person_uuid: UUID,
         org_unit_uuid: UUID,
+        org_unit_validity: Validity,
         job_functions: dict[str, UUID],
         job_function_default: str,
         engagement_type_uuid: UUID,
@@ -41,6 +42,9 @@ class ComparableEngagement(ComparableMixin, Engagement):
             omada_user: Manual omada user.
             person_uuid: Employee of the engagement.
             org_unit_uuid: Org unit of the engagement.
+            org_unit_validity: Validity of the org unit of the engagement. This is
+             needed because the Omada user's validity sometimes lies outside the
+             interval of the org unit, which is not accepted by MO.
             job_functions: Map of all engagement job functions in MO.
             job_function_default: Fallback job function used if the one defined on the
              Omada user does not exist in MO.
@@ -53,6 +57,9 @@ class ComparableEngagement(ComparableMixin, Engagement):
             job_function_uuid = job_functions[omada_user.job_title]
         except KeyError:
             job_function_uuid = job_functions[job_function_default]
+        valid_from = max(omada_user.valid_from, org_unit_validity.from_date)
+        to_dates = filter(None, (omada_user.valid_to, org_unit_validity.to_date))
+        valid_to = min(to_dates, default=None)
         return cls(
             user_key=omada_user.service_number,
             person=PersonRef(uuid=person_uuid),
@@ -61,8 +68,8 @@ class ComparableEngagement(ComparableMixin, Engagement):
             engagement_type=EngagementType(uuid=engagement_type_uuid),
             primary=Primary(uuid=primary_type_uuid),
             validity=Validity(
-                from_date=omada_user.valid_from,
-                to_date=omada_user.valid_to,
+                from_date=valid_from,
+                to_date=valid_to,
             ),
         )
 
@@ -180,11 +187,16 @@ class EngagementSyncer(Syncer):
                 org_unit_uuid = await self.mo_service.get_org_unit_with_uuid(
                     omada_user.org_unit
                 )
-
+            # The org unit's validity is needed to ensure the engagement's validity
+            # does not lie outside this interval.
+            org_unit_validity = await self.mo_service.get_org_unit_validity(
+                org_unit_uuid
+            )
             return ComparableEngagement.from_omada(
                 omada_user=omada_user,
                 person_uuid=employee_uuid,
                 org_unit_uuid=org_unit_uuid,
+                org_unit_validity=org_unit_validity,
                 job_functions=job_functions,
                 job_function_default=job_function_default,
                 engagement_type_uuid=engagement_type_uuid,
