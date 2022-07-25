@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.3.3 - 2022-07-25
+------------------
+
+[#49604] Clamp engagement validity range to org unit's
+
 1.3.2 - 2022-07-22
 ------------------
 
