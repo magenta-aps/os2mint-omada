@@ -20,6 +20,7 @@ from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.backing.omada.routing_keys import Event
 from os2mint_omada.backing.omada.routing_keys import PayloadType as OmadaPayloadType
 from os2mint_omada.backing.omada.routing_keys import RoutingKey
+from os2mint_omada.fail_db import FailDB
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
 from os2mint_omada.sync.employee import EmployeeSyncer
@@ -151,11 +152,21 @@ async def sync_omada_engagements(
         logger.info("No employee in MO: skipping engagements synchronisation")
         return
 
-    await EngagementSyncer(
-        settings=context["settings"].mo,
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    # TODO: Remove this try-catch crap
+    #  Should be handled by os2mo-amqp-trigger-failures and the FastRAMQPI library
+    try:
+        await EngagementSyncer(
+            settings=context["settings"].mo,
+            mo_service=context["mo_service"],
+            omada_service=context["omada_service"],
+        ).sync(employee_uuid)
+    except Exception as e:
+        logger.exception(
+            "Failed to synchronise omada engagement",
+            omada_user=omada_user,
+            employee_uuid=employee_uuid,
+        )
+        FailDB(settings=context["settings"]).add(omada_user=omada_user, exception=e)
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
