@@ -20,6 +20,7 @@ from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.backing.omada.routing_keys import Event
 from os2mint_omada.backing.omada.routing_keys import PayloadType as OmadaPayloadType
 from os2mint_omada.backing.omada.routing_keys import RoutingKey
+from os2mint_omada.fail_db import FailDB
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
 from os2mint_omada.sync.employee import EmployeeSyncer
@@ -70,21 +71,21 @@ async def parse_omada_user(
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.CREATE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def parse_raw_create(**kwargs: Any) -> None:
     """Handle create events for raw omada users from the event generator."""
     return await parse_omada_user(Event.CREATE, **kwargs)
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.UPDATE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def parse_raw_update(**kwargs: Any) -> None:
     """Handle update events for raw omada users from the event generator."""
     return await parse_omada_user(Event.UPDATE, **kwargs)
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.DELETE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def parse_raw_delete(**kwargs: Any) -> None:
     """Handle delete events for raw omada users from the event generator."""
     return await parse_omada_user(Event.DELETE, **kwargs)
@@ -96,7 +97,7 @@ async def parse_raw_delete(**kwargs: Any) -> None:
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_employee(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -124,7 +125,7 @@ async def sync_omada_employee(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_engagements(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -151,17 +152,27 @@ async def sync_omada_engagements(
         logger.info("No employee in MO: skipping engagements synchronisation")
         return
 
-    await EngagementSyncer(
-        settings=context["settings"].mo,
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    # TODO: Remove this try-catch crap
+    #  Should be handled by os2mo-amqp-trigger-failures and the FastRAMQPI library
+    try:
+        await EngagementSyncer(
+            settings=context["settings"].mo,
+            mo_service=context["mo_service"],
+            omada_service=context["omada_service"],
+        ).sync(employee_uuid)
+    except Exception as e:
+        logger.exception(
+            "Failed to synchronise omada engagement",
+            omada_user=omada_user,
+            employee_uuid=employee_uuid,
+        )
+        FailDB(settings=context["settings"]).add(omada_user=omada_user, exception=e)
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_addresses(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -194,7 +205,7 @@ async def sync_omada_addresses(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_omada_it_users(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -247,7 +258,7 @@ async def sync_omada_it_users(
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's engagements with Omada.
 
@@ -273,7 +284,7 @@ async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) ->
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's addresses with Omada.
 
@@ -299,7 +310,7 @@ async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> N
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=5)  # TODO
+@with_concurrency(parallel=1)  # TODO
 async def sync_mo_it_users(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's IT users with Omada.
 
