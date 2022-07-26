@@ -19,6 +19,7 @@ from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.sync.base import ComparableMixin
 from os2mint_omada.sync.base import Syncer
+from os2mint_omada.util import validity_intersection
 
 logger = structlog.get_logger(__name__)
 
@@ -57,9 +58,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
             job_function_uuid = job_functions[omada_user.job_title]
         except KeyError:
             job_function_uuid = job_functions[job_function_default]
-        valid_from = max(omada_user.valid_from, org_unit_validity.from_date)
-        to_dates = filter(None, (omada_user.valid_to, org_unit_validity.to_date))
-        valid_to = min(to_dates, default=None)
+
         return cls(
             user_key=omada_user.service_number,
             person=PersonRef(uuid=person_uuid),
@@ -67,10 +66,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
             job_function=JobFunction(uuid=job_function_uuid),
             engagement_type=EngagementType(uuid=engagement_type_uuid),
             primary=Primary(uuid=primary_type_uuid),
-            validity=Validity(
-                from_date=valid_from,
-                to_date=valid_to,
-            ),
+            validity=validity_intersection(omada_user.validity, org_unit_validity),
         )
 
 

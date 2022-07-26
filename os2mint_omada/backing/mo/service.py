@@ -31,6 +31,7 @@ from ramqp.mo import MOAMQPSystem
 
 from os2mint_omada.config import MoSettings
 from os2mint_omada.util import midnight
+from os2mint_omada.util import validity_union
 
 logger = structlog.get_logger(__name__)
 
@@ -582,7 +583,7 @@ class MOService(AbstractAsyncContextManager):
         query = gql(
             """
             query OrgUnitValidityQuery($uuids: [UUID!]) {
-              org_units(uuids: $uuids) {
+              org_units(uuids: $uuids, from_date: null, to_date: null) {
                 objects {
                   validity {
                     from_date: from
@@ -601,8 +602,10 @@ class MOService(AbstractAsyncContextManager):
             },
         )
         org_unit = one(result["org_units"])
-        obj = one(org_unit["objects"])
-        return Validity(**obj["validity"])
+        objs = org_unit["objects"]
+        # Consolidate validities from all past/present/future versions of the org unit
+        validities = (Validity(**obj["validity"]) for obj in objs)
+        return validity_union(*validities)
 
     async def terminate(
         self, model: MOBaseWithValidity, from_date: datetime | None = None

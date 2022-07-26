@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic import Extra
 from pydantic import Field
 from pydantic import validator
+from ramodels.mo import Validity
 
 RawOmadaUser = NewType("RawOmadaUser", dict[str, Any])
 
@@ -46,6 +47,7 @@ class OmadaUser(BaseModel):
 
     @validator("valid_to")
     def fix_pseudo_infinity(cls, value: datetime | None) -> datetime | None:
+        """Convert Omada's pseudo-infinity to actual infinity (None)."""
         if value is None or value.year == 9999:
             return None
         return value
@@ -56,6 +58,14 @@ class OmadaUser(BaseModel):
         # Allow extra attributes so potential "manual" fields are preserved, allowing
         # the object to be converted to a ManualOmadaUser later.
         extra = Extra.allow
+
+    @property
+    def validity(self) -> Validity:
+        """Return MO-compatible Validity object."""
+        return Validity(
+            from_date=self.valid_from,
+            to_date=self.valid_to,
+        )
 
 
 class ManualOmadaUser(OmadaUser):
