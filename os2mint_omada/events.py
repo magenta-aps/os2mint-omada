@@ -70,21 +70,21 @@ async def parse_omada_user(
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.CREATE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def parse_raw_create(**kwargs: Any) -> None:
     """Handle create events for raw omada users from the event generator."""
     return await parse_omada_user(Event.CREATE, **kwargs)
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.UPDATE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def parse_raw_update(**kwargs: Any) -> None:
     """Handle update events for raw omada users from the event generator."""
     return await parse_omada_user(Event.UPDATE, **kwargs)
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.DELETE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def parse_raw_delete(**kwargs: Any) -> None:
     """Handle delete events for raw omada users from the event generator."""
     return await parse_omada_user(Event.DELETE, **kwargs)
@@ -96,7 +96,7 @@ async def parse_raw_delete(**kwargs: Any) -> None:
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_omada_employee(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -124,7 +124,7 @@ async def sync_omada_employee(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_omada_engagements(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -161,7 +161,7 @@ async def sync_omada_engagements(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_omada_addresses(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -194,7 +194,7 @@ async def sync_omada_addresses(
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_omada_it_users(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -247,7 +247,7 @@ async def sync_omada_it_users(
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's engagements with Omada.
 
@@ -273,7 +273,7 @@ async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) ->
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's addresses with Omada.
 
@@ -299,7 +299,7 @@ async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> N
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=1)  # TODO
+@with_concurrency(parallel=5)  # TODO
 async def sync_mo_it_users(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's IT users with Omada.
 
