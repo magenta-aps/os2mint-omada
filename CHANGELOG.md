@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.4.0 - 2022-07-26
+------------------
+
+[#49604] Revert "Bump AMQP concurrency to 5"
+[#49604] Ignore failed engagements
+
 1.3.5 - 2022-07-26
 ------------------
 
