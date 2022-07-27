@@ -19,12 +19,11 @@ from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 
-from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.backing.omada.models import IdentityCategory
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.config import MoSettings
-from os2mint_omada.sync import Syncer
+from os2mint_omada.sync.base import Syncer
 from tests.conftest import FakeMOService
 from tests.conftest import FakeOmadaService
 
@@ -156,11 +155,6 @@ def alice() -> TestUser:
 #     return employee, employee_data
 
 
-class FakeSyncer(Syncer):
-    mo_service: FakeMOService
-    omada_service: FakeOmadaService
-
-
 @pytest.fixture
 def fake_syncer(
     mo_settings: MoSettings,
@@ -285,7 +279,9 @@ async def test_ensure_engagements(
             user_key="unchanged",
             org_unit=OrgUnitRef(uuid=org_units["org_unit_a"]),
             job_function=JobFunction(uuid=job_functions["cryptographer"]),
-            engagement_type=EngagementType(uuid=engagement_types["manually_created"]),
+            engagement_type=EngagementType(
+                uuid=engagement_types["omada_manually_created"]
+            ),
             primary=Primary(uuid=primary_types["primary"]),
             validity=Validity(
                 from_date=datetime(2019, 5, 6),
@@ -296,7 +292,9 @@ async def test_ensure_engagements(
             user_key="old",
             org_unit=OrgUnitRef(uuid=org_units["org_unit_a"]),
             job_function=JobFunction(uuid=job_functions["cryptographer"]),
-            engagement_type=EngagementType(uuid=engagement_types["manually_created"]),
+            engagement_type=EngagementType(
+                uuid=engagement_types["omada_manually_created"]
+            ),
             primary=Primary(uuid=primary_types["primary"]),
             validity=Validity(
                 from_date=datetime(2009, 8, 9),
@@ -312,7 +310,7 @@ async def test_ensure_engagements(
         employee_data=employee_data,
         job_functions=job_functions,
         job_function_default="not_applicable",
-        engagement_type_uuid=engagement_types["manually_created"],
+        engagement_type_uuid=engagement_types["omada_manually_created"],
         primary_type_uuid=primary_types["primary"],
     )
 
@@ -401,3 +399,55 @@ async def test_ensure_addresses(
         user_key="new",
     )
     assert one(created.args[0]).dict().items() >= expected_created.items()
+
+
+# async def test_lol(
+#         fake_syncer: FakeSyncer,
+#         alice: TestUser,
+#         address_types: dict[str, UUID],
+#         visibilities: dict[str, UUID],
+#
+# ) -> None:
+#     employee_data = EmployeeData.parse_obj(
+#         {
+#             "uuid": "42ef556d-1b7e-4c99-a891-b61aeea44a37",
+#             "engagements": [
+#                 {
+#                     "uuid": "6900d20a-c417-4b6e-88c1-51aa187c2d66",
+#                     "user_key": "23695",
+#                     "org_unit_uuid": "1432abba-1ed8-4800-9800-000001310002",
+#                     "person": [{"uuid": "42ef556d-1b7e-4c99-a891-b61aeea44a37"}],
+#                     "job_function": {"uuid": "68930b4f-67e7-10c8-077f-61f7a4b4ee88"},
+#                     "engagement_type": {"uuid": "57f394f7-c204-64aa-5f9b-8cd4d373e626"},
+#                     "primary": {"uuid": "3c57482c-66e1-3a6f-b03c-592997d789db"},
+#                     "validity": {"from": "2021-08-01T00:00:00+02:00", "to": None},
+#                 }
+#             ],
+#             "addresses": [
+#                 {
+#                     "uuid": "20ca3ca6-fe4e-43e1-b67a-95efe96e4438",
+#                     "value": "AlberteHoy.Jensen@silkeborg.dk",
+#                     "address_type": {"uuid": "db077886-9392-1caa-d41e-5415bf4efde7"},
+#                     "person": [{"uuid": "42ef556d-1b7e-4c99-a891-b61aeea44a37"}],
+#                     "visibility": {"uuid": "edb076dc-473f-f8c9-1e39-77a8205f2b00"},
+#                     "validity": {"from": "2022-02-25T00:00:00+01:00", "to": None},
+#                 }
+#             ],
+#             "itusers": [
+#                 {
+#                     "uuid": "47f3cb07-d915-4e4f-bbd2-23d86d5131c8",
+#                     "user_key": "26790561-133a-4c16-8f38-79c25f6adb72",
+#                     "itsystem_uuid": "1760947e-0496-1483-fba8-98af2b98ef4f",
+#                     "person": [{"uuid": "42ef556d-1b7e-4c99-a891-b61aeea44a37"}],
+#                     "validity": {"from": "2022-02-25T00:00:00+01:00", "to": None},
+#                 }
+#             ],
+#         }
+#     )
+#     omada_users = []
+#     await fake_syncer.ensure_addresses(
+#         omada_users=omada_users,
+#         employee_data=employee_data,
+#         address_types=address_types,
+#         visibility_uuid=visibilities["Intern"],
+#     )

@@ -6,6 +6,7 @@ from respx import MockRouter
 from starlette import status
 
 from os2mint_omada.backing.omada.api import OmadaAPI
+from os2mint_omada.backing.omada.models import RawOmadaUser
 from os2mint_omada.config import OmadaSettings
 
 
@@ -61,8 +62,8 @@ async def test_is_not_ready(
 
 async def test_get_users(
     omada_api: OmadaAPI,
-    raw_omada_user: dict,
-    raw_omada_user_manual: dict,
+    raw_omada_user: RawOmadaUser,
+    raw_omada_user_manual: RawOmadaUser,
     omada_settings: OmadaSettings,
     respx_mock: MockRouter,
 ) -> None:

@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
-from typing import Collection
 from typing import Iterable
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -12,8 +11,6 @@ from ramodels.mo import Employee
 from ramqp import AMQPSystem
 from ramqp.mo import MOAMQPSystem
 
-from os2mint_omada.backing.mo.models import EmployeeData
-from os2mint_omada.backing.mo.service import ITSystems
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.api import OmadaAPI
 from os2mint_omada.backing.omada.models import OmadaUser
@@ -82,7 +79,7 @@ def job_functions() -> dict[str, UUID]:
 def engagement_types() -> dict[str, UUID]:
     """Hard-coded dict of engagement types user_key/uuids."""
     return {
-        "manually_created": UUID("3d76ae3e-5a74-46b9-9e51-508903d17606"),
+        "omada_manually_created": UUID("3d76ae3e-5a74-46b9-9e51-508903d17606"),
     }
 
 
@@ -99,6 +96,15 @@ def visibilities() -> dict[str, UUID]:
     """Hard-coded dict of visibility type user_key/uuids."""
     return {
         "Intern": UUID("70beca48-6520-4af9-9bf8-a8a70880e6d2"),
+    }
+
+
+@pytest.fixture
+def it_systems() -> dict[str, UUID]:
+    """Hard-coded dict of IT system user_key/uuids."""
+    return {
+        "Omada": UUID("0ADA0ADA-8b16-4b72-9b98-192e4c33132d"),
+        "AD": UUID("ADADADAD-040e-4486-8b9c-e01adf5199af"),
     }
 
 
@@ -150,28 +156,30 @@ def org_unit_it_systems(org_units: dict[str, UUID]) -> dict[str, UUID]:
 
 
 @pytest.fixture
-def raw_omada_user() -> dict:
+def raw_omada_user() -> RawOmadaUser:
     """Raw normal Omada user, as returned by the API."""
-    return {
-        "IDENTITYCATEGORY": {
-            "Id": 560,
-            "UId": "ac0c67fc-5f47-4112-94e6-446bfb68326a",
-        },
-        "C_TJENESTENR": "DRV2639",
-        "C_OBJECTGUID_I_AD": "9e5aee86-1461-4072-9883-ed43c82db42c",
-        "C_LOGIN": "DR00777",
-        "EMAIL": "bob@example.com",
-        "EMAIL2": "",
-        "C_DIREKTE_TLF": "12341234",
-        "CELLPHONE": "",
-        "C_INST_PHONE": "",
-        "VALIDFROM": "2016-06-15T00:00:00+02:00",
-        "VALIDTO": "2022-12-03T00:00:00+01:00",
-    }
+    return RawOmadaUser(
+        {
+            "IDENTITYCATEGORY": {
+                "Id": 560,
+                "UId": "ac0c67fc-5f47-4112-94e6-446bfb68326a",
+            },
+            "C_TJENESTENR": "DRV2639",
+            "C_OBJECTGUID_I_AD": "9e5aee86-1461-4072-9883-ed43c82db42c",
+            "C_LOGIN": "DR00777",
+            "EMAIL": "bob@example.com",
+            "EMAIL2": "",
+            "C_DIREKTE_TLF": "12341234",
+            "CELLPHONE": "",
+            "C_INST_PHONE": "",
+            "VALIDFROM": "2016-06-15T00:00:00+02:00",
+            "VALIDTO": "2022-12-03T00:00:00+01:00",
+        }
+    )
 
 
 @pytest.fixture
-def raw_omada_user_manual(raw_omada_user: dict) -> dict:
+def raw_omada_user_manual(raw_omada_user: RawOmadaUser) -> RawOmadaUser:
     """Raw manual Omada user, as returned by the API."""
     manual_fields = {
         "IDENTITYCATEGORY": {
@@ -184,7 +192,7 @@ def raw_omada_user_manual(raw_omada_user: dict) -> dict:
         "JOBTITLE": "Worker",
         "C_ORGANISATIONSKODE": "5a23d722-1be4-4f00-a200-000001500001",
     }
-    return raw_omada_user | manual_fields
+    return RawOmadaUser(raw_omada_user | manual_fields)
 
 
 class FakeMOService(MOService):
@@ -200,48 +208,6 @@ class FakeMOService(MOService):
         self.employees: list[Employee] = []
         self.org_unit_it_systems = org_unit_it_systems
         self.model = AsyncMock()
-
-    async def get_it_systems(self) -> ITSystems:
-        raise NotImplementedError
-        # return ITSystems(it_systems)
-
-    async def get_classes(self, facet_user_key: str) -> dict[str, UUID]:
-        raise NotImplementedError
-        # return facets[facet_user_key]
-
-    async def get_employee_uuid_from_service_number(
-        self, service_number: str
-    ) -> UUID | None:
-        # TODO
-        raise NotImplementedError
-        # for employee in EMPLOYEES:
-        #     for engagement in employee.todo:
-        #         pass
-        # return None
-
-    async def get_employee_uuid_from_cpr(self, cpr: str) -> UUID | None:
-        # TODO
-        raise NotImplementedError
-        # for employee in EMPLOYEES:
-        #     if employee.cpr_no == cpr:
-        #         return employee.uuid
-        # return None
-
-    async def get_employee(self, uuid: UUID) -> Employee | None:
-        # TODO
-        raise NotImplementedError
-        # for employee in EMPLOYEES:
-        #     if employee.uuid == uuid:
-        #         return employee
-        # return None
-
-    async def get_employee_data(
-        self,
-        uuid: UUID,
-        address_types: Iterable[UUID],
-        it_systems: Collection[UUID],
-    ) -> EmployeeData | None:
-        raise NotImplementedError  # TODO
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID | None:
         for it_system_uuid in self.org_unit_it_systems.values():
