@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.5.0 - 2022-08-15
+------------------
+
+[#51786] Add endpoint to manually sync Omada user(s)
+[#49604] Only allow KeyErrors for failed engagements
+[#51786] Omada RoutingKey WILDCARD
+
 1.4.0 - 2022-07-26
 ------------------
 
