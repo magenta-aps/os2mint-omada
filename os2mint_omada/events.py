@@ -35,16 +35,15 @@ omada_router = Router()
 #######################################################################################
 # Omada Raw
 #######################################################################################
-async def parse_omada_user(
-    event: Event, message: IncomingMessage, context: Context, **_: Any
-) -> None:
-    """Parse raw omada user from the event generator.
+@omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.WILDCARD))
+@with_concurrency(parallel=1)  # TODO
+async def parse_raw(message: IncomingMessage, context: Context, **_: Any) -> None:
+    """Parse raw omada user - often from the event generator.
 
     The user's identity category is identified, and the parsed user is sent back to
     the AMQP system under the related routing key, to be received below.
 
     Args:
-        event: Create/Update/Delete event type.
         message: AMQP message containing the raw Omada user as body.
         context: ASGI lifespan context.
         **_: Additional kwargs, required for RAMQP forwards-compatibility.
@@ -64,39 +63,21 @@ async def parse_omada_user(
     logger.debug("Parsed Omada user", parsed=omada_user)
 
     # Publish parsed user to AMQP
+    assert message.routing_key
+    original_routing_key = RoutingKey.from_str(message.routing_key)
     await context["omada_service"].amqp_system.publish_message(
-        routing_key=RoutingKey(type=OmadaPayloadType.PARSED, event=event),
+        routing_key=RoutingKey(
+            type=OmadaPayloadType.PARSED,
+            event=original_routing_key.event,
+        ),
         payload=jsonable_encoder(omada_user.dict()),
     )
-
-
-@omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.CREATE))
-@with_concurrency(parallel=1)  # TODO
-async def parse_raw_create(**kwargs: Any) -> None:
-    """Handle create events for raw omada users from the event generator."""
-    return await parse_omada_user(Event.CREATE, **kwargs)
-
-
-@omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.UPDATE))
-@with_concurrency(parallel=1)  # TODO
-async def parse_raw_update(**kwargs: Any) -> None:
-    """Handle update events for raw omada users from the event generator."""
-    return await parse_omada_user(Event.UPDATE, **kwargs)
-
-
-@omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.DELETE))
-@with_concurrency(parallel=1)  # TODO
-async def parse_raw_delete(**kwargs: Any) -> None:
-    """Handle delete events for raw omada users from the event generator."""
-    return await parse_omada_user(Event.DELETE, **kwargs)
 
 
 #######################################################################################
 # Omada Parsed
 #######################################################################################
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
 @with_concurrency(parallel=1)  # TODO
 async def sync_omada_employee(
     message: IncomingMessage, context: Context, **_: Any
@@ -122,9 +103,7 @@ async def sync_omada_employee(
     ).sync(omada_user)
 
 
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
 @with_concurrency(parallel=1)  # TODO
 async def sync_omada_engagements(
     message: IncomingMessage, context: Context, **_: Any
@@ -169,9 +148,7 @@ async def sync_omada_engagements(
         FailDB(settings=context["settings"]).add(omada_user=omada_user, exception=e)
 
 
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
 @with_concurrency(parallel=1)  # TODO
 async def sync_omada_addresses(
     message: IncomingMessage, context: Context, **_: Any
@@ -202,9 +179,7 @@ async def sync_omada_addresses(
     ).sync(employee_uuid)
 
 
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.CREATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.UPDATE))
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.DELETE))
+@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
 @with_concurrency(parallel=1)  # TODO
 async def sync_omada_it_users(
     message: IncomingMessage, context: Context, **_: Any
