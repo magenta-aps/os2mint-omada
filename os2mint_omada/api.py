@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import asyncio
+from typing import Iterable
 from uuid import UUID
 
 import structlog
@@ -10,12 +11,16 @@ from starlette import status
 from starlette.requests import Request
 
 from os2mint_omada.backing.mo.service import MOService
+from os2mint_omada.backing.omada.routing_keys import Event
+from os2mint_omada.backing.omada.routing_keys import PayloadType as OmadaPayloadType
+from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.backing.omada.service import OmadaService
 from os2mint_omada.config import MoSettings
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
 from os2mint_omada.sync.engagement import EngagementSyncer
 from os2mint_omada.sync.it_user import ITUserSyncer
+
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
@@ -59,6 +64,22 @@ async def sync_mo(request: Request) -> None:
             logger.exception(
                 "Failed to synchronise MO user", employee_uuid=employee_uuid
             )
+
+
+@router.post("/sync/omada", status_code=status.HTTP_204_NO_CONTENT)
+async def sync_omada(request: Request, key: str, values: Iterable[str]) -> None:
+    """Force-synchronise Omada user(s)."""
+    logger.info("Synchronising Omada users", key=key, values=values)
+    context: Context = request.app.state.context
+    omada_service = context["omada_service"]
+
+    raw_omada_users = await omada_service.api.get_users_by(key, values)
+    logger.info("Synchronising raw Omada users", omada_users=raw_omada_users)
+    for raw_omada_user in raw_omada_users:
+        await omada_service.amqp_system.publish_message(
+            routing_key=RoutingKey(type=OmadaPayloadType.RAW, event=Event.REFRESH),
+            payload=raw_omada_user,
+        )
 
 
 async def sync_employee(
