@@ -139,7 +139,7 @@ async def sync_omada_engagements(
             mo_service=context["mo_service"],
             omada_service=context["omada_service"],
         ).sync(employee_uuid)
-    except Exception as e:
+    except KeyError as e:
         logger.exception(
             "Failed to synchronise omada engagement",
             omada_user=omada_user,
