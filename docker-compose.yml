@@ -12,7 +12,7 @@ services:
       CLIENT_ID: "dipex"
       CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
       # LoRa
-      LORA_URL: "http://mox"
+      LORA_URL: "http://mo/lora"
       LORA_CLIENT_SECRET: "a091ed82-6e82-4efc-a8f0-001e2b127853"
     volumes:
       - type: bind
@@ -36,7 +36,7 @@ services:
       # Omada
       OMADA__URL: "http://omada-api/odata.json"
       OMADA__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
-      OMADA__INTERVAL: 5
+      OMADA__INTERVAL: 30
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
