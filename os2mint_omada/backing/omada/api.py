@@ -96,9 +96,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         logger.debug("Retrieved Omada IT users", users=users)
         return users
 
-    async def _get_users_by(
-        self, key: str, values: Iterable[str]
-    ) -> list[RawOmadaUser]:
+    async def get_users_by(self, key: str, values: Iterable[str]) -> list[RawOmadaUser]:
         """Convenience wrapper for filtering on multiple criteria simultaneously.
 
         Args:
@@ -125,7 +123,7 @@ class OmadaAPI(AbstractAsyncContextManager):
 
         Returns: List of raw omada users with the given service number.
         """
-        return await self._get_users_by("C_TJENESTENR", service_numbers)
+        return await self.get_users_by("C_TJENESTENR", service_numbers)
 
     async def get_users_by_cpr_numbers(
         self, cpr_numbers: Iterable[str]
@@ -137,4 +135,4 @@ class OmadaAPI(AbstractAsyncContextManager):
 
         Returns: List of raw omada users with the given CPR number.
         """
-        return await self._get_users_by("C_CPRNR", cpr_numbers)
+        return await self.get_users_by("C_CPRNR", cpr_numbers)
