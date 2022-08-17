@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import structlog
 from ramodels.mo import Employee
+from ramqp.utils import handle_exclusively
 
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.sync.base import ComparableMixin
@@ -31,6 +32,7 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
 
 
 class EmployeeSyncer(Syncer):
+    @handle_exclusively(key=lambda self, omada_user: omada_user.cpr_number)
     async def sync(self, omada_user: ManualOmadaUser) -> None:
         """Synchronise an Omada user to MO.
 

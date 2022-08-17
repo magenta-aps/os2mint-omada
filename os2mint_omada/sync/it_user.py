@@ -11,6 +11,7 @@ from ramodels.mo import Validity
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
+from ramqp.utils import handle_exclusively
 
 from os2mint_omada.backing.mo.service import ITSystems
 from os2mint_omada.backing.omada.models import OmadaUser
@@ -51,6 +52,7 @@ class ComparableITUser(ComparableMixin, ITUser):
 
 
 class ITUserSyncer(Syncer):
+    @handle_exclusively(key=lambda self, employee_uuid: employee_uuid)
     async def sync(self, employee_uuid: UUID) -> None:
         """Synchronise Omada IT users to MO.
 
