@@ -13,6 +13,7 @@ from ramodels.mo._shared import AddressType
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
+from ramqp.utils import handle_exclusively
 
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.sync.base import ComparableMixin
@@ -61,6 +62,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
 
 
 class AddressSyncer(Syncer):
+    @handle_exclusively(key=lambda self, employee_uuid: employee_uuid)
     async def sync(self, employee_uuid: UUID) -> None:
         """Synchronise Omada addresses to MO.
 
