@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.5.1 - 2022-08-17
+------------------
+
+[#51802] Add exclusivity to synchronisation handlers to avoid race conditions
+
 1.5.0 - 2022-08-15
 ------------------
 
