@@ -107,8 +107,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         """
         # Omada does not support OR or IN operators, so we have to do it like this
         get_users = (
-            self.get_users(params={"$filter": f"{key} eq '{value}'"})
-            for value in values
+            self.get_users(params={"$filter": f"{key} eq {value}"}) for value in values
         )
         users = await asyncio.gather(*get_users)
         return list(flatten(users))
@@ -123,7 +122,8 @@ class OmadaAPI(AbstractAsyncContextManager):
 
         Returns: List of raw omada users with the given service number.
         """
-        return await self.get_users_by("C_TJENESTENR", service_numbers)
+        service_number_strings = (f"'{n}'" for n in service_numbers)
+        return await self.get_users_by("C_TJENESTENR", service_number_strings)
 
     async def get_users_by_cpr_numbers(
         self, cpr_numbers: Iterable[str]
@@ -135,4 +135,5 @@ class OmadaAPI(AbstractAsyncContextManager):
 
         Returns: List of raw omada users with the given CPR number.
         """
-        return await self.get_users_by("C_CPRNR", cpr_numbers)
+        cpr_number_strings = (f"'{n}'" for n in cpr_numbers)
+        return await self.get_users_by("C_CPRNR", cpr_number_strings)
