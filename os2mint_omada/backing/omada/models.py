@@ -82,6 +82,7 @@ class ManualOmadaUser(OmadaUser):
     job_title: str = Field(alias="JOBTITLE")
 
     org_unit: UUID = Field(alias="C_ORGANISATIONSKODE")
+    is_visible: bool = Field(alias="C_SYNLIG_I_OS2MO")
 
     @validator("identity_category")
     def check_is_manual(cls, identity_category: IdentityCategory) -> IdentityCategory:

@@ -35,7 +35,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
         org_unit_validity: Validity,
         job_functions: dict[str, UUID],
         job_function_default: str,
-        engagement_type_uuid: UUID,
+        engagement_type_uuid_for_visibility: dict[bool, UUID],
         primary_type_uuid: UUID,
     ) -> ComparableEngagement:
         """Construct (comparable) MO engagement from a manual omada user.
@@ -50,7 +50,8 @@ class ComparableEngagement(ComparableMixin, Engagement):
             job_functions: Map of all engagement job functions in MO.
             job_function_default: Fallback job function used if the one defined on the
              Omada user does not exist in MO.
-            engagement_type_uuid: Engagement type of the engagement.
+            engagement_type_uuid_for_visibility: Engagement type for visible/hidden
+             engagements.
             primary_type_uuid: Primary class of the engagement.
 
         Returns: Comparable MO engagement.
@@ -59,6 +60,10 @@ class ComparableEngagement(ComparableMixin, Engagement):
             job_function_uuid = job_functions[omada_user.job_title]
         except KeyError:
             job_function_uuid = job_functions[job_function_default]
+
+        engagement_type_uuid = engagement_type_uuid_for_visibility[
+            omada_user.is_visible
+        ]
 
         return cls(
             user_key=omada_user.service_number,
@@ -107,9 +112,10 @@ class EngagementSyncer(Syncer):
         # Get MO classes configuration
         job_functions = await self.mo_service.get_classes("engagement_job_function")
         engagement_types = await self.mo_service.get_classes("engagement_type")
-        manual_engagement_type_uuid = engagement_types[
-            self.settings.manual_engagement_type
-        ]
+        omada_engagement_type_for_visibility = {
+            is_visible: engagement_types[user_key]
+            for is_visible, user_key in self.settings.engagement_type_for_visibility.items()  # NOQA: E501
+        }
         primary_types = await self.mo_service.get_classes("primary_type")
         primary_type_uuid = primary_types[self.settings.manual_primary_class]
 
@@ -118,7 +124,7 @@ class EngagementSyncer(Syncer):
         omada_engagements = [
             e
             for e in mo_engagements
-            if e.engagement_type.uuid == manual_engagement_type_uuid
+            if e.engagement_type.uuid in omada_engagement_type_for_visibility.values()
         ]
 
         # Synchronise engagements to MO
@@ -128,7 +134,7 @@ class EngagementSyncer(Syncer):
             engagements=omada_engagements,
             job_functions=job_functions,
             job_function_default=self.settings.manual_job_function_default,
-            engagement_type_uuid=manual_engagement_type_uuid,
+            engagement_type_uuid_for_visibility=omada_engagement_type_for_visibility,
             primary_type_uuid=primary_type_uuid,
         )
 
@@ -139,7 +145,7 @@ class EngagementSyncer(Syncer):
         engagements: list[Engagement],
         job_functions: dict[str, UUID],
         job_function_default: str,
-        engagement_type_uuid: UUID,
+        engagement_type_uuid_for_visibility: dict[bool, UUID],
         primary_type_uuid: UUID,
     ) -> None:
         """Ensure that the MO engagements are synchronised with the Omada users.
@@ -155,7 +161,8 @@ class EngagementSyncer(Syncer):
             job_functions: Map of all engagement job functions in MO.
             job_function_default: Fallback job function used if the one defined on a
              Omada user does not exist in MO.
-            engagement_type_uuid: Engagement type of the engagements.
+            engagement_type_uuid_for_visibility: Engagement type for visible/hidden
+             engagements.
             primary_type_uuid: Primary class of the engagements.
 
         Returns: None.
@@ -197,7 +204,7 @@ class EngagementSyncer(Syncer):
                 org_unit_validity=org_unit_validity,
                 job_functions=job_functions,
                 job_function_default=job_function_default,
-                engagement_type_uuid=engagement_type_uuid,
+                engagement_type_uuid_for_visibility=engagement_type_uuid_for_visibility,
                 primary_type_uuid=primary_type_uuid,
             )
 
