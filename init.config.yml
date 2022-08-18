@@ -27,6 +27,9 @@ facets:
     omada_manually_created:
       title: "(Omada) Manuelt oprettet"
       scope: "TEXT"
+    omada_manually_created_hidden:
+      title: "(Omada) Manuelt oprettet (Skjult)"
+      scope: "TEXT"
   primary_type:
     primary:
       title: "Primær"
