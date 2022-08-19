@@ -20,6 +20,7 @@ from fastapi.encoders import jsonable_encoder
 from gql import gql
 from gql.client import AsyncClientSession
 from more_itertools import one
+from more_itertools import only
 from raclients.graph.client import GraphQLClient
 from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
@@ -246,11 +247,8 @@ class MOService(AbstractAsyncContextManager):
                 "cpr_numbers": [cpr],
             },
         )
-        try:
-            employee = one(result["employees"])
-        except ValueError:
-            return None
-        return UUID(employee["uuid"])
+        employee = only(result["employees"])
+        return UUID(employee["uuid"]) if employee else None
 
     async def get_employee(self, uuid: UUID) -> Employee | None:
         """Retrieve employee.
