@@ -114,6 +114,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 user_key=key,
                 user_identifier=self.user_identifier,
             )
+            assert payload is not None  # mypy is so dumb
             await self.amqp_system.publish_message(
                 routing_key=RoutingKey(type=PayloadType.RAW, event=event),
                 payload=payload,

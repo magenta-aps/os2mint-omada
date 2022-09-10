@@ -49,7 +49,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         omada_value = getattr(omada_user, omada_attr)
         if not omada_value:
             return None
-        return cls(
+        return cls(  # type: ignore[call-arg]
             value=omada_value,
             address_type=AddressType(uuid=address_type_uuid),
             person=PersonRef(uuid=employee_uuid),

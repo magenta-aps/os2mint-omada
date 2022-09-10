@@ -8,6 +8,7 @@ from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import BaseSettings
 from pydantic import Field
+from pydantic import parse_obj_as
 from pydantic import SecretStr
 from pydantic import validator
 from ramqp.config import ConnectionSettings as AMQPConnectionSettings
@@ -18,11 +19,13 @@ class MOAMQPConnectionSettings(AMQPConnectionSettings):
 
 
 class MoSettings(BaseModel):
-    url: AnyHttpUrl = Field("http://mo-service:5000")
+    url: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://mo-service:5000")
     client_id: str = "omada"
     client_secret: SecretStr
     auth_realm: str = "mo"
-    auth_server: AnyHttpUrl = Field("http://keycloak-service:8080/auth")
+    auth_server: AnyHttpUrl = parse_obj_as(
+        AnyHttpUrl, "http://keycloak-service:8080/auth"
+    )
 
     amqp: MOAMQPConnectionSettings = Field(default_factory=MOAMQPConnectionSettings)
 

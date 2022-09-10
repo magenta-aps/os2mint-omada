@@ -24,7 +24,7 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
 
         Returns: Comparable MO employee.
         """
-        return cls(
+        return cls(  # type: ignore[call-arg]
             givenname=omada_user.first_name,
             surname=omada_user.last_name,
             cpr_no=omada_user.cpr_number,

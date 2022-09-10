@@ -65,7 +65,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
             omada_user.is_visible
         ]
 
-        return cls(
+        return cls(  # type: ignore[call-arg]
             user_key=omada_user.service_number,
             person=PersonRef(uuid=person_uuid),
             org_unit=OrgUnitRef(uuid=org_unit_uuid),
