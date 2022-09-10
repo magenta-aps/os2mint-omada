@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.6.3 - 2022-09-10
+------------------
+
+[#52084] Update dependencies
+
+Fixes validation error for Engagement "none is not an allowed value for 'primary'"
+
 1.6.2 - 2022-08-19
 ------------------
 
