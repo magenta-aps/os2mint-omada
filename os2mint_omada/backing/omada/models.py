@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import datetime
 from typing import Any
-from typing import NewType
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -11,7 +10,7 @@ from pydantic import Field
 from pydantic import validator
 from ramodels.mo import Validity
 
-RawOmadaUser = NewType("RawOmadaUser", dict[str, Any])
+RawOmadaUser = dict[str, Any]
 
 
 class IdentityCategory(BaseModel):

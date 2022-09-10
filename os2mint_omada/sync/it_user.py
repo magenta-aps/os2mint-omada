@@ -40,7 +40,7 @@ class ComparableITUser(ComparableMixin, ITUser):
 
         Returns: Comparable MO IT user for the Omada attribute.
         """
-        return cls(
+        return cls(  # type: ignore[call-arg]
             user_key=str(getattr(omada_user, omada_attr)),
             itsystem=ITSystemRef(uuid=it_system_uuid),
             person=PersonRef(uuid=employee_uuid),

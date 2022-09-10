@@ -33,7 +33,7 @@ def create_app(*args: Any, **kwargs: Any) -> FastAPI:
     # Config
     settings = Settings(*args, **kwargs)
     configure_logging(settings.log_level)
-    context: Context = dict(settings=settings)
+    context = Context(settings=settings)
 
     # AMQP
     mo_amqp_system = MOAMQPSystem(
