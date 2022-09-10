@@ -622,7 +622,7 @@ class MOService(AbstractAsyncContextManager):
         if from_date is None:
             from_date = midnight() - timedelta(days=1)  # TODO #51539
         logger.info("Terminating object", object=model, from_date=from_date)
-        await self.model.post(
+        await self.model.async_httpx_client.post(
             "/service/details/terminate",
             json=jsonable_encoder(
                 dict(
