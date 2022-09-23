@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.6.5 - 2022-09-23
+------------------
+
+[#51949] Sleep on errors to avoid race-conditions
+[#51949] Replace with_concurrency with RAMQP prefetch limit
+
 1.6.4 - 2022-09-10
 ------------------
 
