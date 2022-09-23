@@ -10,6 +10,7 @@ from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.sync.base import ComparableMixin
 from os2mint_omada.sync.base import StripUserKeyMixin
 from os2mint_omada.sync.base import Syncer
+from os2mint_omada.util import sleep_on_error
 
 logger = structlog.get_logger(__name__)
 
@@ -33,6 +34,7 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
 
 class EmployeeSyncer(Syncer):
     @handle_exclusively(key=lambda self, omada_user: omada_user.cpr_number)
+    @sleep_on_error()
     async def sync(self, omada_user: ManualOmadaUser) -> None:
         """Synchronise an Omada user to MO.
 

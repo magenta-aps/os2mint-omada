@@ -20,6 +20,7 @@ from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.sync.base import ComparableMixin
 from os2mint_omada.sync.base import Syncer
+from os2mint_omada.util import sleep_on_error
 from os2mint_omada.util import validity_intersection
 
 logger = structlog.get_logger(__name__)
@@ -78,6 +79,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
 
 class EngagementSyncer(Syncer):
     @handle_exclusively(key=lambda self, employee_uuid: employee_uuid)
+    @sleep_on_error()
     async def sync(self, employee_uuid: UUID) -> None:
         """Synchronise Omada engagements to MO.
 
