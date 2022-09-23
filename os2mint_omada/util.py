@@ -1,7 +1,10 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime
 from datetime import time
+from typing import AsyncGenerator
 from typing import cast
 
 from ramodels.mo import Validity
@@ -64,3 +67,27 @@ def validity_intersection(*validities: Validity) -> Validity:
     to_date = min(filter(None, to_dates), default=None)
 
     return Validity(from_date=from_date, to_date=to_date)
+
+
+@asynccontextmanager
+async def sleep_on_error(delay: int = 30) -> AsyncGenerator:
+    """Async context manager that delays returning on errors.
+
+    This is used to prevent race-conditions on writes to MO/LoRa, when the upload times
+    out initially but is completed by the backend afterwards. The sleep ensures that
+    the AMQP message is not retried immediately, causing the handler to act on
+    information which could become stale by the queued write. This happens because the
+    backend does not implement fairness of requests, such that read operations can
+    return soon-to-be stale data while a write operation is queued on another thread.
+
+    Specifically, duplicate objects would be created when a write operation failed to
+    complete within the timeout (but would be completed later), and the handler, during
+    retry, read an outdated list of existing objects, and thus dispatched another
+    (duplicate) write operation.
+
+    See: https://redmine.magenta-aps.dk/issues/51949#note-23.
+    """
+    try:
+        yield
+    except Exception:
+        await asyncio.sleep(delay)

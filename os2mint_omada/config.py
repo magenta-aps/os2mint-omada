@@ -16,6 +16,7 @@ from ramqp.config import ConnectionSettings as AMQPConnectionSettings
 
 class MOAMQPConnectionSettings(AMQPConnectionSettings):
     queue_prefix = "omada"
+    prefetch_count = 3  # MO cannot handle too many requests
 
 
 class MoSettings(BaseModel):
@@ -61,6 +62,7 @@ class MoSettings(BaseModel):
 class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
     exchange = "omada"
     queue_prefix = "omada"
+    prefetch_count = 3  # MO cannot handle too many requests
 
 
 class OmadaSettings(BaseModel):

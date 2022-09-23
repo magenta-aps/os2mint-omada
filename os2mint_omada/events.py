@@ -6,7 +6,6 @@ import structlog
 from aio_pika import IncomingMessage
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
-from ra_utils.asyncio_utils import with_concurrency
 from ramqp import Router
 from ramqp.mo import MORouter
 from ramqp.mo.models import MORoutingKey
@@ -36,7 +35,6 @@ omada_router = Router()
 # Omada Raw
 #######################################################################################
 @omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.WILDCARD))
-@with_concurrency(parallel=1)  # TODO
 async def parse_raw(message: IncomingMessage, context: Context, **_: Any) -> None:
     """Parse raw omada user - often from the event generator.
 
@@ -78,7 +76,6 @@ async def parse_raw(message: IncomingMessage, context: Context, **_: Any) -> Non
 # Omada Parsed
 #######################################################################################
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
-@with_concurrency(parallel=1)  # TODO
 async def sync_omada_employee(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -104,7 +101,6 @@ async def sync_omada_employee(
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
-@with_concurrency(parallel=1)  # TODO
 async def sync_omada_engagements(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -149,7 +145,6 @@ async def sync_omada_engagements(
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
-@with_concurrency(parallel=1)  # TODO
 async def sync_omada_addresses(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -180,7 +175,6 @@ async def sync_omada_addresses(
 
 
 @omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
-@with_concurrency(parallel=1)  # TODO
 async def sync_omada_it_users(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -233,7 +227,6 @@ async def sync_omada_it_users(
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=1)  # TODO
 async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's engagements with Omada.
 
@@ -259,7 +252,6 @@ async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) ->
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=1)  # TODO
 async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's addresses with Omada.
 
@@ -285,7 +277,6 @@ async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> N
         request_type=RequestType.WILDCARD,
     )
 )
-@with_concurrency(parallel=1)  # TODO
 async def sync_mo_it_users(payload: MOPayload, context: Context, **_: Any) -> None:
     """Synchronise a MO user's IT users with Omada.
 
