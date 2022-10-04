@@ -66,7 +66,7 @@ class MOService(AbstractAsyncContextManager):
 
         # GraphQL Client
         graphql = GraphQLClient(
-            url=f"{settings.url}/graphql",
+            url=f"{settings.url}/graphql/v2",
             **client_kwargs,
             # Ridiculous timeout to support fetching all employee uuids until MO
             # supports pagination/streaming of GraphQL responses.
