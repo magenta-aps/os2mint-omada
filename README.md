@@ -4,62 +4,51 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 # OS2mint: Omada
-TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-OS2mo integration for Omada. Synchronises Omada IT users to MO through the IT system defined by the `IT_SYSTEM_USER_KEY`
-environment variable.
+OS2mo integration for [Omada](https://omadaidentity.com/).
 
 
 ## Prerequisites
-The integration requires MO to be initialised with the IT system and address classes `EmailEmployee`, `PhoneEmployee`,
-`MobilePhoneEmployee`, and `InstitutionPhoneEmployee`. Users are encouraged to do so by adding the following to their
-[os2mo-init](https://git.magenta.dk/rammearkitektur/os2mo-init) configuration:
-```yaml
-facets:
-  employee_address_type:
-    EmailEmployee:
-      title: "Email"
-      scope: "EMAIL"
-    PhoneEmployee:
-      title: "Telefon"
-      scope: "PHONE"
-    MobilePhoneEmployee:
-      title: "Mobiltelefon"
-      scope: "PHONE"
-    InstitutionPhoneEmployee:
-      title: "Institutionstelefonnummer"
-      scope: "PHONE"
-  visibility:
-    Intern:
-      title: "Må vises internt"
-      scope: "INTERNAL"
+The integration requires MO to be initialised with a number of facet classes.
+Users are encouraged to do so by applying [init.config.yml] using
+[os2mo-init](https://git.magenta.dk/rammearkitektur/os2mo-init). The default
+`docker-compose.yml` does so automatically.
 
-it_systems:
-  omada_ad_guid: "Omada"
-```
-The default `docker-compose.yml` does so automatically. Additionally, the v1 API must be enabled in OS2mo by setting the environment variable `V1_API_ENABLE=true`, the "lora" realm must be enabled in Keycloak, and the DIPEX client for the LoRa realm must be enabled as well.
+## Persistence
+Omada's API is not event-driven. Instead, the entire Omada view is read
+periodically and cached to a local file on disk. For this reason, the `/data`
+path should be mounted into the container and persisted. It is our goal to
+implement persistence using a backing service in the future.
 
 
 ## Usage
 ```
 docker-compose up -d
 ```
-The API can then be viewed from the host through http://localhost:9000/.
+Configuration is done through environment variables. Available options can be
+seen in [os2mint_omada/config.py]. Complex variables such as dict or lists can
+be given as JSON strings, as specified by Pydantic's settings parser.
 
-The following environment variables are used:
-TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-  - `MO_URL`: OS2mo URL, e.g. `http://mo:80`.
-  - `CLIENT_ID`: Client ID used to authenticate against OS2mo, e.g. `dipex`.
-  - `CLIENT_SECRET`: Client secret used to authenticate against OS2mo, e.g. `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.
-  - `AUTH_REALM`: Keycloak realm for OS2mo authentication, e.g. `mo`.
-  - `AUTH_SERVER`: Keycloak authentication server, e.g. `http://keycloak:8080/auth`.
+The API can be viewed from the host through http://localhost:9000/.
 
-  - `IT_SYSTEM_USER_KEY`: User key of the IT system users will be inserted into, e.g. `omada`.
+After the initial import of Omada users, it can be useful to force-synchronise
+information for already-existing MO users. This is done by executing the
+following:
+```commandline
+curl -X POST http://localhost/sync/mo
+```
+The call returns immediately, but processing can take upwards of 12 hours to
+complete.
 
-  - `ODATA_URL`: Omada OData view URL to fetch users from, e.g. `http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx`.
+**NOTE** that MO organisation units are not watched for changes, so manual Omada
+users, which should be inserted into a non-existent organisation unit will not
+be synchronised automatically when (and if) this organisation unit is created in
+MO. To force-synchronise Omada users for the newly created organisation unit,
+the `/sync/omada` endpoint can be used.
 
 
 ## Versioning
-This project uses [Semantic Versioning](https://semver.org/) with the following strategy:
+This project uses [Semantic Versioning](https://semver.org/) with the following
+strategy:
 - MAJOR: Incompatible API changes.
 - MINOR: Backwards-compatible updates and functionality.
 - PATCH: Backwards-compatible bug fixes.
