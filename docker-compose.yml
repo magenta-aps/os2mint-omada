@@ -3,7 +3,7 @@
 ---
 services:
   init:
-    image: magentaaps/os2mo-init:0.4
+    image: magentaaps/os2mo-init:1.0
     environment:
       # Keycloak
       AUTH_SERVER: "http://keycloak:8080/auth"
@@ -13,7 +13,6 @@ services:
       CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
       # LoRa
       LORA_URL: "http://mo/lora"
-      LORA_CLIENT_SECRET: "a091ed82-6e82-4efc-a8f0-001e2b127853"
     volumes:
       - type: bind
         source: ./init.config.yml
@@ -38,7 +37,7 @@ services:
       OMADA__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
       OMADA__INTERVAL: 30
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:9000:8000"
     volumes:
       - ./os2mint_omada:/app/os2mint_omada:ro
     depends_on:
