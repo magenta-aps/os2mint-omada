@@ -14,12 +14,12 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 from ramqp.utils import handle_exclusively
+from ramqp.utils import sleep_on_error
 
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.sync.base import ComparableMixin
 from os2mint_omada.sync.base import StripUserKeyMixin
 from os2mint_omada.sync.base import Syncer
-from os2mint_omada.util import sleep_on_error
 
 logger = structlog.get_logger(__name__)
 

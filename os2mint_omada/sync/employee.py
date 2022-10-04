@@ -5,12 +5,12 @@ from __future__ import annotations
 import structlog
 from ramodels.mo import Employee
 from ramqp.utils import handle_exclusively
+from ramqp.utils import sleep_on_error
 
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.sync.base import ComparableMixin
 from os2mint_omada.sync.base import StripUserKeyMixin
 from os2mint_omada.sync.base import Syncer
-from os2mint_omada.util import sleep_on_error
 
 logger = structlog.get_logger(__name__)
 
