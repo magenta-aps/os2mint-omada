@@ -74,7 +74,7 @@ class EmployeeSyncer(Syncer):
 
         Returns: None.
         """
-        logger.debug(
+        logger.info(
             "Ensuring employee",
             omada_user=omada_user,
             employee_uuid=getattr(employee, "uuid", None),

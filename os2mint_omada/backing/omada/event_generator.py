@@ -124,7 +124,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
 
     def _save_users(self, users: list[RawOmadaUser]) -> None:
         """Save known Omada users (dicts) to disk."""
-        logger.debug("Saving known Omada users", num_users=len(users))
+        logger.info("Saving known Omada users", num_users=len(users))
         with self.settings.persistence_file.open("w") as file:
             json.dump(users, file)
 
@@ -135,5 +135,5 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 users = json.load(file)
         except FileNotFoundError:
             users = []
-        logger.debug("Loaded known Omada users", num_users=len(users))
+        logger.info("Loaded known Omada users", num_users=len(users))
         return users

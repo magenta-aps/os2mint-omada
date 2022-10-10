@@ -169,7 +169,7 @@ class EngagementSyncer(Syncer):
 
         Returns: None.
         """
-        logger.debug("Ensuring engagements", employee_uuid=employee_uuid)
+        logger.info("Ensuring engagements", employee_uuid=employee_uuid)
 
         # Actual engagements in MO
         actual: dict[ComparableEngagement, Engagement] = {

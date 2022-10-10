@@ -134,7 +134,7 @@ class AddressSyncer(Syncer):
 
         Returns: None.
         """
-        logger.debug("Ensuring addresses", employee_uuid=employee_uuid)
+        logger.info("Ensuring addresses", employee_uuid=employee_uuid)
         # Actual addresses in MO
         actual: dict[ComparableAddress, Address] = {
             ComparableAddress(**address.dict()): address for address in addresses

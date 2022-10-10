@@ -52,7 +52,7 @@ async def sync_mo(request: Request) -> None:
     context: Context = request.app.state.context
     employees = await context["mo_service"].get_employees()
     for i, employee_uuid in enumerate(employees):
-        logger.debug("Synchronising MO user", current=i, total=len(employees))
+        logger.info("Synchronising MO user", current=i, total=len(employees))
         try:
             await sync_employee(
                 employee_uuid=employee_uuid,
