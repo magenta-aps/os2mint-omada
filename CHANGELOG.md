@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.6.8 - 2022-10-12
+------------------
+
+[#52084] More logging
+[#52084] Update RAMQP to fix issue with sleep_on_error
+
 1.6.7 - 2022-10-04
 ------------------
 
