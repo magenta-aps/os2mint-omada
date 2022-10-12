@@ -118,7 +118,7 @@ class ITUserSyncer(Syncer):
 
         Returns: None.
         """
-        logger.debug("Ensuring IT users", employee_uuid=employee_uuid)
+        logger.info("Ensuring IT users", employee_uuid=employee_uuid)
         # Actual IT users in MO
         actual: dict[ComparableITUser, ITUser] = {
             ComparableITUser(**it_user.dict()): it_user for it_user in it_users
