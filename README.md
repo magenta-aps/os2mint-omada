@@ -37,7 +37,10 @@ following:
 curl -X POST http://localhost/sync/mo
 ```
 The call returns immediately, but processing can take upwards of 12 hours to
-complete.
+complete. Alternatively, a subset of MO users can be synchronised as follows:
+```commandline
+curl -X POST http://localhost/sync/mo -H 'Content-Type: application/json' --data '["3fa85f64-5717-4562-b3fc-2c963f66afa6"]'
+```
 
 **NOTE** that MO organisation units are not watched for changes, so manual Omada
 users, which should be inserted into a non-existent organisation unit will not
