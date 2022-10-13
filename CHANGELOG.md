@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.7.0 - 2022-10-13
+------------------
+
+[#52084] Allow force-synchronising a subset of MO users
+
 1.6.8 - 2022-10-12
 ------------------
 

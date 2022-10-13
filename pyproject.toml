@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "os2mint_omada"
-version = "1.6.8"
+version = "1.7.0"
 description = "OS2mo Omada integration"
 authors = ["Magenta <info@magenta.dk>"]
 license = "MPL-2.0"
