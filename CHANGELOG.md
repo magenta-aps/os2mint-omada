@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.9.0 - 2022-10-18
+------------------
+
+[#52084] Add feature flag to disallow modification of existing (manual) employees in MO
+
 1.8.0 - 2022-10-18
 ------------------
 
