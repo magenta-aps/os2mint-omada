@@ -96,6 +96,10 @@ class Settings(BaseSettings):
     mo: MoSettings
     omada: OmadaSettings
 
+    # Manual employees are always created. Setting this to true disallows modification
+    # of already-existing (manual) employees in MO.
+    manual_employees_create_only: bool = False
+
     class Config:
         frozen = True
         env_nested_delimiter = "__"  # allows setting e.g. MO__AMQP__QUEUE_PREFIX=foo
