@@ -55,6 +55,11 @@ class EmployeeSyncer(Syncer):
             employee = await self.mo_service.get_employee(uuid=employee_uuid)
         else:
             employee = None
+
+        if employee is not None and self.settings.manual_employees_create_only:
+            logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
+            return
+
         await self.ensure_employee(
             omada_user=omada_user,
             employee=employee,
