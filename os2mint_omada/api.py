@@ -15,7 +15,7 @@ from os2mint_omada.backing.omada.routing_keys import Event
 from os2mint_omada.backing.omada.routing_keys import PayloadType as OmadaPayloadType
 from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.backing.omada.service import OmadaService
-from os2mint_omada.config import MoSettings
+from os2mint_omada.config import Settings
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
 from os2mint_omada.sync.engagement import EngagementSyncer
@@ -60,7 +60,7 @@ async def sync_mo(request: Request, employees: list[UUID] | None = None) -> None
         try:
             await sync_employee(
                 employee_uuid=employee_uuid,
-                mo_settings=context["settings"].mo,
+                settings=context["settings"],
                 mo_service=context["mo_service"],
                 omada_service=context["omada_service"],
             )
@@ -88,7 +88,7 @@ async def sync_omada(request: Request, key: str, values: Iterable[str]) -> None:
 
 async def sync_employee(
     employee_uuid: UUID,
-    mo_settings: MoSettings,
+    settings: Settings,
     mo_service: MOService,
     omada_service: OmadaService,
 ) -> None:
@@ -96,7 +96,7 @@ async def sync_employee(
 
     Args:
         employee_uuid: MO employee UUID.
-        mo_settings: MO-specific settings.
+        settings: Configuration.
         mo_service: MO service.
         omada_service: Omada service.
 
@@ -104,17 +104,17 @@ async def sync_employee(
     """
     logger.info("Synchronising MO employee", employee_uuid=employee_uuid)
     await EngagementSyncer(
-        settings=mo_settings,
+        settings=settings,
         mo_service=mo_service,
         omada_service=omada_service,
     ).sync(employee_uuid)
     await AddressSyncer(
-        settings=mo_settings,
+        settings=settings,
         mo_service=mo_service,
         omada_service=omada_service,
     ).sync(employee_uuid)
     await ITUserSyncer(
-        settings=mo_settings,
+        settings=settings,
         mo_service=mo_service,
         omada_service=omada_service,
     ).sync(employee_uuid)

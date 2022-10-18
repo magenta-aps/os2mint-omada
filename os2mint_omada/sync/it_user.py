@@ -68,7 +68,7 @@ class ITUserSyncer(Syncer):
         # Get current user data from MO
         it_systems = await self.mo_service.get_it_systems()
         omada_it_systems = [
-            it_systems[user_key] for user_key in self.settings.it_user_map.values()
+            it_systems[user_key] for user_key in self.settings.mo.it_user_map.values()
         ]
         mo_it_users = await self.mo_service.get_employee_it_users(
             uuid=employee_uuid,
@@ -91,7 +91,7 @@ class ITUserSyncer(Syncer):
             omada_users=omada_users,
             employee_uuid=employee_uuid,
             it_users=mo_it_users,
-            it_user_map=self.settings.it_user_map,
+            it_user_map=self.settings.mo.it_user_map,
             it_systems=it_systems,
         )
 

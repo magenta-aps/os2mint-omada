@@ -116,10 +116,10 @@ class EngagementSyncer(Syncer):
         engagement_types = await self.mo_service.get_classes("engagement_type")
         omada_engagement_type_for_visibility = {
             is_visible: engagement_types[user_key]
-            for is_visible, user_key in self.settings.engagement_type_for_visibility.items()  # NOQA: E501
+            for is_visible, user_key in self.settings.mo.engagement_type_for_visibility.items()  # NOQA: E501
         }
         primary_types = await self.mo_service.get_classes("primary_type")
-        primary_type_uuid = primary_types[self.settings.manual_primary_class]
+        primary_type_uuid = primary_types[self.settings.mo.manual_primary_class]
 
         # Only process engagements we know Omada is authoritative for (created by us)
         # to avoid deleting those that have nothing to do with Omada.
@@ -135,7 +135,7 @@ class EngagementSyncer(Syncer):
             employee_uuid=employee_uuid,
             engagements=omada_engagements,
             job_functions=job_functions,
-            job_function_default=self.settings.manual_job_function_default,
+            job_function_default=self.settings.mo.manual_job_function_default,
             engagement_type_uuid_for_visibility=omada_engagement_type_for_visibility,
             primary_type_uuid=primary_type_uuid,
         )

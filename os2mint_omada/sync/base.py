@@ -12,7 +12,7 @@ from ramodels.mo import Validity
 
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.service import OmadaService
-from os2mint_omada.config import MoSettings
+from os2mint_omada.config import Settings
 from os2mint_omada.util import at_midnight
 
 logger = structlog.get_logger(__name__)
@@ -47,12 +47,12 @@ class StripUserKeyMixin(BaseModel):
 
 class Syncer:
     def __init__(
-        self, settings: MoSettings, mo_service: MOService, omada_service: OmadaService
+        self, settings: Settings, mo_service: MOService, omada_service: OmadaService
     ) -> None:
         """The logic responsible for taking actions to synchronise MO with Omada.
 
         Args:
-            settings: MO-specific settings.
+            settings: Configuration.
             mo_service: MO backing service.
             omada_service: Omada backing service.
         """

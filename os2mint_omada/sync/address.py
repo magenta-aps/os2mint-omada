@@ -78,7 +78,8 @@ class AddressSyncer(Syncer):
         # Get current user data from MO
         address_types = await self.mo_service.get_classes("employee_address_type")
         omada_address_types = [
-            address_types[user_key] for user_key in self.settings.address_map.values()
+            address_types[user_key]
+            for user_key in self.settings.mo.address_map.values()
         ]
         mo_addresses = await self.mo_service.get_employee_addresses(
             uuid=employee_uuid,
@@ -104,9 +105,9 @@ class AddressSyncer(Syncer):
             omada_users=omada_users,
             employee_uuid=employee_uuid,
             addresses=mo_addresses,
-            address_map=self.settings.address_map,
+            address_map=self.settings.mo.address_map,
             address_types=address_types,
-            visibility_uuid=visibility_classes[self.settings.address_visibility],
+            visibility_uuid=visibility_classes[self.settings.mo.address_visibility],
         )
 
     async def ensure_addresses(
