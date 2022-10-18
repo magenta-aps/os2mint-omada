@@ -92,7 +92,6 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
     enable_metrics: bool = False
-    failures_file: Path = Path("/data/failures.log")
 
     mo: MoSettings
     omada: OmadaSettings
