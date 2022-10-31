@@ -70,8 +70,8 @@ class EmployeeSyncer(Syncer):
     ) -> None:
         """Ensure that the MO employee is synchronised with the Omada user.
 
-        Note that the employee objects are never terminated, as that is usually not
-        done (some argue it being slightly morbid).
+        Note that the employee objects are never deleted or terminated, as that is
+        usually not done (some argue it being slightly morbid).
 
         Args:
             omada_user: Manual Omada user.

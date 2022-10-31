@@ -154,7 +154,7 @@ class EngagementSyncer(Syncer):
 
         Synchronisation is done on ALL Omada user entries for the employee, since total
         knowledge of all of a user's Omada entries is needed to avoid potentially
-        terminating engagements related to a different Omada user entry.
+        deleting engagements related to a different Omada user entry.
 
         Args:
             omada_users: List of Omada users to synchronise.
@@ -216,15 +216,15 @@ class EngagementSyncer(Syncer):
         expected_tuples = await asyncio.gather(*expected_tasks)
         expected: set[ComparableEngagement] = set(expected_tuples)
 
-        # Terminate excess existing
+        # Delete excess existing
         excess_engagements = actual.keys() - expected
         if excess_engagements:
             excess_mo_engagements = [actual[e] for e in excess_engagements]
             logger.info(
-                "Terminating excess engagements", engagements=excess_mo_engagements
+                "Deleting excess engagements", engagements=excess_mo_engagements
             )
-            terminate = (self.mo_service.terminate(e) for e in excess_mo_engagements)
-            await asyncio.gather(*terminate)
+            delete = (self.mo_service.delete(e) for e in excess_mo_engagements)
+            await asyncio.gather(*delete)
 
         # Create missing
         missing_engagements = expected - actual.keys()

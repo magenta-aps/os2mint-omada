@@ -123,7 +123,7 @@ class AddressSyncer(Syncer):
 
         Synchronisation is done on ALL Omada user entries for the employee, since total
         knowledge of all of a user's Omada entries is needed to avoid potentially
-        terminating addresses related to a different Omada user entry.
+        deleting addresses related to a different Omada user entry.
 
         Args:
             omada_users: List of Omada users to synchronise.
@@ -157,13 +157,13 @@ class AddressSyncer(Syncer):
             set[ComparableAddress], expected_with_none - {None}
         )
 
-        # Terminate excess existing
+        # Delete excess existing
         excess_addresses = actual.keys() - expected
         if excess_addresses:
             excess_mo_addresses = [actual[a] for a in excess_addresses]  # with UUID
-            logger.info("Terminating excess addresses", address=excess_mo_addresses)
-            terminate = (self.mo_service.terminate(a) for a in excess_mo_addresses)
-            await asyncio.gather(*terminate)
+            logger.info("Deleting excess addresses", address=excess_mo_addresses)
+            delete = (self.mo_service.delete(a) for a in excess_mo_addresses)
+            await asyncio.gather(*delete)
 
         # Create missing
         missing_addresses = expected - actual.keys()

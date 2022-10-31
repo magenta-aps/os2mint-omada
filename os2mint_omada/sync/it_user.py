@@ -107,7 +107,7 @@ class ITUserSyncer(Syncer):
 
         Synchronisation is done on ALL Omada user entries for the employee, since total
         knowledge of all of a user's Omada entries is needed to avoid potentially
-        terminating it users related to a different Omada user entry.
+        deleting it users related to a different Omada user entry.
 
         Args:
             omada_users: List of Omada users to synchronise.
@@ -136,13 +136,13 @@ class ITUserSyncer(Syncer):
             for omada_attr, mo_it_system_user_key in it_user_map.items()
         }
 
-        # Terminate excess existing
+        # Delete excess existing
         excess_it_users = actual.keys() - expected
         if excess_it_users:
             excess_mo_users = [actual[u] for u in excess_it_users]  # with UUID
-            logger.info("Terminating excess IT users", it_users=excess_it_users)
-            terminate = (self.mo_service.terminate(u) for u in excess_mo_users)
-            await asyncio.gather(*terminate)
+            logger.info("Deleting excess IT users", it_users=excess_it_users)
+            delete = (self.mo_service.delete(u) for u in excess_mo_users)
+            await asyncio.gather(*delete)
 
         # Create missing
         missing_it_users = expected - actual.keys()

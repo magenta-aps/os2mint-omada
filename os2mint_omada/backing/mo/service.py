@@ -613,30 +613,33 @@ class MOService(AbstractAsyncContextManager):
         validities = (Validity(**obj["validity"]) for obj in objs)
         return validity_union(*validities)
 
-    async def terminate(
-        self, model: MOBaseWithValidity, from_date: datetime | None = None
-    ) -> None:
-        """Terminate a MO object.
+    async def delete(self, obj: UUIDBase) -> None:
+        """Delete a MO object.
 
         Args:
-            model: Object to terminate.
-            from_date: Termination date. If not given, today will be used.
-
-        Notes:
-            TODO: Yesterday is currently used pending fix of OS2mo bug #51539.
-
-        Returns: None.
+            obj: Object to delete.
         """
-        if from_date is None:
-            from_date = midnight() - timedelta(days=1)  # TODO #51539
-        logger.info("Terminating object", object=model, from_date=from_date)
-        await self.model.async_httpx_client.post(
-            "/service/details/terminate",
-            json=jsonable_encoder(
-                dict(
-                    type=model.type_,
-                    uuid=model.uuid,
-                    validity={"to": from_date},
-                )
+        logger.info("Deleting object", object=obj)
+        mutators: dict[Type[UUIDBase], str] = {
+            Address: "address_delete",
+            Engagement: "engagement_delete",
+            ITUser: "ituser_delete",
+        }
+        mutator = mutators[type(obj)]
+        query = gql(
+            f"""
+            mutation DeleteMutation($uuid: UUID!) {{
+              {mutator}(uuid: $uuid) {{
+                uuid
+              }}
+            }}
+            """
+        )
+        await self.graphql.execute(
+            query,
+            variable_values=jsonable_encoder(
+                {
+                    "uuid": obj.uuid,
+                }
             ),
         )
