@@ -278,10 +278,11 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                }
+            ),
         )
         try:
             employee_dict = one(result["employees"])
@@ -332,11 +333,12 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "employee_uuids": [str(uuid)],
-                "address_types": [str(t) for t in address_types],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "employee_uuids": [uuid],
+                    "address_types": address_types,
+                }
+            ),
         )
         try:
             employee = one(result["employees"])
@@ -394,10 +396,11 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "employee_uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "employee_uuids": [uuid],
+                }
+            ),
         )
         try:
             employee = one(result["employees"])
@@ -451,10 +454,11 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "employee_uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "employee_uuids": [uuid],
+                }
+            ),
         )
         try:
             employee = one(result["employees"])
@@ -558,10 +562,13 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                    "from_date": from_date,
+                    "to_date": to_date,
+                }
+            ),
         )
         try:
             org_unit = one(result["org_units"])
@@ -594,10 +601,11 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                }
+            ),
         )
         org_unit = one(result["org_units"])
         objs = org_unit["objects"]
