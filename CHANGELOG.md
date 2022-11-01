@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.10.0 - 2022-11-01
+-------------------
+
+[#53184] Operate on full MO history, instead of just the present
+
+Omada already provides temporality through its 'VALIDFROM' and 'VALIDTO' fields, so all of an object's validity intervals should be synchronised; operating only on the latest/present one is insufficient.
+
 1.9.0 - 2022-10-18
 ------------------
 
