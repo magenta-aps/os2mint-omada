@@ -12,7 +12,6 @@ from ramodels.mo import Employee
 from ramqp import AMQPSystem
 from ramqp.mo import MOAMQPSystem
 
-from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.backing.mo.service import ITSystems
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.api import OmadaAPI
@@ -240,7 +239,7 @@ class FakeMOService(MOService):
         uuid: UUID,
         address_types: Iterable[UUID],
         it_systems: Collection[UUID],
-    ) -> EmployeeData | None:
+    ) -> None:
         raise NotImplementedError  # TODO
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID | None:

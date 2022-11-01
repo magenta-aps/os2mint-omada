@@ -50,15 +50,15 @@ class EmployeeSyncer(Syncer):
             omada_user.cpr_number
         )
 
+        if employee_uuid is not None and self.settings.manual_employees_create_only:
+            logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
+            return
+
         # Get current user data from MO
         if employee_uuid is not None:
             employee = await self.mo_service.get_employee(uuid=employee_uuid)
         else:
             employee = None
-
-        if employee is not None and self.settings.manual_employees_create_only:
-            logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
-            return
 
         await self.ensure_employee(
             omada_user=omada_user,
@@ -70,8 +70,8 @@ class EmployeeSyncer(Syncer):
     ) -> None:
         """Ensure that the MO employee is synchronised with the Omada user.
 
-        Note that the employee objects are never terminated, as that is usually not
-        done (some argue it being slightly morbid).
+        Note that the employee objects are never deleted or terminated, as that is
+        usually not done (some argue it being slightly morbid).
 
         Args:
             omada_user: Manual Omada user.

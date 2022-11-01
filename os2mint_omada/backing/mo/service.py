@@ -5,14 +5,12 @@ from __future__ import annotations
 import asyncio
 from contextlib import AbstractAsyncContextManager
 from contextlib import AsyncExitStack
-from datetime import datetime
-from datetime import timedelta
+from itertools import chain
 from types import TracebackType
 from typing import Collection
 from typing import Iterable
 from typing import NewType
 from typing import Type
-from typing import TypeVar
 from uuid import UUID
 
 import structlog
@@ -25,19 +23,19 @@ from raclients.graph.client import GraphQLClient
 from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
 from ramodels.mo import Validity
+from ramodels.mo._shared import PersonRef
+from ramodels.mo._shared import UUIDBase
 from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
 from ramqp.mo import MOAMQPSystem
 
 from os2mint_omada.config import MoSettings
-from os2mint_omada.util import midnight
 from os2mint_omada.util import validity_union
 
 logger = structlog.get_logger(__name__)
 
 ITSystems = NewType("ITSystems", dict[str, UUID])
-MOBaseWithValidity = TypeVar("MOBaseWithValidity", Address, Engagement, ITUser)
 
 
 class MOService(AbstractAsyncContextManager):
@@ -198,8 +196,8 @@ class MOService(AbstractAsyncContextManager):
         logger.info("Getting MO employee UUID", service_number=service_number)
         query = gql(
             """
-            query EmployeeCPRQuery($user_keys: [String!]) {
-              engagements(user_keys: $user_keys) {
+            query EmployeeServiceNumberQuery($user_keys: [String!]) {
+              engagements(user_keys: $user_keys, from_date: null, to_date: null) {
                 objects {
                   employee {
                     uuid
@@ -215,13 +213,14 @@ class MOService(AbstractAsyncContextManager):
                 "user_keys": [service_number],
             },
         )
-        try:
-            engagement = one(result["engagements"])
-        except ValueError:
+        engagement = only(result["engagements"])
+        if engagement is None:
             return None
-        obj = one(engagement["objects"])
-        employee = one(obj["employee"])
-        return UUID(employee["uuid"])
+        objects = engagement["objects"]
+        employees = (one(o["employee"]) for o in objects)
+        uuids = {e["uuid"] for e in employees}
+        uuid = one(uuids)  # it's an error if different UUIDs are returned
+        return UUID(uuid)
 
     async def get_employee_uuid_from_cpr(self, cpr: str) -> UUID | None:
         """Find employee UUID by CPR number.
@@ -235,7 +234,7 @@ class MOService(AbstractAsyncContextManager):
         query = gql(
             """
             query EmployeeCPRQuery($cpr_numbers: [CPR!]) {
-              employees(cpr_numbers: $cpr_numbers) {
+              employees(cpr_numbers: $cpr_numbers, from_date: null, to_date: null) {
                 uuid
               }
             }
@@ -247,8 +246,12 @@ class MOService(AbstractAsyncContextManager):
                 "cpr_numbers": [cpr],
             },
         )
-        employee = only(result["employees"])
-        return UUID(employee["uuid"]) if employee else None
+        employees = result["employees"]
+        if not employees:
+            return None
+        uuids = {e["uuid"] for e in employees}
+        uuid = one(uuids)  # it's an error if different UUIDs are returned
+        return UUID(uuid)
 
     async def get_employee(self, uuid: UUID) -> Employee | None:
         """Retrieve employee.
@@ -265,7 +268,7 @@ class MOService(AbstractAsyncContextManager):
         query = gql(
             """
             query EmployeeQuery($uuids: [UUID!]) {
-              employees(uuids: $uuids) {
+              employees(uuids: $uuids, from_date: null, to_date: null) {
                 objects {
                   uuid
                   givenname
@@ -278,21 +281,22 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                }
+            ),
         )
-        try:
-            employee_dict = one(result["employees"])
-        except ValueError:
+        # TODO: Support multiple employee objects and deletion of employee
+        employee_dict = only(result["employees"])
+        if employee_dict is None:
             return None
         obj = one(employee_dict["objects"])
         return Employee.parse_obj(obj)
 
     async def get_employee_addresses(
         self, uuid: UUID, address_types: Iterable[UUID]
-    ) -> list[Address]:
+    ) -> set[Address]:
         """Retrieve addresses related to an employee.
 
         Args:
@@ -300,13 +304,13 @@ class MOService(AbstractAsyncContextManager):
             address_types: Only retrieve the given address types, to avoid terminating
              addresses irrelevant to Omada.
 
-        Returns: List of addresses related to the employee.
+        Returns: Set of addresses related to the employee.
         """
         logger.info("Getting MO addresses", employee_uuid=uuid)
         query = gql(
             """
             query AddressesQuery($employee_uuids: [UUID!], $address_types: [UUID!]) {
-              employees(uuids: $employee_uuids) {
+              employees(uuids: $employee_uuids, from_date: null, to_date: null) {
                 objects {
                   addresses(address_types: $address_types) {
                     uuid
@@ -332,39 +336,38 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "employee_uuids": [str(uuid)],
-                "address_types": [str(t) for t in address_types],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "employee_uuids": [uuid],
+                    "address_types": address_types,
+                }
+            ),
         )
-        try:
-            employee = one(result["employees"])
-        except ValueError:
-            return []
-        obj = one(employee["objects"])
-        addresses = obj["addresses"]
+        employee = only(result["employees"])
+        if employee is None:
+            return set()
+        addresses = chain.from_iterable(o["addresses"] for o in employee["objects"])
 
         def convert(address: dict) -> Address:
             """Convert GraphQL address to be RA-Models compatible."""
-            address["person"] = one(address["person"])
+            address["person"] = one({PersonRef(**p) for p in address["person"]})
             return Address.parse_obj(address)
 
-        return [convert(address) for address in addresses]
+        return {convert(address) for address in addresses}
 
-    async def get_employee_engagements(self, uuid: UUID) -> list[Engagement]:
+    async def get_employee_engagements(self, uuid: UUID) -> set[Engagement]:
         """Retrieve engagements related to an employee.
 
         Args:
             uuid: Employee UUID.
 
-        Returns: List of engagements related to the employee.
+        Returns: Set of engagements related to the employee.
         """
         logger.info("Getting MO engagements", employee_uuid=uuid)
         query = gql(
             """
             query EngagementsQuery($employee_uuids: [UUID!]) {
-              employees(uuids: $employee_uuids) {
+              employees(uuids: $employee_uuids, from_date: null, to_date: null) {
                 objects {
                   engagements {
                     uuid
@@ -394,29 +397,28 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "employee_uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "employee_uuids": [uuid],
+                }
+            ),
         )
-        try:
-            employee = one(result["employees"])
-        except ValueError:
-            return []
-        obj = one(employee["objects"])
-        engagements = obj["engagements"]
+        employee = only(result["employees"])
+        if employee is None:
+            return set()
+        engagements = chain.from_iterable(o["engagements"] for o in employee["objects"])
 
         def convert(engagement: dict) -> Engagement:
             """Convert GraphQL engagement to be RA-Models compatible."""
-            engagement["person"] = one(engagement["person"])
+            engagement["person"] = one({PersonRef(**p) for p in engagement["person"]})
             engagement["org_unit"] = {"uuid": engagement.pop("org_unit_uuid")}
             return Engagement.parse_obj(engagement)
 
-        return [convert(engagement) for engagement in engagements]
+        return {convert(engagement) for engagement in engagements}
 
     async def get_employee_it_users(
         self, uuid: UUID, it_systems: Collection[UUID]
-    ) -> list[ITUser]:
+    ) -> set[ITUser]:
         """Retrieve IT users related to an employee.
 
         Args:
@@ -424,13 +426,13 @@ class MOService(AbstractAsyncContextManager):
             it_systems: Only retrieve IT users for the given IT systems, to avoid
              terminating IT users irrelevant to Omada.
 
-        Returns: List of IT users related to the employee.
+        Returns: Set of IT users related to the employee.
         """
         logger.info("Getting MO IT users", employee_uuid=uuid)
         query = gql(
             """
             query ITUsersQuery($employee_uuids: [UUID!]) {
-              employees(uuids: $employee_uuids) {
+              employees(uuids: $employee_uuids, from_date: null, to_date: null) {
                 objects {
                   itusers {
                     uuid
@@ -451,39 +453,38 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "employee_uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "employee_uuids": [uuid],
+                }
+            ),
         )
-        try:
-            employee = one(result["employees"])
-        except ValueError:
-            return []
-        obj = one(employee["objects"])
-        it_users = obj["itusers"]
+        employee = only(result["employees"])
+        if employee is None:
+            return set()
+        it_users = chain.from_iterable(o["itusers"] for o in employee["objects"])
 
         def convert(it_user: dict) -> ITUser:
             """Convert GraphQL IT user to be RA-Models compatible."""
-            it_user["person"] = one(it_user["person"])
+            it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
             return ITUser.parse_obj(it_user)
 
-        converted_it_users = [convert(it_user) for it_user in it_users]
+        converted_it_users = (convert(it_user) for it_user in it_users)
         # Ideally IT users would be filtered directly in GraphQL, but it is not
         # currently supported.
-        return [u for u in converted_it_users if u.itsystem.uuid in it_systems]
+        return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
 
-    async def get_employees(self) -> list[UUID]:
-        """Retrieve a list of all employee UUIDs in MO.
+    async def get_employees(self) -> set[UUID]:
+        """Retrieve a set of all employee UUIDs in MO.
 
-        Returns: List of MO employee UUIDs.
+        Returns: Set of MO employee UUIDs.
         """
         logger.info("Getting all MO employees")
         query = gql(
             """
             query EmployeesQuery {
-              employees {
+              employees(from_date: null, to_date: null) {
                 uuid
               }
             }
@@ -491,7 +492,7 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(query)
         employees = result["employees"]
-        return [UUID(e["uuid"]) for e in employees]
+        return {UUID(e["uuid"]) for e in employees}
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         """Find organisational unit with the given IT system user user_key.
@@ -513,7 +514,7 @@ class MOService(AbstractAsyncContextManager):
         query = gql(
             """
             query OrgUnitITUserQuery($user_keys: [String!]) {
-              itusers(user_keys: $user_keys) {
+              itusers(user_keys: $user_keys, from_date: null, to_date: null) {
                 objects {
                   org_unit_uuid
                 }
@@ -527,12 +528,13 @@ class MOService(AbstractAsyncContextManager):
                 "user_keys": [user_key],
             },
         )
-        try:
-            it_users = one(result["itusers"])
-        except ValueError as e:
-            raise KeyError from e
-        obj = one(it_users["objects"])
-        return UUID(obj["org_unit_uuid"])
+        it_users = result["itusers"]
+        if not it_users:
+            raise KeyError(f"No organisation unit with {user_key=} found")
+        objects = chain.from_iterable(u["objects"] for u in it_users)
+        uuids = {o["org_unit_uuid"] for o in objects}
+        uuid = one(uuids)  # it's an error if different UUIDs are returned
+        return UUID(uuid)
 
     async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
         """Get organisational unit with the given UUID, validating that it exists.
@@ -550,7 +552,7 @@ class MOService(AbstractAsyncContextManager):
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
-              org_units(uuids: $uuids) {
+              org_units(uuids: $uuids, from_date: null, to_date: null) {
                 uuid
               }
             }
@@ -558,15 +560,16 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                }
+            ),
         )
         try:
             org_unit = one(result["org_units"])
         except ValueError as e:
-            raise KeyError from e
+            raise KeyError(f"No organisation unit with {uuid=} found") from e
         return UUID(org_unit["uuid"])
 
     async def get_org_unit_validity(self, uuid: UUID) -> Validity:
@@ -594,10 +597,11 @@ class MOService(AbstractAsyncContextManager):
         )
         result = await self.graphql.execute(
             query,
-            variable_values={
-                # UUIDs are not JSON serializable, so they are converted to strings
-                "uuids": [str(uuid)],
-            },
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                }
+            ),
         )
         org_unit = one(result["org_units"])
         objs = org_unit["objects"]
@@ -605,30 +609,33 @@ class MOService(AbstractAsyncContextManager):
         validities = (Validity(**obj["validity"]) for obj in objs)
         return validity_union(*validities)
 
-    async def terminate(
-        self, model: MOBaseWithValidity, from_date: datetime | None = None
-    ) -> None:
-        """Terminate a MO object.
+    async def delete(self, obj: UUIDBase) -> None:
+        """Delete a MO object.
 
         Args:
-            model: Object to terminate.
-            from_date: Termination date. If not given, today will be used.
-
-        Notes:
-            TODO: Yesterday is currently used pending fix of OS2mo bug #51539.
-
-        Returns: None.
+            obj: Object to delete.
         """
-        if from_date is None:
-            from_date = midnight() - timedelta(days=1)  # TODO #51539
-        logger.info("Terminating object", object=model, from_date=from_date)
-        await self.model.async_httpx_client.post(
-            "/service/details/terminate",
-            json=jsonable_encoder(
-                dict(
-                    type=model.type_,
-                    uuid=model.uuid,
-                    validity={"to": from_date},
-                )
+        logger.info("Deleting object", object=obj)
+        mutators: dict[Type[UUIDBase], str] = {
+            Address: "address_delete",
+            Engagement: "engagement_delete",
+            ITUser: "ituser_delete",
+        }
+        mutator = mutators[type(obj)]
+        query = gql(
+            f"""
+            mutation DeleteMutation($uuid: UUID!) {{
+              {mutator}(uuid: $uuid) {{
+                uuid
+              }}
+            }}
+            """
+        )
+        await self.graphql.execute(
+            query,
+            variable_values=jsonable_encoder(
+                {
+                    "uuid": obj.uuid,
+                }
             ),
         )
