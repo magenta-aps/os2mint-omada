@@ -99,7 +99,7 @@ class ITUserSyncer(Syncer):
         self,
         omada_users: list[OmadaUser],
         employee_uuid: UUID,
-        it_users: list[ITUser],
+        it_users: set[ITUser],
         it_user_map: dict[str, str],
         it_systems: ITSystems,
     ) -> None:

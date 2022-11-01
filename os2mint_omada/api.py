@@ -46,7 +46,7 @@ async def readiness_probe(response: Response, request: Request) -> None:
 
 
 @router.post("/sync/mo", status_code=status.HTTP_204_NO_CONTENT)
-async def sync_mo(request: Request, employees: list[UUID] | None = None) -> None:
+async def sync_mo(request: Request, employees: set[UUID] | None = None) -> None:
     """Force-synchronise MO employees with Omada.
 
     Synchronises all employees in MO if no list of UUIDs is given.

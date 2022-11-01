@@ -114,7 +114,7 @@ class AddressSyncer(Syncer):
         self,
         omada_users: list[OmadaUser],
         employee_uuid: UUID,
-        addresses: list[Address],
+        addresses: set[Address],
         address_map: dict[str, str],
         address_types: dict[str, UUID],
         visibility_uuid: UUID,
