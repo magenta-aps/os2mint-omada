@@ -62,8 +62,17 @@ async def test_get_employee_uuid_from_service_number(mo_service: MOService) -> N
         "engagements": [
             {
                 "objects": [
-                    {"employee": [{"uuid": "57561cc7-5e07-4a7b-b2bb-af5a22fa1f65"}]},
-                    {"employee": [{"uuid": "57561cc7-5e07-4a7b-b2bb-af5a22fa1f65"}]},
+                    {
+                        "employee": [
+                            {"uuid": "57561cc7-5e07-4a7b-b2bb-af5a22fa1f65"},
+                            {"uuid": "57561cc7-5e07-4a7b-b2bb-af5a22fa1f65"},
+                        ]
+                    },
+                    {
+                        "employee": [
+                            {"uuid": "57561cc7-5e07-4a7b-b2bb-af5a22fa1f65"},
+                        ]
+                    },
                 ]
             },
         ]
