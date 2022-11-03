@@ -75,6 +75,15 @@ async def test_get_employee_uuid_from_service_number(mo_service: MOService) -> N
                     },
                 ]
             },
+            {
+                "objects": [
+                    {
+                        "employee": [
+                            {"uuid": "57561cc7-5e07-4a7b-b2bb-af5a22fa1f65"},
+                        ]
+                    },
+                ]
+            },
         ]
     }
     mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
@@ -87,6 +96,7 @@ async def test_get_employee_uuid_from_service_number(mo_service: MOService) -> N
 async def test_get_employee_uuid_from_cpr(mo_service: MOService) -> None:
     graphql_response = {
         "employees": [
+            {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
     }
@@ -104,18 +114,28 @@ async def test_get_employee(mo_service: MOService) -> None:
                 "objects": [
                     {
                         "uuid": "0004b952-a513-430b-b696-8d393d7eb2bb",
-                        "givenname": "Birgitta Munk",
+                        "givenname": "Birgitta FOO",
                         "surname": "Duschek",
                         "cpr_no": "1011482720",
                     },
                     {
                         "uuid": "0004b952-a513-430b-b696-8d393d7eb2bb",
-                        "givenname": "Birgitta Munk",
+                        "givenname": "Birgitta BAR",
                         "surname": "Duschek",
                         "cpr_no": "1011482720",
                     },
                 ]
-            }
+            },
+            {
+                "objects": [
+                    {
+                        "uuid": "0004b952-a513-430b-b696-8d393d7eb2bb",
+                        "givenname": "Birgitta BAZ",
+                        "surname": "Duschek",
+                        "cpr_no": "1011482720",
+                    },
+                ]
+            },
         ]
     }
     mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
