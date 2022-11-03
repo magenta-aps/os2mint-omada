@@ -213,10 +213,11 @@ class MOService(AbstractAsyncContextManager):
                 "user_keys": [service_number],
             },
         )
-        engagement = only(result["engagements"])
-        if engagement is None:
+        engagements = result["engagements"]
+        if not engagements:
             return None
-        employees = chain.from_iterable(o["employee"] for o in engagement["objects"])
+        objects = chain.from_iterable(e["objects"] for e in engagements)
+        employees = chain.from_iterable(o["employee"] for o in objects)
         uuids = {e["uuid"] for e in employees}
         uuid = one(uuids)  # it's an error if different UUIDs are returned
         return UUID(uuid)
