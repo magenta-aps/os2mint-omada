@@ -105,9 +105,7 @@ async def test_get_employee_uuid_from_cpr(mo_service: MOService) -> None:
     assert actual == UUID("0004b952-a513-430b-b696-8d393d7eb2bb")
 
 
-@pytest.mark.xfail
 async def test_get_employee(mo_service: MOService) -> None:
-    # TODO: Support multiple employee objects and deletion of employee
     graphql_response = {
         "employees": [
             {
@@ -126,26 +124,25 @@ async def test_get_employee(mo_service: MOService) -> None:
                     },
                 ]
             },
-            {
-                "objects": [
-                    {
-                        "uuid": "0004b952-a513-430b-b696-8d393d7eb2bb",
-                        "givenname": "Birgitta BAZ",
-                        "surname": "Duschek",
-                        "cpr_no": "1011482720",
-                    },
-                ]
-            },
         ]
     }
     mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee(uuid=uuid4())
-    assert actual == Employee(
-        uuid=UUID("0004b952-a513-430b-b696-8d393d7eb2bb"),
-        givenname="Birgitta Munk",
-        surname="Duschek",
-        cpr_no="1011482720",
-    )
+    actual = await mo_service.get_employee_states(uuid=uuid4())
+    expected = {
+        Employee(
+            uuid=UUID("0004b952-a513-430b-b696-8d393d7eb2bb"),
+            givenname="Birgitta FOO",
+            surname="Duschek",
+            cpr_no="1011482720",
+        ),
+        Employee(
+            uuid=UUID("0004b952-a513-430b-b696-8d393d7eb2bb"),
+            givenname="Birgitta BAR",
+            surname="Duschek",
+            cpr_no="1011482720",
+        ),
+    }
+    assert actual == expected
 
 
 async def test_get_employee_addresses(mo_service: MOService) -> None:
@@ -348,7 +345,7 @@ async def test_get_employee_it_users(mo_service: MOService) -> None:
     TestCase().assertCountEqual(actual_uuids, expected_uuids)
 
 
-async def test_get_employees(mo_service: MOService) -> None:
+async def test_get_all_employee_uuids(mo_service: MOService) -> None:
     graphql_response = {
         "employees": [
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
@@ -356,7 +353,7 @@ async def test_get_employees(mo_service: MOService) -> None:
         ]
     }
     mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employees()
+    actual = await mo_service.get_all_employee_uuids()
     assert actual == {
         UUID("0004b952-a513-430b-b696-8d393d7eb2bb"),
         UUID("002a1aed-d015-4b86-86a4-c37cd8df1e18"),

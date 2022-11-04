@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
+from uuid import UUID
+
 import structlog
 from ramodels.mo import Employee
 from ramqp.utils import handle_exclusively
@@ -54,49 +56,66 @@ class EmployeeSyncer(Syncer):
             logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
             return
 
-        # Get current user data from MO
+        # Get employee objects from MO
         if employee_uuid is not None:
-            employee = await self.mo_service.get_employee(uuid=employee_uuid)
+            employee_states = await self.mo_service.get_employee_states(
+                uuid=employee_uuid
+            )
         else:
-            employee = None
+            employee_states = set()
 
         await self.ensure_employee(
             omada_user=omada_user,
-            employee=employee,
+            employee_uuid=employee_uuid,
+            employee_states=employee_states,
         )
 
     async def ensure_employee(
-        self, omada_user: ManualOmadaUser, employee: Employee | None
+        self,
+        omada_user: ManualOmadaUser,
+        employee_uuid: UUID | None,
+        employee_states: set[Employee],
     ) -> None:
         """Ensure that the MO employee is synchronised with the Omada user.
 
         Note that the employee objects are never deleted or terminated, as that is
-        usually not done (some argue it being slightly morbid).
+        usually not done (some argue it being slightly morbid) -- and also not
+        supported by MO (yet).
 
         Args:
             omada_user: Manual Omada user.
-            employee: (Potentially) pre-existing MO employee. Can be None.
+            employee_uuid: MO employee UUID. Can be None.
+            employee_states: (Potentially) pre-existing MO employee states. Can be
+             empty.
 
         Returns: None.
         """
         logger.info(
             "Ensuring employee",
             omada_user=omada_user,
-            employee_uuid=getattr(employee, "uuid", None),
+            employee_uuid=employee_uuid,
         )
-        # Actual employee in MO
-        if employee is not None:
-            actual = ComparableEmployee(**employee.dict())
-            uuid = employee.uuid
-        else:
-            actual = None
-            uuid = None
+        # Actual employee states in MO
+        actual: dict[ComparableEmployee, Employee] = {
+            ComparableEmployee(**employee.dict()): employee
+            for employee in employee_states
+        }
 
-        # Expected employee from Omada
-        expected = ComparableEmployee.from_omada(omada_user)
+        # Expected employee states from Omada (only one)
+        expected = {ComparableEmployee.from_omada(omada_user)}
 
-        # Update if outdated
-        if actual != expected:
-            updated_employee = Employee(uuid=uuid, **expected.dict(exclude={"uuid"}))
-            logger.info("Uploading employee", employee=updated_employee)
-            await self.mo_service.model.upload([updated_employee])
+        # Delete excess existing
+        # TODO: Implement when supported by MO
+
+        # Create (edit) missing
+        missing_employee_states = expected - actual.keys()
+        if missing_employee_states:
+            missing_mo_employee_states = [
+                Employee(uuid=employee_uuid, **employee.dict(exclude={"uuid"}))
+                for employee in missing_employee_states
+            ]
+            logger.info(
+                "Creating missing Employeee states",
+                employees=missing_mo_employee_states,
+            )
+            await self.mo_service.model.upload(missing_mo_employee_states)
