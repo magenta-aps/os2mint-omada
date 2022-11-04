@@ -54,20 +54,18 @@ async def sync_mo(request: Request, employees: set[UUID] | None = None) -> None:
     logger.info("Synchronising MO employees", employees=employees)
     context: Context = request.app.state.context
     if employees is None:
-        employees = await context["mo_service"].get_employees()
-    for i, employee_uuid in enumerate(employees):
-        logger.info("Synchronising MO user", current=i, total=len(employees))
+        employee_uuids = await context["mo_service"].get_all_employee_uuids()
+    for i, uuid in enumerate(employee_uuids):
+        logger.info("Synchronising MO user", current=i, total=len(employee_uuids))
         try:
             await sync_employee(
-                employee_uuid=employee_uuid,
+                employee_uuid=uuid,
                 settings=context["settings"],
                 mo_service=context["mo_service"],
                 omada_service=context["omada_service"],
             )
         except Exception:
-            logger.exception(
-                "Failed to synchronise MO user", employee_uuid=employee_uuid
-            )
+            logger.exception("Failed to synchronise MO user", employee_uuid=uuid)
 
 
 @router.post("/sync/omada", status_code=status.HTTP_204_NO_CONTENT)

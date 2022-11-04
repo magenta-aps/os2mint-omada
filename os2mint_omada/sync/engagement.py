@@ -6,6 +6,7 @@ import asyncio
 from uuid import UUID
 
 import structlog
+from more_itertools import only
 from pydantic import parse_obj_as
 from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementType
@@ -91,9 +92,11 @@ class EngagementSyncer(Syncer):
         logger.info("Synchronising manual engagements", employee_uuid=employee_uuid)
 
         # Get current user data from MO
-        mo_employee = await self.mo_service.get_employee(employee_uuid)
-        assert mo_employee is not None
-        if mo_employee.cpr_no is None:
+        employee_states = await self.mo_service.get_employee_states(employee_uuid)
+        assert employee_states
+        cpr_number = only(e.cpr_no for e in employee_states)
+
+        if cpr_number is None:
             logger.warning(
                 "Cannot to synchronise employee without CPR number",
                 employee_uuid=employee_uuid,
@@ -106,7 +109,7 @@ class EngagementSyncer(Syncer):
 
         # Get current user data from Omada
         raw_omada_users = await self.omada_service.api.get_users_by_cpr_numbers(
-            cpr_numbers=[mo_employee.cpr_no]
+            cpr_numbers=[cpr_number]
         )
         omada_users = parse_obj_as(list[ManualOmadaUser | OmadaUser], raw_omada_users)
         manual_omada_users = [u for u in omada_users if isinstance(u, ManualOmadaUser)]

@@ -253,8 +253,8 @@ class MOService(AbstractAsyncContextManager):
         uuid = one(uuids)  # it's an error if different UUIDs are returned
         return UUID(uuid)
 
-    async def get_employee(self, uuid: UUID) -> Employee | None:
-        """Retrieve employee.
+    async def get_employee_states(self, uuid: UUID) -> set[Employee]:
+        """Retrieve employee states.
 
         The retrieved fields correspond to the fields which are synchronised from
         Omada, i.e. exactly the fields we are interested in, to check up-to-dateness.
@@ -262,7 +262,7 @@ class MOService(AbstractAsyncContextManager):
         Args:
             uuid: Employee UUID.
 
-        Returns: Employee if one exists, otherwise None.
+        Returns: Set of employee objects; one for each state.
         """
         logger.info("Getting MO employee", uuid=uuid)
         query = gql(
@@ -287,12 +287,10 @@ class MOService(AbstractAsyncContextManager):
                 }
             ),
         )
-        # TODO: Support multiple employee objects and deletion of employee
-        employee_dict = only(result["employees"])
-        if employee_dict is None:
-            return None
-        obj = one(employee_dict["objects"])
-        return Employee.parse_obj(obj)
+        employee = only(result["employees"])
+        if employee is None:
+            return set()
+        return {Employee.parse_obj(o) for o in employee["objects"]}
 
     async def get_employee_addresses(
         self, uuid: UUID, address_types: Iterable[UUID]
@@ -475,7 +473,7 @@ class MOService(AbstractAsyncContextManager):
         # currently supported.
         return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
 
-    async def get_employees(self) -> set[UUID]:
+    async def get_all_employee_uuids(self) -> set[UUID]:
         """Retrieve a set of all employee UUIDs in MO.
 
         Returns: Set of MO employee UUIDs.
