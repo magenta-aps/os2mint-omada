@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import time
 from typing import Any
 from uuid import UUID
 
@@ -13,7 +15,6 @@ from ramodels.mo import Validity
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.service import OmadaService
 from os2mint_omada.config import Settings
-from os2mint_omada.util import at_midnight
 
 logger = structlog.get_logger(__name__)
 
@@ -26,7 +27,17 @@ class ComparableMixin(BaseModel):
 
     @validator("validity", check_fields=False)
     def validity_at_midnight(cls, validity: Validity) -> Validity:
-        """Normalise validity dates to allow for convenient comparison of models."""
+        """Normalise validity dates to allow for convenient comparison of models.
+
+        Date(time)s are converted to "midnight" for MO compatibility by removing the
+        time-component.
+        """
+
+        def at_midnight(date: datetime | None) -> datetime | None:
+            if date is None:
+                return None
+            return datetime.combine(date, time.min)
+
         return Validity(
             from_date=at_midnight(validity.from_date),
             to_date=at_midnight(validity.to_date),
