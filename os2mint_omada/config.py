@@ -45,7 +45,7 @@ class MoSettings(BaseModel):
         "phone_institution": "InstitutionPhoneEmployee",
     }
     # Visibility class for created addresses
-    address_visibility = "Intern"
+    address_visibility = "Public"
     # Fallback job function for engagements created for manual users if the job title
     # from Omada does not exist in MO.
     manual_job_function_default: str = "not_applicable"

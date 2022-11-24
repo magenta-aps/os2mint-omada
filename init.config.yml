@@ -16,9 +16,9 @@ facets:
       title: "Institutionstelefonnummer"
       scope: "PHONE"
   visibility:
-    Intern:
-      title: "Må vises internt"
-      scope: "INTERNAL"
+    Public:
+      title: "Må vises eksternt"
+      scope: "PUBLIC"
   engagement_job_function:
     not_applicable:
       title: "N/A"
