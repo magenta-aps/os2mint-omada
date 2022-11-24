@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.10.6 - 2022-11-24
+-------------------
+
+[#53629] Use address visibility 'Public' instead of 'Internal'
+
 1.10.5 - 2022-11-21
 -------------------
 
