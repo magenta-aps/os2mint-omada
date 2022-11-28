@@ -362,19 +362,6 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
-name = "httpx-ntlm"
-version = "1.0.0"
-description = "This package allows for HTTP NTLM authentication using the HTTPX library."
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-cryptography = ">=36.0.0,<36.1.0"
-httpx = ">=0.21"
-pyspnego = ">=0.3.0,<0.4.0"
-
-[[package]]
 name = "identify"
 version = "2.5.5"
 description = "File identification library for Python"
@@ -733,21 +720,6 @@ python-versions = ">=3.6.8"
 
 [package.extras]
 diagrams = ["jinja2", "railroad-diagrams"]
-
-[[package]]
-name = "pyspnego"
-version = "0.3.1"
-description = "Windows Negotiate Authentication Client and Server"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-cryptography = "*"
-
-[package.extras]
-kerberos = ["gssapi (>=1.5.0)", "krb5"]
-yaml = ["ruamel.yaml"]
 
 [[package]]
 name = "pytest"
@@ -1121,7 +1093,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "c67d06c498d39c7a09374a5f476eb3b77babe051734290bdbd28876baa620788"
+content-hash = "35ca14f23f6bf0f8882a67172ead9f2a8ef793dedc699863efb2630c2605bb17"
 
 [metadata.files]
 aio-pika = [
@@ -1384,10 +1356,6 @@ httpcore = [
 httpx = [
     {file = "httpx-0.23.0-py3-none-any.whl", hash = "sha256:42974f577483e1e932c3cdc3cd2303e883cbfba17fe228b0f63589764d7b9c4b"},
     {file = "httpx-0.23.0.tar.gz", hash = "sha256:f28eac771ec9eb4866d3fb4ab65abd42d38c424739e80c08d8d20570de60b0ef"},
-]
-httpx-ntlm = [
-    {file = "httpx_ntlm-1.0.0-py3-none-any.whl", hash = "sha256:8205dc92b4826dd2cd429c15fe7bf7f2adbbcd86e118b4f4ce38b486a1880632"},
-    {file = "httpx_ntlm-1.0.0.tar.gz", hash = "sha256:a6ffcec6070ed095a4da7099a7e6ca94e757ecda95e95e716510f2e5d775dea4"},
 ]
 identify = [
     {file = "identify-2.5.5-py2.py3-none-any.whl", hash = "sha256:ef78c0d96098a3b5fe7720be4a97e73f439af7cf088ebf47b620aeaa10fadf97"},
@@ -1665,20 +1633,6 @@ pymdown-extensions = [
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
-]
-pyspnego = [
-    {file = "pyspnego-0.3.1-cp310-cp310-win32.whl", hash = "sha256:b02c9b61f85c96f969c78f492b35915a590dddabf987687eb1256ef2fd8fbdcb"},
-    {file = "pyspnego-0.3.1-cp310-cp310-win_amd64.whl", hash = "sha256:6387b4631120205240d1be25aff7a78d41db9b99bb5803b3ac6b7b6ed80b8920"},
-    {file = "pyspnego-0.3.1-cp36-cp36m-win32.whl", hash = "sha256:19da2de9d55d73d05b2798d4e5bd7ee5980e573ae50dc2f2bc460df5eaffe5ea"},
-    {file = "pyspnego-0.3.1-cp36-cp36m-win_amd64.whl", hash = "sha256:37c4d80a0c90bd2b670c583b2efbd210c26f54b1f7661c0cbc684a954b88c1c3"},
-    {file = "pyspnego-0.3.1-cp37-cp37m-win32.whl", hash = "sha256:9235a3159a4e1648d6bb4d170b8d68ecf5b1f55fa2f3157335ce74df5c192468"},
-    {file = "pyspnego-0.3.1-cp37-cp37m-win_amd64.whl", hash = "sha256:e15d16b205fbc5e945244b974312e9796467913f69736fdad262edee0c3c105f"},
-    {file = "pyspnego-0.3.1-cp38-cp38-win32.whl", hash = "sha256:f4a00cc3796d34212b391caecb3fd636cdefea798cb4ac231f893bdade674f01"},
-    {file = "pyspnego-0.3.1-cp38-cp38-win_amd64.whl", hash = "sha256:27dd07b6b918c289d2820c685b346a198498354cf3a1bfe9ec19cff9fa8fce2f"},
-    {file = "pyspnego-0.3.1-cp39-cp39-win32.whl", hash = "sha256:a0d41d43657cd4d4456ca734ec00b6e24c95a144499cfc429371a310c4b10d7a"},
-    {file = "pyspnego-0.3.1-cp39-cp39-win_amd64.whl", hash = "sha256:6df4b5233ec28358992adadfef5be76807ca1424e7c0fbf430424759edc85f8b"},
-    {file = "pyspnego-0.3.1-py2.py3-none-any.whl", hash = "sha256:75a0d4be4236f6b7c2ded0b43fd03e942c48cdbe91c2856f45f22884b7e92ddc"},
-    {file = "pyspnego-0.3.1.tar.gz", hash = "sha256:ccb8d9cea310f1715d5ed3d2d092db9bf50ff2762cf94a0dd9dfab7774a727fe"},
 ]
 pytest = [
     {file = "pytest-7.1.3-py3-none-any.whl", hash = "sha256:1377bda3466d70b55e3f5cecfa55bb7cfcf219c7964629b967c37cf0bda818b7"},
