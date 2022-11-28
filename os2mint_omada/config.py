@@ -9,9 +9,21 @@ from pydantic import BaseModel
 from pydantic import BaseSettings
 from pydantic import Field
 from pydantic import parse_obj_as
-from pydantic import SecretStr
 from pydantic import validator
 from ramqp.config import ConnectionSettings as AMQPConnectionSettings
+
+
+class OIDCSettings(BaseSettings):
+    client_id: str
+    client_secret: str
+    auth_realm: str
+    auth_server: AnyHttpUrl
+
+
+class MOOIDCSettings(OIDCSettings):
+    client_id = "omada"
+    auth_realm = "mo"
+    auth_server = parse_obj_as(AnyHttpUrl, "http://keycloak-service:8080/auth")
 
 
 class MOAMQPConnectionSettings(AMQPConnectionSettings):
@@ -21,12 +33,7 @@ class MOAMQPConnectionSettings(AMQPConnectionSettings):
 
 class MoSettings(BaseModel):
     url: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://mo-service:5000")
-    client_id: str = "omada"
-    client_secret: SecretStr
-    auth_realm: str = "mo"
-    auth_server: AnyHttpUrl = parse_obj_as(
-        AnyHttpUrl, "http://keycloak-service:8080/auth"
-    )
+    oidc: MOOIDCSettings
 
     amqp: MOAMQPConnectionSettings = Field(default_factory=MOAMQPConnectionSettings)
 
@@ -69,8 +76,7 @@ class OmadaSettings(BaseModel):
     # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     url: AnyHttpUrl
     host_header: str | None = None  # http host header override
-    ntlm_username: str | None = None
-    ntlm_password: str | None = None
+    oidc: OIDCSettings | None = None
     insecure_skip_ssl_verify = False
 
     amqp: OmadaAMQPConnectionSettings = Field(
