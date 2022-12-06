@@ -10,11 +10,10 @@ from typing import Any
 from typing import Iterable
 from typing import Type
 
-import httpx
 import structlog
 from httpx import AsyncClient
-from httpx_ntlm import HttpNtlmAuth
 from more_itertools import flatten
+from raclients.auth import AuthenticatedAsyncHTTPXClient
 
 from os2mint_omada.backing.omada.models import RawOmadaUser
 from os2mint_omada.config import OmadaSettings
@@ -38,20 +37,19 @@ class OmadaAPI(AbstractAsyncContextManager):
         settings = self.settings
 
         # HTTPX Client
+        client_cls = AsyncClient
         client_kwargs: dict[str, Any] = {}
         if settings.host_header:
             client_kwargs["headers"] = {"Host": settings.host_header}
-        if any((settings.ntlm_username, settings.ntlm_password)):
-            client_kwargs["auth"] = HttpNtlmAuth(
-                username=settings.ntlm_username,
-                password=settings.ntlm_password,
-            )
+        if settings.oidc is not None:
+            client_cls = AuthenticatedAsyncHTTPXClient
+            client_kwargs.update(**settings.oidc.dict())
         if settings.insecure_skip_ssl_verify:
             logger.warning("INSECURE: Skipping SSL verification for Omada API!")
             client_kwargs["verify"] = False
 
         logger.info("Setting up Omada API", client_kwargs=client_kwargs)
-        client = httpx.AsyncClient(timeout=30, **client_kwargs)
+        client = client_cls(timeout=30, **client_kwargs)
         self.client: AsyncClient = await self.stack.enter_async_context(client)
 
         return await super().__aenter__()

@@ -55,17 +55,11 @@ class MOService(AbstractAsyncContextManager):
     async def __aenter__(self) -> MOService:
         """Start clients for persistent connections to the MO API and AMQP system."""
         settings = self.settings
-        client_kwargs = dict(
-            client_id=settings.client_id,
-            client_secret=settings.client_secret.get_secret_value(),
-            auth_realm=settings.auth_realm,
-            auth_server=settings.auth_server,
-        )
 
         # GraphQL Client
         graphql = GraphQLClient(
             url=f"{settings.url}/graphql/v3",
-            **client_kwargs,
+            **settings.oidc.dict(),
             # Ridiculous timeout to support fetching all employee uuids until MO
             # supports pagination/streaming of GraphQL responses.
             httpx_client_kwargs=dict(timeout=300),
@@ -74,7 +68,7 @@ class MOService(AbstractAsyncContextManager):
         self.graphql: AsyncClientSession = await self.stack.enter_async_context(graphql)
 
         # Model Client
-        model = MoModelClient(base_url=settings.url, **client_kwargs)
+        model = MoModelClient(base_url=settings.url, **settings.oidc.dict())
         self.model: MoModelClient = await self.stack.enter_async_context(model)
 
         # The AMQP system is started last so the API clients, which are used from the

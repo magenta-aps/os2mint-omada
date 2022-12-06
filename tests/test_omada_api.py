@@ -1,7 +1,10 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import pytest
-from httpx_ntlm import HttpNtlmAuth
+from httpx import AsyncClient
+from pydantic import AnyHttpUrl
+from pydantic import parse_obj_as
+from raclients.auth import AuthenticatedAsyncHTTPXClient
 from respx import MockRouter
 from starlette import status
 
@@ -19,7 +22,7 @@ async def omada_api(omada_settings: OmadaSettings) -> OmadaAPI:
 async def test_client(omada_api: OmadaAPI) -> None:
     """Test that the client does not override headers and auth as default."""
     assert "host" not in omada_api.client.headers
-    assert omada_api.client.auth is None
+    assert isinstance(omada_api.client, AsyncClient)
 
 
 async def test_client_host_header(omada_settings: OmadaSettings) -> None:
@@ -29,14 +32,18 @@ async def test_client_host_header(omada_settings: OmadaSettings) -> None:
         assert api.client.headers["host"] == "foo"
 
 
-async def test_client_ntlm_auth(omada_settings: OmadaSettings) -> None:
-    """Test that ntlm auth settings are passed through."""
-    omada_settings.ntlm_username = "AzureDiamond"
-    omada_settings.ntlm_password = "hunter2"
+async def test_client_auth(omada_settings: OmadaSettings) -> None:
+    """Test that auth settings are passed through."""
+    omada_settings.oidc.client_id = "AzureDiamond"
+    omada_settings.oidc.client_secret = "hunter2"
+    omada_settings.auth_realm = "Firemaw-EU"
+    omada_settings.auth_server = parse_obj_as(AnyHttpUrl, "https://adfs.example.net")
     async with OmadaAPI(settings=omada_settings) as api:
-        assert isinstance(api.client.auth, HttpNtlmAuth)
-        assert api.client.auth.username == "AzureDiamond"
-        assert api.client.auth.password == "hunter2"
+        assert isinstance(api.client, AuthenticatedAsyncHTTPXClient)
+        assert api.client.client_id == omada_settings.oidc.client_id
+        assert api.client.client_secret == omada_settings.oidc.client_secret
+        assert api.client.auth_realm == omada_settings.auth_realm
+        assert api.client.auth_server == omada_settings.auth_server
 
 
 async def test_is_ready(
