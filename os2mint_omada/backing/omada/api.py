@@ -37,7 +37,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         settings = self.settings
 
         # HTTPX Client
-        client_cls = AsyncClient
+        client_cls: Type[AsyncClient | AuthenticatedAsyncHTTPXClient] = AsyncClient
         client_kwargs: dict[str, Any] = {}
         if settings.host_header:
             client_kwargs["headers"] = {"Host": settings.host_header}

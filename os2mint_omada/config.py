@@ -13,17 +13,11 @@ from pydantic import validator
 from ramqp.config import ConnectionSettings as AMQPConnectionSettings
 
 
-class OIDCSettings(BaseSettings):
-    client_id: str
-    client_secret: str
-    auth_realm: str
-    auth_server: AnyHttpUrl
-
-
-class MOOIDCSettings(OIDCSettings):
+class MOAuthSettings(BaseModel):
     client_id = "omada"
-    auth_realm = "mo"
-    auth_server = parse_obj_as(AnyHttpUrl, "http://keycloak-service:8080/auth")
+    client_secret: str
+    realm = "mo"
+    server: AnyHttpUrl
 
 
 class MOAMQPConnectionSettings(AMQPConnectionSettings):
@@ -33,9 +27,9 @@ class MOAMQPConnectionSettings(AMQPConnectionSettings):
 
 class MoSettings(BaseModel):
     url: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://mo-service:5000")
-    oidc: MOOIDCSettings
+    auth: MOAuthSettings
 
-    amqp: MOAMQPConnectionSettings = Field(default_factory=MOAMQPConnectionSettings)
+    amqp: MOAMQPConnectionSettings
 
     # These classes and IT systems should be created by os2mo-init before starting.
     # See init.config.yml for an example that corresponds to these defaults.
@@ -66,6 +60,13 @@ class MoSettings(BaseModel):
     manual_primary_class: str = "primary"
 
 
+class OmadaOIDCSettings(BaseModel):
+    client_id: str
+    client_secret: str
+    token_endpoint: AnyHttpUrl
+    scope: str
+
+
 class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
     exchange = "omada"
     queue_prefix = "omada"
@@ -76,12 +77,10 @@ class OmadaSettings(BaseModel):
     # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     url: AnyHttpUrl
     host_header: str | None = None  # http host header override
-    oidc: OIDCSettings | None = None
+    oidc: OmadaOIDCSettings | None = None
     insecure_skip_ssl_verify = False
 
-    amqp: OmadaAMQPConnectionSettings = Field(
-        default_factory=OmadaAMQPConnectionSettings
-    )
+    amqp: OmadaAMQPConnectionSettings
     interval: int = 1800
     persistence_file: Path = Path("/data/omada.json")
 

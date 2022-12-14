@@ -27,9 +27,10 @@ services:
 
       # OS2mo
       MO__URL: "http://mo"
-      MO__OIDC__CLIENT_ID: "dipex"
-      MO__OIDC__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
-      MO__OIDC__AUTH_SERVER: "http://keycloak:8080/auth"
+      MO__AUTH__CLIENT_ID: "dipex"
+      MO__AUTH__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      MO__AUTH__REALM: "mo"
+      MO__AUTH__SERVER: "http://keycloak:8080/auth"
       MO__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
 
       # Omada
