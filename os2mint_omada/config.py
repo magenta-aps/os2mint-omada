@@ -16,8 +16,8 @@ from ramqp.config import ConnectionSettings as AMQPConnectionSettings
 class MOAuthSettings(BaseModel):
     client_id = "omada"
     client_secret: str
-    realm = "mo"
-    server: AnyHttpUrl
+    auth_realm = Field("mo", alias="realm")
+    auth_server: AnyHttpUrl = Field(alias="server")
 
 
 class MOAMQPConnectionSettings(AMQPConnectionSettings):
