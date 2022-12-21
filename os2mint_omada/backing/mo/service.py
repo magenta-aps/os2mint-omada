@@ -442,6 +442,9 @@ class MOService(AbstractAsyncContextManager):
                     person: employee {
                       uuid
                     }
+                    engagement {
+                      uuid
+                    }
                     validity {
                       from
                       to
@@ -469,6 +472,11 @@ class MOService(AbstractAsyncContextManager):
             """Convert GraphQL IT user to be RA-Models compatible."""
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
+
+            engagement = it_user["engagement"]
+            if engagement is not None:
+                it_user["engagement"] = one({EngagementRef(**p) for p in engagement})
+
             return ITUser.parse_obj(it_user)
 
         converted_it_users = (convert(it_user) for it_user in it_users)
