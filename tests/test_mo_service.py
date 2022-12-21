@@ -388,5 +388,5 @@ async def test_delete(mo_service: MOService) -> None:
     )
     await mo_service.delete(it_user)
     mo_service.graphql.execute.assert_awaited_once_with(
-        ANY, variable_values={"uuid": [str(it_user.uuid)]}
+        ANY, variable_values={"uuid": str(it_user.uuid)}
     )

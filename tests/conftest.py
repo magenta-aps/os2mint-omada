@@ -7,6 +7,8 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from pydantic import AnyHttpUrl
+from pydantic import parse_obj_as
 from pytest import Item
 from ramodels.mo import Employee
 from ramqp import AMQPSystem
@@ -18,7 +20,10 @@ from os2mint_omada.backing.omada.api import OmadaAPI
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.backing.omada.models import RawOmadaUser
 from os2mint_omada.backing.omada.service import OmadaService
+from os2mint_omada.config import MOAMQPConnectionSettings
+from os2mint_omada.config import MOAuthSettings
 from os2mint_omada.config import MoSettings
+from os2mint_omada.config import OmadaAMQPConnectionSettings
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.config import Settings
 
@@ -35,7 +40,11 @@ def pytest_collection_modifyitems(items: list[Item]) -> None:
 def mo_settings() -> MoSettings:
     """Fixed settings so tests work without specific environment variables."""
     return MoSettings(
-        client_secret="hunter2",
+        auth=MOAuthSettings(
+            client_secret="hunter2",
+            server=parse_obj_as(AnyHttpUrl, "https://keycloak.example.org"),
+        ),
+        amqp=MOAMQPConnectionSettings(),
     )
 
 
@@ -43,8 +52,9 @@ def mo_settings() -> MoSettings:
 def omada_settings(tmp_path: Path) -> OmadaSettings:
     """Fixed settings so tests work without specific environment variables."""
     return OmadaSettings(
-        url="http://omada.example.com/odata.json",
+        url=parse_obj_as(AnyHttpUrl, "https://omada.example.com/odata.json"),
         persistence_file=tmp_path.joinpath("omada.json"),
+        amqp=OmadaAMQPConnectionSettings(),
     )
 
 
@@ -182,6 +192,7 @@ def raw_omada_user_manual(raw_omada_user: dict) -> dict:
         "C_CPRNR": "1707821597",
         "JOBTITLE": "Worker",
         "C_ORGANISATIONSKODE": "5a23d722-1be4-4f00-a200-000001500001",
+        "C_SYNLIG_I_OS2MO": True,
     }
     return raw_omada_user | manual_fields
 
