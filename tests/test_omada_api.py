@@ -36,14 +36,16 @@ async def test_client_auth(omada_settings: OmadaSettings) -> None:
     """Test that auth settings are passed through."""
     omada_settings.oidc.client_id = "AzureDiamond"
     omada_settings.oidc.client_secret = "hunter2"
-    omada_settings.auth_realm = "Firemaw-EU"
-    omada_settings.auth_server = parse_obj_as(AnyHttpUrl, "https://adfs.example.net")
+    omada_settings.oidc.token_endpoint = parse_obj_as(
+        AnyHttpUrl, "https://oidc.example.net"
+    )
+    omada_settings.oidc.scope = "all"
     async with OmadaAPI(settings=omada_settings) as api:
         assert isinstance(api.client, AuthenticatedAsyncHTTPXClient)
         assert api.client.client_id == omada_settings.oidc.client_id
         assert api.client.client_secret == omada_settings.oidc.client_secret
-        assert api.client.auth_realm == omada_settings.auth_realm
-        assert api.client.auth_server == omada_settings.auth_server
+        assert api.client.token_endpoint == omada_settings.oidc.token_endpoint
+        assert api.client.scope == omada_settings.oidc.scope
 
 
 async def test_is_ready(
