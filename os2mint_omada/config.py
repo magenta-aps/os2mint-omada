@@ -78,7 +78,6 @@ class OmadaSettings(BaseModel):
     url: AnyHttpUrl
     host_header: str | None = None  # http host header override
     oidc: OmadaOIDCSettings | None = None
-    insecure_skip_ssl_verify = False
 
     amqp: OmadaAMQPConnectionSettings
     interval: int = 1800
