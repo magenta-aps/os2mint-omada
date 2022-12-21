@@ -108,8 +108,8 @@ class EngagementSyncer(Syncer):
         )
 
         # Get current user data from Omada
-        raw_omada_users = await self.omada_service.api.get_users_by_cpr_numbers(
-            cpr_numbers=[cpr_number]
+        raw_omada_users = await self.omada_service.api.get_users_by_cpr_number(
+            cpr_number
         )
         omada_users = parse_obj_as(list[ManualOmadaUser | OmadaUser], raw_omada_users)
         manual_omada_users = [u for u in omada_users if isinstance(u, ManualOmadaUser)]

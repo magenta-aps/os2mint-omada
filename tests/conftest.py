@@ -268,7 +268,7 @@ class FakeOmadaAPI(OmadaAPI):
         super().__init__(settings)
         self.users: list[OmadaUser] = []
 
-    async def get_users(self, params: dict | None = None) -> list[RawOmadaUser]:
+    async def get_users(self, omada_filter: str | None = None) -> list[RawOmadaUser]:
         return [RawOmadaUser(u.dict()) for u in self.users]
 
     async def get_users_by_service_numbers(
@@ -280,10 +280,8 @@ class FakeOmadaAPI(OmadaAPI):
             if u.get("service_number") in service_numbers
         ]
 
-    async def get_users_by_cpr_numbers(
-        self, cpr_numbers: Iterable[str]
-    ) -> list[RawOmadaUser]:
-        return [u for u in await self.get_users() if u.get("cpr_number") in cpr_numbers]
+    async def get_users_by_cpr_number(self, cpr_number) -> list[RawOmadaUser]:
+        return [u for u in await self.get_users() if u.get("cpr_number") == cpr_number]
 
 
 class FakeOmadaService(OmadaService):

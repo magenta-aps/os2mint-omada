@@ -78,14 +78,18 @@ class OmadaAPI(AbstractAsyncContextManager):
             logger.exception("Exception occurred during Omada healthcheck")
         return False
 
-    async def get_users(self, params: dict | None = None) -> list[RawOmadaUser]:
+    async def get_users(self, omada_filter: str | None = None) -> list[RawOmadaUser]:
         """Retrieve IT users from Omada.
 
         Args:
-            params: Additional parameters passed to the HTTPX client request.
+            omada_filter: Optional Omada filter query.
 
         Returns: List of raw omada users (dicts).
         """
+        params = {}
+        if omada_filter is not None:
+            params["$filter"] = omada_filter
+
         url = self.settings.url
         logger.info("Getting Omada IT users", odata_url=url, params=params)
         response = await self.client.get(url, params=params)
@@ -104,9 +108,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         Returns: List of raw omada users matching the filter.
         """
         # Omada does not support OR or IN operators, so we have to do it like this
-        get_users = (
-            self.get_users(params={"$filter": f"{key} eq {value}"}) for value in values
-        )
+        get_users = (self.get_users(f"{key} eq {value}") for value in values)
         users = await asyncio.gather(*get_users)
         return list(flatten(users))
 
@@ -123,15 +125,12 @@ class OmadaAPI(AbstractAsyncContextManager):
         service_number_strings = (f"'{n}'" for n in service_numbers)
         return await self.get_users_by("C_TJENESTENR", service_number_strings)
 
-    async def get_users_by_cpr_numbers(
-        self, cpr_numbers: Iterable[str]
-    ) -> list[RawOmadaUser]:
+    async def get_users_by_cpr_number(self, cpr_number: str) -> list[RawOmadaUser]:
         """Retrieve IT users with the given CPR number ("C_CPRNR").
 
         Args:
-            cpr_numbers: CPR number to retrieve users for.
+            cpr_number: CPR number to retrieve users for.
 
         Returns: List of raw omada users with the given CPR number.
         """
-        cpr_number_strings = (f"'{n}'" for n in cpr_numbers)
-        return await self.get_users_by("C_CPRNR", cpr_number_strings)
+        return await self.get_users_by("C_CPRNR", [f"'{cpr_number}'"])

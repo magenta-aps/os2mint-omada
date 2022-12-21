@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import asyncio
-from typing import Iterable
 from uuid import UUID
 
 import structlog
@@ -54,9 +53,9 @@ async def sync_mo(request: Request, employees: set[UUID] | None = None) -> None:
     logger.info("Synchronising MO employees", employees=employees)
     context: Context = request.app.state.context
     if employees is None:
-        employee_uuids = await context["mo_service"].get_all_employee_uuids()
-    for i, uuid in enumerate(employee_uuids):
-        logger.info("Synchronising MO user", current=i, total=len(employee_uuids))
+        employees = await context["mo_service"].get_all_employee_uuids()
+    for i, uuid in enumerate(employees):
+        logger.info("Synchronising MO user", current=i, total=len(employees))
         try:
             await sync_employee(
                 employee_uuid=uuid,
@@ -69,13 +68,13 @@ async def sync_mo(request: Request, employees: set[UUID] | None = None) -> None:
 
 
 @router.post("/sync/omada", status_code=status.HTTP_204_NO_CONTENT)
-async def sync_omada(request: Request, key: str, values: Iterable[str]) -> None:
-    """Force-synchronise Omada user(s)."""
-    logger.info("Synchronising Omada users", key=key, values=values)
+async def sync_omada(request: Request, omada_filter: str) -> None:
+    """Force-synchronise Omada user(s) matching the given Omada filter."""
+    logger.info("Synchronising Omada users", omada_filter=omada_filter)
     context: Context = request.app.state.context
     omada_service = context["omada_service"]
 
-    raw_omada_users = await omada_service.api.get_users_by(key, values)
+    raw_omada_users = await omada_service.api.get_users(omada_filter)
     logger.info("Synchronising raw Omada users", omada_users=raw_omada_users)
     for raw_omada_user in raw_omada_users:
         await omada_service.amqp_system.publish_message(
