@@ -3,7 +3,7 @@
 ---
 services:
   init:
-    image: magentaaps/os2mo-init:1.0
+    image: magentaaps/os2mo-init:1.1
     environment:
       # Keycloak
       AUTH_SERVER: "http://keycloak:8080/auth"

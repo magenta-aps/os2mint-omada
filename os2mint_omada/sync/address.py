@@ -10,9 +10,11 @@ import structlog
 from pydantic import parse_obj_as
 from ramodels.mo import Validity
 from ramodels.mo._shared import AddressType
+from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
+from ramodels.mo.details import Engagement
 from ramqp.utils import handle_exclusively
 from ramqp.utils import sleep_on_error
 
@@ -31,6 +33,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         omada_user: OmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
+        engagement_uuid: UUID,
         address_type_uuid: UUID,
         visibility_uuid: UUID,
     ) -> ComparableAddress | None:
@@ -40,6 +43,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
             omada_user: Omada user.
             omada_attr: Attribute on the Omada user to use for the address value.
             employee_uuid: MO employee UUID.
+            engagement_uuid: MO engagement UUID.
             address_type_uuid: Type class of the address.
             visibility_uuid: Visibility class of the address.
 
@@ -54,6 +58,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
             value=omada_value,
             address_type=AddressType(uuid=address_type_uuid),
             person=PersonRef(uuid=employee_uuid),
+            engagement=EngagementRef(uuid=engagement_uuid),
             visibility=Visibility(uuid=visibility_uuid),
             validity=Validity(
                 from_date=omada_user.valid_from,
@@ -75,35 +80,36 @@ class AddressSyncer(Syncer):
         """
         logger.info("Synchronising addresses", employee_uuid=employee_uuid)
 
-        # Get current user data from MO
+        # Get MO classes configuration
         address_types = await self.mo_service.get_classes("employee_address_type")
         omada_address_types = [
             address_types[user_key]
             for user_key in self.settings.mo.address_map.values()
         ]
+        visibility_classes = await self.mo_service.get_classes("visibility")
+
+        # Get current user data from MO
+        mo_engagements = await self.mo_service.get_employee_engagements(
+            uuid=employee_uuid
+        )
         mo_addresses = await self.mo_service.get_employee_addresses(
             uuid=employee_uuid,
             address_types=omada_address_types,
         )
-        mo_engagements = await self.mo_service.get_employee_engagements(
-            uuid=employee_uuid
-        )
 
         # Get current user data from Omada. Note that we are fetching Omada users for
         # ALL engagements to avoid deleting too many addresses
-        service_numbers = (e.user_key for e in mo_engagements)
+        engagements = {e.user_key: e for e in mo_engagements}
         raw_omada_users = await self.omada_service.api.get_users_by_service_numbers(
-            service_numbers
+            service_numbers=engagements.keys()
         )
         omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
-
-        # Get MO classes configuration
-        visibility_classes = await self.mo_service.get_classes("visibility")
 
         # Synchronise addresses to MO
         await self.ensure_addresses(
             omada_users=omada_users,
             employee_uuid=employee_uuid,
+            engagements=engagements,
             addresses=mo_addresses,
             address_map=self.settings.mo.address_map,
             address_types=address_types,
@@ -114,6 +120,7 @@ class AddressSyncer(Syncer):
         self,
         omada_users: list[OmadaUser],
         employee_uuid: UUID,
+        engagements: dict[str, Engagement],
         addresses: set[Address],
         address_map: dict[str, str],
         address_types: dict[str, UUID],
@@ -128,6 +135,7 @@ class AddressSyncer(Syncer):
         Args:
             omada_users: List of Omada users to synchronise.
             employee_uuid: MO employee UUID.
+            engagements: Dict from Omada service numbers to MO engagements.
             addresses: Existing MO addresses.
             address_map: Maps from Omada user attribute to address type user key in MO.
             address_types: Address types for employee addresses.
@@ -147,6 +155,7 @@ class AddressSyncer(Syncer):
                 omada_user=omada_user,
                 omada_attr=omada_attr,
                 employee_uuid=employee_uuid,
+                engagement_uuid=engagements[omada_user.service_number].uuid,
                 address_type_uuid=address_types[mo_address_user_key],
                 visibility_uuid=visibility_uuid,
             )

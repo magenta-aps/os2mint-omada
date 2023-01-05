@@ -8,8 +8,10 @@ from uuid import UUID
 import structlog
 from pydantic import parse_obj_as
 from ramodels.mo import Validity
+from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
+from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
 from ramqp.utils import handle_exclusively
 from ramqp.utils import sleep_on_error
@@ -29,6 +31,7 @@ class ComparableITUser(ComparableMixin, ITUser):
         omada_user: OmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
+        engagement_uuid: UUID,
         it_system_uuid: UUID,
     ) -> ComparableITUser:
         """Construct (comparable) MO IT user for a specific attribute on an Omada user.
@@ -37,6 +40,7 @@ class ComparableITUser(ComparableMixin, ITUser):
             omada_user: Omada user.
             omada_attr: Attribute on the Omada user to use as the IT user account name.
             employee_uuid: MO employee UUID.
+            engagement_uuid: MO engagement UUID.
             it_system_uuid: IT system of the IT user.
 
         Returns: Comparable MO IT user for the Omada attribute.
@@ -45,6 +49,7 @@ class ComparableITUser(ComparableMixin, ITUser):
             user_key=str(getattr(omada_user, omada_attr)),
             itsystem=ITSystemRef(uuid=it_system_uuid),
             person=PersonRef(uuid=employee_uuid),
+            engagement=EngagementRef(uuid=engagement_uuid),
             validity=Validity(
                 from_date=omada_user.valid_from,
                 to_date=omada_user.valid_to,
@@ -65,11 +70,13 @@ class ITUserSyncer(Syncer):
         """
         logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
-        # Get current user data from MO
+        # Get MO classes configuration
         it_systems = await self.mo_service.get_it_systems()
         omada_it_systems = [
             it_systems[user_key] for user_key in self.settings.mo.it_user_map.values()
         ]
+
+        # Get current user data from MO
         mo_it_users = await self.mo_service.get_employee_it_users(
             uuid=employee_uuid,
             it_systems=omada_it_systems,
@@ -80,9 +87,9 @@ class ITUserSyncer(Syncer):
 
         # Get current user data from Omada. Note that we are fetching Omada users for
         # ALL engagements to avoid deleting too many IT users
-        service_numbers = (e.user_key for e in mo_engagements)
+        engagements = {e.user_key: e for e in mo_engagements}
         raw_omada_users = await self.omada_service.api.get_users_by_service_numbers(
-            service_numbers
+            service_numbers=engagements.keys()
         )
         omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
 
@@ -90,6 +97,7 @@ class ITUserSyncer(Syncer):
         await self.ensure_it_users(
             omada_users=omada_users,
             employee_uuid=employee_uuid,
+            engagements=engagements,
             it_users=mo_it_users,
             it_user_map=self.settings.mo.it_user_map,
             it_systems=it_systems,
@@ -99,6 +107,7 @@ class ITUserSyncer(Syncer):
         self,
         omada_users: list[OmadaUser],
         employee_uuid: UUID,
+        engagements: dict[str, Engagement],
         it_users: set[ITUser],
         it_user_map: dict[str, str],
         it_systems: ITSystems,
@@ -112,6 +121,7 @@ class ITUserSyncer(Syncer):
         Args:
             omada_users: List of Omada users to synchronise.
             employee_uuid: MO employee UUID.
+            engagements: Dict from Omada service numbers to MO engagements.
             it_users: Existing MO IT users.
             it_user_map: Maps from Omada user attribute to IT system user key in MO.
             it_systems: IT systems configured in MO.
@@ -130,6 +140,7 @@ class ITUserSyncer(Syncer):
                 omada_user=omada_user,
                 omada_attr=omada_attr,
                 employee_uuid=employee_uuid,
+                engagement_uuid=engagements[omada_user.service_number].uuid,
                 it_system_uuid=it_systems[mo_it_system_user_key],
             )
             for omada_user in omada_users

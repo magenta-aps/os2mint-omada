@@ -23,6 +23,7 @@ from raclients.graph.client import GraphQLClient
 from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
 from ramodels.mo import Validity
+from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import UUIDBase
 from ramodels.mo.details import Address
@@ -313,6 +314,9 @@ class MOService(AbstractAsyncContextManager):
                     person: employee {
                       uuid
                     }
+                    engagement {
+                      uuid
+                    }
                     visibility {
                       uuid
                     }
@@ -343,6 +347,11 @@ class MOService(AbstractAsyncContextManager):
         def convert(address: dict) -> Address:
             """Convert GraphQL address to be RA-Models compatible."""
             address["person"] = one({PersonRef(**p) for p in address["person"]})
+
+            engagement = address["engagement"]
+            if engagement is not None:
+                address["engagement"] = one({EngagementRef(**p) for p in engagement})
+
             return Address.parse_obj(address)
 
         return {convert(address) for address in addresses}
@@ -433,6 +442,9 @@ class MOService(AbstractAsyncContextManager):
                     person: employee {
                       uuid
                     }
+                    engagement {
+                      uuid
+                    }
                     validity {
                       from
                       to
@@ -460,6 +472,11 @@ class MOService(AbstractAsyncContextManager):
             """Convert GraphQL IT user to be RA-Models compatible."""
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
+
+            engagement = it_user["engagement"]
+            if engagement is not None:
+                it_user["engagement"] = one({EngagementRef(**p) for p in engagement})
+
             return ITUser.parse_obj(it_user)
 
         converted_it_users = (convert(it_user) for it_user in it_users)

@@ -23,8 +23,8 @@ from os2mint_omada.backing.mo.models import EmployeeData
 from os2mint_omada.backing.omada.models import IdentityCategory
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
-from os2mint_omada.config import MoSettings
-from os2mint_omada.sync import Syncer
+from os2mint_omada.config import Settings
+from os2mint_omada.sync.base import Syncer
 from tests.conftest import FakeMOService
 from tests.conftest import FakeOmadaService
 
@@ -46,8 +46,8 @@ class TestUser:
         return OmadaUser.parse_obj(
             {
                 "identity_category": IdentityCategory(
-                    id=100,
-                    uid="ac0c67fc-5f47-4112-94e6-446bfb68326a",
+                    id="100",
+                    uid=UUID("ac0c67fc-5f47-4112-94e6-446bfb68326a"),
                 ),
                 **kwargs,
             }
@@ -59,8 +59,8 @@ class TestUser:
             {
                 **omada_user.dict(),
                 "identity_category": IdentityCategory(
-                    id=561,
-                    uid="270a1807-95ca-40b4-9ce5-475d8961f31b",
+                    id="561",
+                    uid=UUID("270a1807-95ca-40b4-9ce5-475d8961f31b"),
                 ),
                 "first_name": self.first_name,
                 "last_name": self.last_name,
@@ -163,12 +163,12 @@ class FakeSyncer(Syncer):
 
 @pytest.fixture
 def fake_syncer(
-    mo_settings: MoSettings,
+    settings: Settings,
     fake_mo_service: FakeMOService,
     fake_omada_service: FakeOmadaService,
 ) -> FakeSyncer:
     return FakeSyncer(
-        settings=mo_settings,
+        settings=settings,
         mo_service=fake_mo_service,
         omada_service=fake_omada_service,
     )
@@ -182,6 +182,7 @@ async def test_ensure_employee_no_existing(
         ad_guid=UUID("d3ea59fd-6095-45b6-9d4c-3eb44c9e9f12"),
         job_title="cryptographer",
         org_unit=org_units["org_unit_a"],
+        is_visible=True,
         valid_from=datetime(2019, 5, 6),
     )
     fake_syncer.omada_service.api.users.append(omada_user)
@@ -208,6 +209,7 @@ async def test_ensure_employee_existing(
         ad_guid=UUID("d3ea59fd-6095-45b6-9d4c-3eb44c9e9f12"),
         job_title="cryptographer",
         org_unit=org_units["org_unit_a"],
+        is_visible=True,
         valid_from=datetime(2019, 5, 6),
     )
     employee = alice.get_mo_employee()
@@ -232,6 +234,7 @@ async def test_ensure_employee_existing_changed(
         ad_guid=UUID("d3ea59fd-6095-45b6-9d4c-3eb44c9e9f12"),
         job_title="cryptographer",
         org_unit=org_units["org_unit_a"],
+        is_visible=False,
         valid_from=datetime(2019, 5, 6),
     )
     employee = alice.get_mo_employee()
@@ -270,6 +273,7 @@ async def test_ensure_engagements(
             ad_guid=UUID("4ca9d4f0-d6bf-42f7-a676-01ff99aee05f"),
             job_title="cryptographer",
             org_unit=org_unit_it_systems["org_unit_a"],
+            is_visible=True,
             valid_from=datetime(2019, 5, 6),
         ),
         alice.get_manual_omada_user(
@@ -277,6 +281,7 @@ async def test_ensure_engagements(
             ad_guid=UUID("d9dc2d8c-845d-4575-92ea-7fd0d5b6c028"),
             job_title="",
             org_unit=org_unit_it_systems["org_unit_a"],
+            is_visible=True,
             valid_from=datetime(2022, 11, 12),
         ),
     ]

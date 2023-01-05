@@ -9,6 +9,7 @@ from respx import MockRouter
 from starlette import status
 
 from os2mint_omada.backing.omada.api import OmadaAPI
+from os2mint_omada.config import OmadaOIDCSettings
 from os2mint_omada.config import OmadaSettings
 
 
@@ -34,12 +35,12 @@ async def test_client_host_header(omada_settings: OmadaSettings) -> None:
 
 async def test_client_auth(omada_settings: OmadaSettings) -> None:
     """Test that auth settings are passed through."""
-    omada_settings.oidc.client_id = "AzureDiamond"
-    omada_settings.oidc.client_secret = "hunter2"
-    omada_settings.oidc.token_endpoint = parse_obj_as(
-        AnyHttpUrl, "https://oidc.example.net"
+    omada_settings.oidc = OmadaOIDCSettings(
+        client_id="AzureDiamond",
+        client_secret="hunter2",
+        token_endpoint=parse_obj_as(AnyHttpUrl, "https://oidc.example.net"),
+        scope="all",
     )
-    omada_settings.oidc.scope = "all"
     async with OmadaAPI(settings=omada_settings) as api:
         assert isinstance(api.client, AuthenticatedAsyncHTTPXClient)
         assert api.client.client_id == omada_settings.oidc.client_id
@@ -97,3 +98,16 @@ async def test_get_users_by_service_numbers(
     ).respond(json={"value": ["y"]})
     # The responses from the two individual requests should be flattened to one
     assert await omada_api.get_users_by_service_numbers(["a", "b"]) == ["x", "y"]
+
+
+async def test_get_user_by_cpr_number(
+    omada_api: OmadaAPI,
+    omada_settings: OmadaSettings,
+    respx_mock: MockRouter,
+) -> None:
+    """Test that filtering parameters are sent and handled correctly."""
+    respx_mock.get(
+        url=omada_settings.url,
+        params={"$filter": "C_CPRNR eq 'a'"},
+    ).respond(json={"value": ["x"]})
+    assert await omada_api.get_users_by_cpr_number("a") == ["x"]
