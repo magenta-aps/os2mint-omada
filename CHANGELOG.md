@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+4.0.0 - 2023-01-05
+------------------
+
+[#54109] Link Addresses and ITUsers to MO Engagements
+
 3.0.0 - 2022-12-21
 ------------------
 
