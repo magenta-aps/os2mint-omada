@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+4.1.0 - 2023-01-06
+------------------
+
+fix: [#52084] Remove host header override
+
+Will be implemented using kubernetes hostAliases instead.
+
 4.0.0 - 2023-01-05
 ------------------
 
