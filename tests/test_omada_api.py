@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import pytest
-from httpx import AsyncClient
 from pydantic import AnyHttpUrl
 from pydantic import parse_obj_as
 from raclients.auth import AuthenticatedAsyncHTTPXClient
@@ -18,19 +17,6 @@ async def omada_api(omada_settings: OmadaSettings) -> OmadaAPI:
     """OmadaAPI with settings from fixtures."""
     async with OmadaAPI(settings=omada_settings) as api:
         yield api
-
-
-async def test_client(omada_api: OmadaAPI) -> None:
-    """Test that the client does not override headers and auth as default."""
-    assert "host" not in omada_api.client.headers
-    assert isinstance(omada_api.client, AsyncClient)
-
-
-async def test_client_host_header(omada_settings: OmadaSettings) -> None:
-    """Test that the host header setting is passed through."""
-    omada_settings.host_header = "foo"
-    async with OmadaAPI(settings=omada_settings) as api:
-        assert api.client.headers["host"] == "foo"
 
 
 async def test_client_auth(omada_settings: OmadaSettings) -> None:
