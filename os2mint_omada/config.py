@@ -76,7 +76,6 @@ class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
 class OmadaSettings(BaseModel):
     # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     url: AnyHttpUrl
-    host_header: str | None = None  # http host header override
     oidc: OmadaOIDCSettings | None = None
 
     amqp: OmadaAMQPConnectionSettings
