@@ -347,10 +347,9 @@ class MOService(AbstractAsyncContextManager):
         def convert(address: dict) -> Address:
             """Convert GraphQL address to be RA-Models compatible."""
             address["person"] = one({PersonRef(**p) for p in address["person"]})
-
-            engagement = address["engagement"]
-            if engagement is not None:
-                address["engagement"] = one({EngagementRef(**p) for p in engagement})
+            address["engagement"] = only(
+                {EngagementRef(**p) for p in address.pop("engagement")}
+            )
 
             return Address.parse_obj(address)
 
@@ -472,11 +471,9 @@ class MOService(AbstractAsyncContextManager):
             """Convert GraphQL IT user to be RA-Models compatible."""
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
-
-            engagement = it_user["engagement"]
-            if engagement is not None:
-                it_user["engagement"] = one({EngagementRef(**p) for p in engagement})
-
+            it_user["engagement"] = only(
+                {EngagementRef(**p) for p in it_user.pop("engagement")}
+            )
             return ITUser.parse_obj(it_user)
 
         converted_it_users = (convert(it_user) for it_user in it_users)
