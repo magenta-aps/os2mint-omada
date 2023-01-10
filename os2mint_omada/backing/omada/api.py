@@ -12,6 +12,7 @@ from typing import Type
 
 import structlog
 from httpx import AsyncClient
+from httpx import BasicAuth
 from more_itertools import flatten
 from raclients.auth import AuthenticatedAsyncHTTPXClient
 
@@ -42,6 +43,8 @@ class OmadaAPI(AbstractAsyncContextManager):
         if settings.oidc is not None:
             client_cls = AuthenticatedAsyncHTTPXClient
             client_kwargs.update(**settings.oidc.dict())
+        if settings.basic_auth is not None:
+            client_kwargs["auth"] = BasicAuth(**settings.basic_auth.dict())
 
         logger.info("Setting up Omada API", client_kwargs=client_kwargs)
         client = client_cls(timeout=30, **client_kwargs)
