@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import pytest
+from httpx import AsyncClient
+from httpx import Request
 from pydantic import AnyHttpUrl
 from pydantic import parse_obj_as
 from raclients.auth import AuthenticatedAsyncHTTPXClient
@@ -8,6 +10,7 @@ from respx import MockRouter
 from starlette import status
 
 from os2mint_omada.backing.omada.api import OmadaAPI
+from os2mint_omada.config import OmadaBasicAuthSettings
 from os2mint_omada.config import OmadaOIDCSettings
 from os2mint_omada.config import OmadaSettings
 
@@ -19,8 +22,8 @@ async def omada_api(omada_settings: OmadaSettings) -> OmadaAPI:
         yield api
 
 
-async def test_client_auth(omada_settings: OmadaSettings) -> None:
-    """Test that auth settings are passed through."""
+async def test_client_oidc_auth(omada_settings: OmadaSettings) -> None:
+    """Test that OIDC auth settings are passed through."""
     omada_settings.oidc = OmadaOIDCSettings(
         client_id="AzureDiamond",
         client_secret="hunter2",
@@ -33,6 +36,19 @@ async def test_client_auth(omada_settings: OmadaSettings) -> None:
         assert api.client.client_secret == omada_settings.oidc.client_secret
         assert api.client.token_endpoint == omada_settings.oidc.token_endpoint
         assert api.client.scope == omada_settings.oidc.scope
+
+
+async def test_client_basic_auth(omada_settings: OmadaSettings) -> None:
+    """Test that basic auth settings are passed through."""
+    omada_settings.basic_auth = OmadaBasicAuthSettings(
+        username="AzureDiamond",
+        password="hunter2",
+    )
+    async with OmadaAPI(settings=omada_settings) as api:
+        assert isinstance(api.client, AsyncClient)
+        request = next(api.client.auth.auth_flow(Request("GET", "example.com")))
+        # base64("AzureDiamond:hunter2") == "QXp1cmVEaWFtb25kOmh1bnRlcjI="
+        assert request.headers["Authorization"] == "Basic QXp1cmVEaWFtb25kOmh1bnRlcjI="
 
 
 async def test_is_ready(
