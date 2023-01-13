@@ -40,6 +40,9 @@ class OmadaAPI(AbstractAsyncContextManager):
         # HTTPX Client
         client_cls: Type[AsyncClient | AuthenticatedAsyncHTTPXClient] = AsyncClient
         client_kwargs: dict[str, Any] = {}
+        if settings.insecure_skip_ssl_verify:
+            logger.warning("INSECURE: Skipping SSL verification for Omada API!")
+            client_kwargs["verify"] = False
         if settings.oidc is not None:
             client_cls = AuthenticatedAsyncHTTPXClient
             client_kwargs.update(**settings.oidc.dict())
