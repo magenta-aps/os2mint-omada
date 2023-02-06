@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+4.2.0 - 2023-02-06
+------------------
+
+[#xxxxx] support rejecting messages via env-vars
+
 4.1.1 - 2023-01-09
 ------------------
 
