@@ -13,6 +13,7 @@ from ramqp.mo.models import ObjectType
 from ramqp.mo.models import PayloadType as MOPayload
 from ramqp.mo.models import RequestType
 from ramqp.mo.models import ServiceType
+from ramqp.utils import RejectMessage
 
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
@@ -87,6 +88,11 @@ async def sync_omada_employee(
 
     Returns: None.
     """
+    message_id = message.info()["message_id"]
+    logger.debug("AMQP message id", message_id=message_id)
+    if message_id in context["settings"].reject_ids:
+        raise RejectMessage("Rejected due to blacklist")
+
     try:
         omada_user = ManualOmadaUser.parse_raw(message.body)
     except ValidationError:

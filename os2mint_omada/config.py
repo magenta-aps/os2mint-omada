@@ -102,6 +102,7 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
     enable_metrics: bool = False
+    reject_ids: list[str]
 
     mo: MoSettings
     omada: OmadaSettings
