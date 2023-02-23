@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+4.3.0 - 2023-02-23
+------------------
+
+[#54858] Revert: support rejecting messages via env-vars
+
 4.2.0 - 2023-02-06
 ------------------
 
