@@ -50,7 +50,7 @@ class OmadaAPI(AbstractAsyncContextManager):
             client_kwargs["auth"] = BasicAuth(**settings.basic_auth.dict())
 
         logger.info("Setting up Omada API", client_kwargs=client_kwargs)
-        client = client_cls(timeout=30, **client_kwargs)
+        client = client_cls(timeout=60, **client_kwargs)
         self.client: AsyncClient = await self.stack.enter_async_context(client)
 
         return await super().__aenter__()

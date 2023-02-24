@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
 from asyncio import CancelledError
 from asyncio import Task
 from contextlib import AbstractAsyncContextManager
@@ -71,8 +72,12 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 await asyncio.sleep(self.settings.interval)
             except Exception:  # pylint: disable=broad-except
                 logger.exception("Failed to generate events")
-                logger.info("Resuming scheduler in 5 seconds..")
-                await asyncio.sleep(5)
+                # Wait a random amount of time before retrying, to avoid two or more
+                # integrations indefinitely causing timeouts in each other by trying to
+                # generate at the same time.
+                wait = random.randint(30, 120)
+                logger.info("Waiting to resume scheduler", wait=wait)
+                await asyncio.sleep(wait)
             except CancelledError:
                 logger.info("Stopping Omada scheduler")
                 break
