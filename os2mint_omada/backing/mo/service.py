@@ -348,7 +348,7 @@ class MOService(AbstractAsyncContextManager):
             """Convert GraphQL address to be RA-Models compatible."""
             address["person"] = one({PersonRef(**p) for p in address["person"]})
             address["engagement"] = only(
-                {EngagementRef(**p) for p in (address.pop("engagement") or [])}
+                {EngagementRef(**p) for p in address.pop("engagement")}
             )
 
             return Address.parse_obj(address)
@@ -472,7 +472,7 @@ class MOService(AbstractAsyncContextManager):
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
             it_user["engagement"] = only(
-                {EngagementRef(**p) for p in (it_user.pop("engagement") or [])}
+                {EngagementRef(**p) for p in it_user.pop("engagement")}
             )
             return ITUser.parse_obj(it_user)
 
