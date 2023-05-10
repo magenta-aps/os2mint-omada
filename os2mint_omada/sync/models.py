@@ -12,10 +12,6 @@ from pydantic import BaseModel
 from pydantic import validator
 from ramodels.mo import Validity
 
-from os2mint_omada.backing.mo.service import MOService
-from os2mint_omada.backing.omada.service import OmadaService
-from os2mint_omada.config import Settings
-
 logger = structlog.get_logger(__name__)
 
 
