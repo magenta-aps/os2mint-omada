@@ -1,22 +1,21 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from typing import Any
-
 import structlog
-from aio_pika import IncomingMessage
-from os2mint_omada.backing.omada.models import ManualOmadaUser
-from os2mint_omada.backing.omada.models import OmadaUser
-from os2mint_omada.backing.omada.routing_keys import Event
-from os2mint_omada.models import Context
 from pydantic import ValidationError
 from ramqp import Router
+from ramqp.depends import PayloadBytes
+from ramqp.depends import SleepOnError
 from ramqp.mo import MORouter
 from ramqp.mo import PayloadType
 
+from ... import depends
 from .address import sync_addresses
 from .employee import sync_manual_employee
 from .engagement import sync_engagements
 from .it_user import sync_it_users
+from .models import ManualSilkeborgOmadaUser
+from .models import SilkeborgOmadaUser
+from os2mint_omada.omada.event_generator import Event
 
 logger = structlog.get_logger(__name__)
 mo_router = MORouter()
@@ -28,81 +27,92 @@ omada_router = Router()
 #######################################################################################
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_employee(
-    message: IncomingMessage, context: Context, **_: Any
+    body: PayloadBytes,
+    mo: depends.MO,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
 ) -> None:
     """Synchronise a manual Omada user to a MO employee.
 
     Args:
-        message: AMQP message containing the parsed Omada user as body.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        body: AMQP message body.
+        mo: MO API.
+        model_client: MO model client.
 
     Returns: None.
     """
     try:
-        omada_user = ManualOmadaUser.parse_raw(message.body)
+        omada_user = ManualSilkeborgOmadaUser.parse_raw(body)
     except ValidationError:
         # User is not manual, so we have nothing to do
         return
     await sync_manual_employee(
         omada_user=omada_user,
-        mo=todo,
-        model_client=todo,
+        mo=mo,
+        model_client=model_client,
     )
 
 
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_engagements(
-    message: IncomingMessage, context: Context, **_: Any
+    body: PayloadBytes,
+    mo: depends.MO,
+    omada_api: depends.OmadaAPI,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
 ) -> None:
     """Synchronise a manual Omada user to a MO engagements.
 
     Args:
-        message: AMQP message containing the parsed Omada user as body.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        body: AMQP message body.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
 
     Returns: None.
     """
     try:
-        omada_user = ManualOmadaUser.parse_raw(message.body)
+        omada_user = ManualSilkeborgOmadaUser.parse_raw(body)
     except ValidationError:
         # User is not manual, so we have nothing to do
         return
 
     # Find employee in MO
-    employee_uuid = await context["mo_service"].get_employee_uuid_from_cpr(
-        omada_user.cpr_number
-    )
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping engagements synchronisation")
         return
 
     await sync_engagements(
         employee_uuid=employee_uuid,
-        mo=todo,
-        omada_api=todo,
-        model_client=todo,
+        mo=mo,
+        omada_api=omada_api,
+        model_client=model_client,
     )
 
 
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_addresses(
-    message: IncomingMessage, context: Context, **_: Any
+    body: PayloadBytes,
+    mo: depends.MO,
+    omada_api: depends.OmadaAPI,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
 ) -> None:
     """Synchronise an Omada user's addresses to MO.
 
     Args:
-        message: AMQP message containing the parsed Omada user as body.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        body: AMQP message body.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
 
     Returns: None.
     """
-    omada_user: OmadaUser = OmadaUser.parse_raw(message.body)
+    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await context["mo_service"].get_employee_uuid_from_service_number(
+    employee_uuid = await mo.get_employee_uuid_from_service_number(
         omada_user.service_number
     )
     if employee_uuid is None:
@@ -111,29 +121,34 @@ async def sync_omada_addresses(
 
     await sync_addresses(
         employee_uuid=employee_uuid,
-        mo=todo,
-        omada_api=todo,
-        model_client=todo,
+        mo=mo,
+        omada_api=omada_api,
+        model_client=model_client,
     )
 
 
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_it_users(
-    message: IncomingMessage, context: Context, **_: Any
+    body: PayloadBytes,
+    mo: depends.MO,
+    omada_api: depends.OmadaAPI,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
 ) -> None:
     """Synchronise an Omada user to MO IT users.
 
     Args:
-        message: AMQP message containing the parsed Omada user as body.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        body: AMQP message body.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
 
     Returns: None.
     """
-    omada_user: OmadaUser = OmadaUser.parse_raw(message.body)
+    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await context["mo_service"].get_employee_uuid_from_service_number(
+    employee_uuid = await mo.get_employee_uuid_from_service_number(
         omada_user.service_number
     )
     if employee_uuid is None:
@@ -142,9 +157,9 @@ async def sync_omada_it_users(
 
     await sync_it_users(
         employee_uuid=employee_uuid,
-        mo=todo,
-        omada_api=todo,
-        model_client=todo,
+        mo=mo,
+        omada_api=omada_api,
+        model_client=model_client,
     )
 
 
@@ -164,79 +179,82 @@ async def sync_omada_it_users(
 #  before the users appear in Omada.
 
 
-@mo_router.register(
-    MORoutingKey(
-        service_type=ServiceType.EMPLOYEE,
-        object_type=ObjectType.EMPLOYEE,
-        request_type=RequestType.WILDCARD,
-    )
-)
-async def sync_mo_engagements(payload: PayloadType, context: Context, **_: Any) -> None:
+@mo_router.register("employee.employee.*")
+async def sync_mo_engagements(
+    payload: PayloadType,
+    mo: depends.MO,
+    omada_api: depends.OmadaAPI,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
+) -> None:
     """Synchronise a MO user's engagements with Omada.
 
     Args:
         payload: MOAMQP message payload containing the affected objects.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
 
     Returns: None.
     """
     employee_uuid = payload.uuid
     await sync_engagements(
         employee_uuid=employee_uuid,
-        mo=todo,
-        omada_api=todo,
-        model_client=todo,
+        mo=mo,
+        omada_api=omada_api,
+        model_client=model_client,
     )
 
 
-@mo_router.register(
-    MORoutingKey(
-        service_type=ServiceType.EMPLOYEE,
-        object_type=ObjectType.ENGAGEMENT,
-        request_type=RequestType.WILDCARD,
-    )
-)
-async def sync_mo_addresses(payload: PayloadType, context: Context, **_: Any) -> None:
+@mo_router.register("employee.engagement.*")
+async def sync_mo_addresses(
+    payload: PayloadType,
+    mo: depends.MO,
+    omada_api: depends.OmadaAPI,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
+) -> None:
     """Synchronise a MO user's addresses with Omada.
 
     Args:
         payload: MOAMQP message payload containing the affected objects.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
 
     Returns: None.
     """
     employee_uuid = payload.uuid
     await sync_addresses(
         employee_uuid=employee_uuid,
-        mo=todo,
-        omada_api=todo,
-        model_client=todo,
+        mo=mo,
+        omada_api=omada_api,
+        model_client=model_client,
     )
 
 
-@mo_router.register(
-    MORoutingKey(
-        service_type=ServiceType.EMPLOYEE,
-        object_type=ObjectType.ENGAGEMENT,
-        request_type=RequestType.WILDCARD,
-    )
-)
-async def sync_mo_it_users(payload: PayloadType, context: Context, **_: Any) -> None:
+@mo_router.register("employee.engagement.*")
+async def sync_mo_it_users(
+    payload: PayloadType,
+    mo: depends.MO,
+    omada_api: depends.OmadaAPI,
+    model_client: depends.ModelClient,
+    _: SleepOnError,
+) -> None:
     """Synchronise a MO user's IT users with Omada.
 
     Args:
         payload: MOAMQP message payload containing the affected objects.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
 
     Returns: None.
     """
     employee_uuid = payload.uuid
     await sync_it_users(
         employee_uuid=employee_uuid,
-        mo=todo,
-        omada_api=todo,
-        model_client=todo,
+        mo=mo,
+        omada_api=omada_api,
+        model_client=model_client,
     )

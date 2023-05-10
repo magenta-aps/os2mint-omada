@@ -1,35 +1,13 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-import logging
 from pathlib import Path
 
-import structlog
+from fastramqpi.config import Settings as FastRAMQPISettings
 from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import BaseSettings
-from pydantic import Field
-from pydantic import parse_obj_as
 from pydantic import validator
-from ramqp.config import ConnectionSettings as AMQPConnectionSettings
-
-
-class MOAuthSettings(BaseModel):
-    client_id = "omada"
-    client_secret: str
-    auth_realm = Field("mo", alias="realm")
-    auth_server: AnyHttpUrl = Field(alias="server")
-
-
-class MOAMQPConnectionSettings(AMQPConnectionSettings):
-    queue_prefix = "omada"
-    prefetch_count = 1  # MO cannot handle too many requests
-
-
-class MoSettings(BaseModel):
-    url: AnyHttpUrl = parse_obj_as(AnyHttpUrl, "http://mo-service:5000")
-    auth: MOAuthSettings
-
-    amqp: MOAMQPConnectionSettings
+from ramqp.config import AMQPConnectionSettings
 
 
 class OmadaOIDCSettings(BaseModel):
@@ -69,22 +47,10 @@ class OmadaSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    commit_sha: str = Field("HEAD", description="Git commit SHA.")
-    commit_tag: str | None = Field(None, description="Git commit tag.")
+    fastramqpi: FastRAMQPISettings
 
-    log_level: str = "INFO"
-    enable_metrics: bool = False
-
-    mo: MoSettings
     omada: OmadaSettings
 
     class Config:
         frozen = True
-        env_nested_delimiter = "__"  # allows setting e.g. MO__AMQP__QUEUE_PREFIX=foo
-
-
-def configure_logging(log_level_name: str) -> None:
-    log_level_value = logging.getLevelName(log_level_name)
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(log_level_value)
-    )
+        env_nested_delimiter = "__"

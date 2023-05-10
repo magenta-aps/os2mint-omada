@@ -13,8 +13,8 @@ from httpx import BasicAuth
 from more_itertools import flatten
 from raclients.auth import AuthenticatedAsyncHTTPXClient
 
-from os2mint_omada.backing.omada.models import RawOmadaUser
 from os2mint_omada.config import OmadaSettings
+from os2mint_omada.omada.models import RawOmadaUser
 
 logger = structlog.get_logger(__name__)
 

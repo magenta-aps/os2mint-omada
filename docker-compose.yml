@@ -26,12 +26,12 @@ services:
       LOG_LEVEL: DEBUG
 
       # OS2mo
-      MO__URL: "http://mo"
-      MO__AUTH__CLIENT_ID: "dipex"
-      MO__AUTH__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
-      MO__AUTH__REALM: "mo"
-      MO__AUTH__SERVER: "http://keycloak:8080/auth"
-      MO__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
+      FASTRAMQPI__MO_URL: "http://mo"
+      FASTRAMQPI__CLIENT_ID: "dipex"
+      FASTRAMQPI__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      FASTRAMQPI__AUTH_SERVER: "http://keycloak:8080/auth"
+      FASTRAMQPI__AUTH_REALM: "mo"
+      FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
 
       # Omada
       OMADA__URL: "http://fake-omada-api/"
