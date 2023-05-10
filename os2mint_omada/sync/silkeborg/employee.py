@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import structlog
-from ramodels.mo import Employee
-
 from os2mint_omada.sync.base import ComparableMixin
 from os2mint_omada.sync.base import StripUserKeyMixin
-from os2mint_omada.sync.base import Syncer
+from ramodels.mo import Employee
 
 logger = structlog.get_logger(__name__)
 
@@ -29,61 +27,55 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
         )
 
 
-class EmployeeSyncer(Syncer):
-    async def sync(self, omada_user: ManualOmadaUser) -> None:
-        """Synchronise an Omada user to MO.
+async def sync_manual_employee(
+    omada_user: ManualOmadaUser,
+    mo: MO,
+    model_client: ModelClient,
+) -> None:
+    """Synchronise an Omada user to MO.
 
-        Args:
-            omada_user: (Manual) Omada user to synchronise.
+    Args:
+        omada_user: (Manual) Omada user to synchronise.
 
-        Returns: None.
-        """
-        logger.info("Synchronising manual employee", omada_user=omada_user)
+    Returns: None.
+    """
+    logger.info("Synchronising manual employee", omada_user=omada_user)
 
-        # Find employee in MO
-        employee_uuid = await self.mo_service.get_employee_uuid_from_cpr(
-            omada_user.cpr_number
-        )
+    # Find employee in MO
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
 
-        if employee_uuid is not None:
-            logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
-            return
+    if employee_uuid is not None:
+        logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
+        return
 
-        # Get employee objects from MO
-        if employee_uuid is not None:
-            employee_states = await self.mo_service.get_employee_states(
-                uuid=employee_uuid
-            )
-        else:
-            employee_states = set()
+    # Get employee objects from MO
+    if employee_uuid is not None:
+        employee_states = await mo.get_employee_states(uuid=employee_uuid)
+    else:
+        employee_states = set()
 
-        # Synchronise employee to MO
+    # Synchronise employee to MO
+    logger.info("Ensuring employee", omada_user=omada_user, employee_uuid=employee_uuid)
+    # Actual employee states in MO
+    actual: dict[ComparableEmployee, Employee] = {
+        ComparableEmployee(**employee.dict()): employee for employee in employee_states
+    }
+
+    # Expected employee states from Omada (only one)
+    expected = {ComparableEmployee.from_omada(omada_user)}
+
+    # Delete excess existing
+    # TODO: Implement when supported by MO
+
+    # Create (edit) missing
+    missing_employee_states = expected - actual.keys()
+    if missing_employee_states:
+        missing_mo_employee_states = [
+            Employee(uuid=employee_uuid, **employee.dict(exclude={"uuid"}))
+            for employee in missing_employee_states
+        ]
         logger.info(
-            "Ensuring employee",
-            omada_user=omada_user,
-            employee_uuid=employee_uuid,
+            "Creating missing Employeee states",
+            employees=missing_mo_employee_states,
         )
-        # Actual employee states in MO
-        actual: dict[ComparableEmployee, Employee] = {
-            ComparableEmployee(**employee.dict()): employee
-            for employee in employee_states
-        }
-
-        # Expected employee states from Omada (only one)
-        expected = {ComparableEmployee.from_omada(omada_user)}
-
-        # Delete excess existing
-        # TODO: Implement when supported by MO
-
-        # Create (edit) missing
-        missing_employee_states = expected - actual.keys()
-        if missing_employee_states:
-            missing_mo_employee_states = [
-                Employee(uuid=employee_uuid, **employee.dict(exclude={"uuid"}))
-                for employee in missing_employee_states
-            ]
-            logger.info(
-                "Creating missing Employeee states",
-                employees=missing_mo_employee_states,
-            )
-            await self.mo_service.model.upload(missing_mo_employee_states)
+        await model_client.upload(missing_mo_employee_states)

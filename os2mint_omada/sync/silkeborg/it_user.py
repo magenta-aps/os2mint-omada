@@ -6,14 +6,12 @@ import asyncio
 from uuid import UUID
 
 import structlog
+from os2mint_omada.sync.base import ComparableMixin
 from pydantic import parse_obj_as
 from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
-
-from os2mint_omada.sync.base import ComparableMixin
-from os2mint_omada.sync.base import Syncer
 
 logger = structlog.get_logger(__name__)
 
@@ -48,76 +46,76 @@ class ComparableITUser(ComparableMixin, ITUser):
         )
 
 
-class ITUserSyncer(Syncer):
-    async def sync(self, employee_uuid: UUID) -> None:
-        """Synchronise Omada IT users to MO.
+async def sync_it_users(
+    employee_uuid: UUID,
+    mo: MO,
+    omada_api: OmadaAPI,
+    model_client: ModelClient,
+) -> None:
+    """Synchronise Omada IT users to MO.
 
-        Args:
-            employee_uuid: UUID of MO employee to synchronise.
+    Args:
+        employee_uuid: UUID of MO employee to synchronise.
 
-        Returns: None.
-        """
-        logger.info("Synchronising IT users", employee_uuid=employee_uuid)
+    Returns: None.
+    """
+    logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
-        # Get MO classes configuration
-        it_systems = await self.mo_service.get_it_systems()
-        # Maps from Omada user attribute to IT system user key in MO
-        it_user_map: dict[str, str] = {
-            "ad_guid": "omada_ad_guid",
-            "login": "omada_login",
-        }
-        omada_it_systems = [it_systems[user_key] for user_key in it_user_map.values()]
+    # Get MO classes configuration
+    it_systems = await mo.get_it_systems()
+    # Maps from Omada user attribute to IT system user key in MO
+    it_user_map: dict[str, str] = {
+        "ad_guid": "omada_ad_guid",
+        "login": "omada_login",
+    }
+    omada_it_systems = [it_systems[user_key] for user_key in it_user_map.values()]
 
-        # Get current user data from MO
-        mo_it_users = await self.mo_service.get_employee_it_users(
-            uuid=employee_uuid,
-            it_systems=omada_it_systems,
+    # Get current user data from MO
+    mo_it_users = await mo.get_employee_it_users(
+        uuid=employee_uuid,
+        it_systems=omada_it_systems,
+    )
+    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
+
+    # Get current user data from Omada. Note that we are fetching Omada users for
+    # ALL engagements to avoid deleting too many IT users
+    engagements = {e.user_key: e for e in mo_engagements}
+    raw_omada_users = await omada_api.get_users_by_service_numbers(
+        service_numbers=engagements.keys()
+    )
+    omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
+
+    # Synchronise IT users to MO
+    logger.info("Ensuring IT users", employee_uuid=employee_uuid)
+    # Actual IT users in MO
+    actual: dict[ComparableITUser, ITUser] = {
+        ComparableITUser(**it_user.dict()): it_user for it_user in mo_it_users
+    }
+
+    # Expected IT users from Omada
+    expected: set[ComparableITUser] = {
+        ComparableITUser.from_omada(
+            omada_user=omada_user,
+            omada_attr=omada_attr,
+            employee_uuid=employee_uuid,
+            engagement_uuid=engagements[omada_user.service_number].uuid,
+            it_system_uuid=it_systems[mo_it_system_user_key],
         )
-        mo_engagements = await self.mo_service.get_employee_engagements(
-            uuid=employee_uuid
-        )
+        for omada_user in omada_users
+        for omada_attr, mo_it_system_user_key in it_user_map.items()
+    }
 
-        # Get current user data from Omada. Note that we are fetching Omada users for
-        # ALL engagements to avoid deleting too many IT users
-        engagements = {e.user_key: e for e in mo_engagements}
-        raw_omada_users = await self.omada_service.api.get_users_by_service_numbers(
-            service_numbers=engagements.keys()
-        )
-        omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
+    # Delete excess existing
+    excess_it_users = actual.keys() - expected
+    if excess_it_users:
+        excess_mo_users = [actual[u] for u in excess_it_users]  # with UUID
+        logger.info("Deleting excess IT users", it_users=excess_it_users)
+        delete = (mo.delete(u) for u in excess_mo_users)
+        await asyncio.gather(*delete)
 
-        # Synchronise IT users to MO
-        logger.info("Ensuring IT users", employee_uuid=employee_uuid)
-        # Actual IT users in MO
-        actual: dict[ComparableITUser, ITUser] = {
-            ComparableITUser(**it_user.dict()): it_user for it_user in mo_it_users
-        }
-
-        # Expected IT users from Omada
-        expected: set[ComparableITUser] = {
-            ComparableITUser.from_omada(
-                omada_user=omada_user,
-                omada_attr=omada_attr,
-                employee_uuid=employee_uuid,
-                engagement_uuid=engagements[omada_user.service_number].uuid,
-                it_system_uuid=it_systems[mo_it_system_user_key],
-            )
-            for omada_user in omada_users
-            for omada_attr, mo_it_system_user_key in it_user_map.items()
-        }
-
-        # Delete excess existing
-        excess_it_users = actual.keys() - expected
-        if excess_it_users:
-            excess_mo_users = [actual[u] for u in excess_it_users]  # with UUID
-            logger.info("Deleting excess IT users", it_users=excess_it_users)
-            delete = (self.mo_service.delete(u) for u in excess_mo_users)
-            await asyncio.gather(*delete)
-
-        # Create missing
-        missing_it_users = expected - actual.keys()
-        if missing_it_users:
-            missing_mo_it_users = [
-                ITUser(**it_user.dict()) for it_user in missing_it_users
-            ]
-            logger.info("Creating missing IT users", users=missing_mo_it_users)
-            await self.mo_service.model.upload(missing_mo_it_users)
+    # Create missing
+    missing_it_users = expected - actual.keys()
+    if missing_it_users:
+        missing_mo_it_users = [ITUser(**it_user.dict()) for it_user in missing_it_users]
+        logger.info("Creating missing IT users", users=missing_mo_it_users)
+        await model_client.upload(missing_mo_it_users)

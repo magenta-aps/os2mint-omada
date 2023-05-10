@@ -50,17 +50,3 @@ class StripUserKeyMixin(BaseModel):
         if absent).
         """
         return None
-
-
-class Syncer:
-    def __init__(
-        self, mo_service: MOService, omada_service: OmadaService
-    ) -> None:
-        """The logic responsible for taking actions to synchronise MO with Omada.
-
-        Args:
-            mo_service: MO backing service.
-            omada_service: Omada backing service.
-        """
-        self.mo_service = mo_service
-        self.omada_service = omada_service
