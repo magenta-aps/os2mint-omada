@@ -34,7 +34,7 @@ class OmadaService(AbstractAsyncContextManager):
     async def __aenter__(self) -> OmadaService:
         """Start clients for persistent connections to the Omada API and AMQP."""
         settings = self.settings
-        logger.info("Starting Omada Service", settings=settings)
+        logger.debug("Starting Omada Service", settings=settings)
 
         # API
         api = OmadaAPI(settings)
@@ -60,7 +60,7 @@ class OmadaService(AbstractAsyncContextManager):
         __traceback: TracebackType | None,
     ) -> bool | None:
         """Close connections to the Omada API and AMQP system."""
-        logger.info("Closing Omada Service")
+        logger.debug("Closing Omada Service")
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 

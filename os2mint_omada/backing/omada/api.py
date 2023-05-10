@@ -49,7 +49,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         if settings.basic_auth is not None:
             client_kwargs["auth"] = BasicAuth(**settings.basic_auth.dict())
 
-        logger.info("Setting up Omada API", client_kwargs=client_kwargs)
+        logger.debug("Setting up Omada API", client_kwargs=client_kwargs)
         client = client_cls(timeout=60, **client_kwargs)
         self.client: AsyncClient = await self.stack.enter_async_context(client)
 
@@ -62,7 +62,7 @@ class OmadaAPI(AbstractAsyncContextManager):
         __traceback: TracebackType | None,
     ) -> bool | None:
         """Close the connection to the Oamda API."""
-        logger.info("Closing Omada API")
+        logger.debug("Closing Omada API")
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 
@@ -96,7 +96,8 @@ class OmadaAPI(AbstractAsyncContextManager):
         response = await self.client.get(url, params=params)
         response.raise_for_status()
         users = response.json()["value"]
-        logger.debug("Retrieved Omada IT users", users=users)
+        logger.info("Retrieved Omada IT users")
+        # logger.debug("Retrieved Omada IT users", users=users)
         return users
 
     async def get_users_by(self, key: str, values: Iterable[str]) -> list[RawOmadaUser]:

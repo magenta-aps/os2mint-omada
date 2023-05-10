@@ -48,7 +48,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
 
     async def __aenter__(self) -> OmadaEventGenerator:
         """Start the scheduler task."""
-        logger.info("Starting Omada event scheduler")
+        logger.debug("Starting Omada event scheduler")
         self._scheduler_task: Task = asyncio.create_task(self._scheduler())
         return await super().__aenter__()
 
@@ -59,7 +59,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         __traceback: TracebackType | None,
     ) -> bool | None:
         """Stop the scheduler task."""
-        logger.info("Stopping Omada event scheduler")
+        logger.debug("Stopping Omada event scheduler")
         self._scheduler_task.cancel()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 

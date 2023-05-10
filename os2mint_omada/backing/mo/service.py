@@ -188,7 +188,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Employee UUID if found, otherwise None.
         """
-        logger.info("Getting MO employee UUID", service_number=service_number)
+        logger.debug("Getting MO employee UUID", service_number=service_number)
         query = gql(
             """
             query EmployeeServiceNumberQuery($user_keys: [String!]) {
@@ -225,7 +225,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Employee UUID if matching employee exists, otherwise None.
         """
-        logger.info("Getting MO employee UUID", cpr=cpr)
+        logger.debug("Getting MO employee UUID", cpr=cpr)
         query = gql(
             """
             query EmployeeCPRQuery($cpr_numbers: [CPR!]) {
@@ -259,7 +259,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of employee objects; one for each state.
         """
-        logger.info("Getting MO employee", uuid=uuid)
+        logger.debug("Getting MO employee", uuid=uuid)
         query = gql(
             """
             query EmployeeQuery($uuids: [UUID!]) {
@@ -299,7 +299,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of addresses related to the employee.
         """
-        logger.info("Getting MO addresses", employee_uuid=uuid)
+        logger.debug("Getting MO addresses", employee_uuid=uuid)
         query = gql(
             """
             query AddressesQuery($employee_uuids: [UUID!], $address_types: [UUID!]) {
@@ -363,7 +363,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of engagements related to the employee.
         """
-        logger.info("Getting MO engagements", employee_uuid=uuid)
+        logger.debug("Getting MO engagements", employee_uuid=uuid)
         query = gql(
             """
             query EngagementsQuery($employee_uuids: [UUID!]) {
@@ -428,7 +428,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of IT users related to the employee.
         """
-        logger.info("Getting MO IT users", employee_uuid=uuid)
+        logger.debug("Getting MO IT users", employee_uuid=uuid)
         query = gql(
             """
             query ITUsersQuery($employee_uuids: [UUID!]) {
@@ -516,7 +516,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: UUID of the org unit if found, otherwise raises KeyError.
         """
-        logger.info("Getting org unit with it system", user_key=user_key)
+        logger.debug("Getting org unit with it system", user_key=user_key)
         query = gql(
             """
             query OrgUnitITUserQuery($user_keys: [String!]) {
@@ -554,7 +554,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: UUID of the org unit if it exists, otherwise raises KeyError.
         """
-        logger.info("Getting org unit with uuid", uuid=uuid)
+        logger.debug("Getting org unit with uuid", uuid=uuid)
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
@@ -586,7 +586,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: The org unit's validity.
         """
-        logger.info("Getting org unit validity", uuid=uuid)
+        logger.debug("Getting org unit validity", uuid=uuid)
         query = gql(
             """
             query OrgUnitValidityQuery($uuids: [UUID!]) {
