@@ -98,7 +98,7 @@ class EngagementSyncer(Syncer):
 
         if cpr_number is None:
             logger.warning(
-                "Cannot to synchronise employee without CPR number",
+                "Cannot synchronise employee without CPR number",
                 employee_uuid=employee_uuid,
             )
             return

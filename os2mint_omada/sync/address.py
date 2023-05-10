@@ -8,7 +8,6 @@ from uuid import UUID
 
 import structlog
 from pydantic import parse_obj_as
-from ramodels.mo import Validity
 from ramodels.mo._shared import AddressType
 from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
@@ -60,10 +59,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
             person=PersonRef(uuid=employee_uuid),
             engagement=EngagementRef(uuid=engagement_uuid),
             visibility=Visibility(uuid=visibility_uuid),
-            validity=Validity(
-                from_date=omada_user.valid_from,
-                to_date=omada_user.valid_to,
-            ),
+            validity=omada_user.validity,
         )
 
 
