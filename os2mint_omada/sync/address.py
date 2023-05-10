@@ -78,11 +78,20 @@ class AddressSyncer(Syncer):
 
         # Get MO classes configuration
         address_types = await self.mo_service.get_classes("employee_address_type")
+        # Maps from Omada user attribute to employee address type (class) user key in MO
+        address_map: dict[str, str] = {
+            "email": "EmailEmployee",
+            "phone_direct": "PhoneEmployee",
+            "phone_cell": "MobilePhoneEmployee",
+            "phone_institution": "InstitutionPhoneEmployee",
+        }
         omada_address_types = [
-            address_types[user_key]
-            for user_key in self.settings.mo.address_map.values()
+            address_types[user_key] for user_key in address_map.values()
         ]
+
+        # Visibility class for created addresses
         visibility_classes = await self.mo_service.get_classes("visibility")
+        visibility_uuid = visibility_classes["Public"]
 
         # Get current user data from MO
         mo_engagements = await self.mo_service.get_employee_engagements(
@@ -109,7 +118,6 @@ class AddressSyncer(Syncer):
         }
 
         # Expected addresses from Omada
-        visibility_uuid = visibility_classes[self.settings.mo.address_visibility]
         expected_with_none: set[ComparableAddress | None] = {
             ComparableAddress.from_omada(
                 omada_user=omada_user,
@@ -120,7 +128,7 @@ class AddressSyncer(Syncer):
                 visibility_uuid=visibility_uuid,
             )
             for omada_user in omada_users
-            for omada_attr, mo_address_user_key in self.settings.mo.address_map.items()
+            for omada_attr, mo_address_user_key in address_map.items()
         }
         expected: set[ComparableAddress] = cast(
             set[ComparableAddress], expected_with_none - {None}

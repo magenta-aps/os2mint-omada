@@ -68,9 +68,12 @@ class ITUserSyncer(Syncer):
 
         # Get MO classes configuration
         it_systems = await self.mo_service.get_it_systems()
-        omada_it_systems = [
-            it_systems[user_key] for user_key in self.settings.mo.it_user_map.values()
-        ]
+        # Maps from Omada user attribute to IT system user key in MO
+        it_user_map: dict[str, str] = {
+            "ad_guid": "omada_ad_guid",
+            "login": "omada_login",
+        }
+        omada_it_systems = [it_systems[user_key] for user_key in it_user_map.values()]
 
         # Get current user data from MO
         mo_it_users = await self.mo_service.get_employee_it_users(
@@ -106,7 +109,7 @@ class ITUserSyncer(Syncer):
                 it_system_uuid=it_systems[mo_it_system_user_key],
             )
             for omada_user in omada_users
-            for omada_attr, mo_it_system_user_key in self.settings.mo.it_user_map.items()
+            for omada_attr, mo_it_system_user_key in it_user_map.items()
         }
 
         # Delete excess existing

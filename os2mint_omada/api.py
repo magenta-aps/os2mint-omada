@@ -37,7 +37,6 @@ async def sync_mo(request: Request, employees: set[UUID] | None = None) -> None:
         try:
             await sync_employee(
                 employee_uuid=uuid,
-                settings=context["settings"],
                 mo_service=context["mo_service"],
                 omada_service=context["omada_service"],
             )
@@ -63,7 +62,6 @@ async def sync_omada(request: Request, omada_filter: str) -> None:
 
 async def sync_employee(
     employee_uuid: UUID,
-    settings: Settings,
     mo_service: MOService,
     omada_service: OmadaService,
 ) -> None:
@@ -79,17 +77,14 @@ async def sync_employee(
     """
     logger.info("Synchronising MO employee", employee_uuid=employee_uuid)
     await EngagementSyncer(
-        settings=settings,
         mo_service=mo_service,
         omada_service=omada_service,
     ).sync(employee_uuid)
     await AddressSyncer(
-        settings=settings,
         mo_service=mo_service,
         omada_service=omada_service,
     ).sync(employee_uuid)
     await ITUserSyncer(
-        settings=settings,
         mo_service=mo_service,
         omada_service=omada_service,
     ).sync(employee_uuid)

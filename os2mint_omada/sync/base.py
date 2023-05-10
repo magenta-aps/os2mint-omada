@@ -58,15 +58,13 @@ class StripUserKeyMixin(BaseModel):
 
 class Syncer:
     def __init__(
-        self, settings: Settings, mo_service: MOService, omada_service: OmadaService
+        self, mo_service: MOService, omada_service: OmadaService
     ) -> None:
         """The logic responsible for taking actions to synchronise MO with Omada.
 
         Args:
-            settings: Configuration.
             mo_service: MO backing service.
             omada_service: Omada backing service.
         """
-        self.settings = settings
         self.mo_service = mo_service
         self.omada_service = omada_service

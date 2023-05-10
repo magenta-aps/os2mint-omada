@@ -52,7 +52,7 @@ class EmployeeSyncer(Syncer):
             omada_user.cpr_number
         )
 
-        if employee_uuid is not None and self.settings.manual_employees_create_only:
+        if employee_uuid is not None:
             logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
             return
 

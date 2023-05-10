@@ -37,7 +37,6 @@ class ComparableEngagement(ComparableMixin, Engagement):
         org_unit_uuid: UUID,
         org_unit_validity: Validity,
         job_functions: dict[str, UUID],
-        job_function_default: str,
         engagement_type_uuid_for_visibility: dict[bool, UUID],
         primary_type_uuid: UUID,
     ) -> ComparableEngagement:
@@ -51,8 +50,6 @@ class ComparableEngagement(ComparableMixin, Engagement):
              needed because the Omada user's validity sometimes lies outside the
              interval of the org unit, which is not accepted by MO.
             job_functions: Map of all engagement job functions in MO.
-            job_function_default: Fallback job function used if the one defined on the
-             Omada user does not exist in MO.
             engagement_type_uuid_for_visibility: Engagement type for visible/hidden
              engagements.
             primary_type_uuid: Primary class of the engagement.
@@ -62,7 +59,9 @@ class ComparableEngagement(ComparableMixin, Engagement):
         try:
             job_function_uuid = job_functions[omada_user.job_title]
         except KeyError:
-            job_function_uuid = job_functions[job_function_default]
+            # Fallback job function for engagements created for manual users if the
+            # job title from Omada does not exist in MO.
+            job_function_uuid = job_functions["not_applicable"]
 
         engagement_type_uuid = engagement_type_uuid_for_visibility[
             omada_user.is_visible
@@ -117,13 +116,18 @@ class EngagementSyncer(Syncer):
 
         # Get MO classes configuration
         job_functions = await self.mo_service.get_classes("engagement_job_function")
-        engagement_types = await self.mo_service.get_classes("engagement_type")
-        omada_engagement_type_for_visibility = {
-            is_visible: engagement_types[user_key]
-            for is_visible, user_key in self.settings.mo.engagement_type_for_visibility.items()  # NOQA: E501
-        }
+
+        # Primary class for engagements created for manual users
         primary_types = await self.mo_service.get_classes("primary_type")
-        primary_type_uuid = primary_types[self.settings.mo.manual_primary_class]
+        primary_type_uuid = primary_types["primary"]
+
+        engagement_types = await self.mo_service.get_classes("engagement_type")
+        # Maps from Omada visibility (boolean) to engagement type (class) user key in MO
+        # for manual users. Only these engagements types are touched by the integration.
+        omada_engagement_type_for_visibility = {
+            True: engagement_types["omada_manually_created"],
+            False: engagement_types["omada_manually_created_hidden"],
+        }
 
         # Only process engagements we know Omada is authoritative for (created by us)
         # to avoid deleting those that have nothing to do with Omada.
@@ -158,7 +162,6 @@ class EngagementSyncer(Syncer):
                 org_unit_uuid=org_unit_uuid,
                 org_unit_validity=org_unit_validity,
                 job_functions=job_functions,
-                job_function_default=self.settings.mo.manual_job_function_default,
                 engagement_type_uuid_for_visibility=omada_engagement_type_for_visibility,
                 primary_type_uuid=primary_type_uuid,
             )

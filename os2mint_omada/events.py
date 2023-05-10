@@ -49,7 +49,6 @@ async def sync_omada_employee(
         # User is not manual, so we have nothing to do
         return
     await EmployeeSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(omada_user)
@@ -83,7 +82,6 @@ async def sync_omada_engagements(
         return
 
     await EngagementSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(employee_uuid)
@@ -113,7 +111,6 @@ async def sync_omada_addresses(
         return
 
     await AddressSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(employee_uuid)
@@ -143,7 +140,6 @@ async def sync_omada_it_users(
         return
 
     await ITUserSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(employee_uuid)
@@ -184,7 +180,6 @@ async def sync_mo_engagements(payload: PayloadType, context: Context, **_: Any) 
     """
     employee_uuid = payload.uuid
     await EngagementSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(employee_uuid)
@@ -209,7 +204,6 @@ async def sync_mo_addresses(payload: PayloadType, context: Context, **_: Any) ->
     """
     employee_uuid = payload.uuid
     await AddressSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(employee_uuid)
@@ -234,7 +228,6 @@ async def sync_mo_it_users(payload: PayloadType, context: Context, **_: Any) -> 
     """
     employee_uuid = payload.uuid
     await ITUserSyncer(
-        settings=context["settings"],
         mo_service=context["mo_service"],
         omada_service=context["omada_service"],
     ).sync(employee_uuid)
