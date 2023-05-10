@@ -81,7 +81,7 @@ class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
 class OmadaSettings(BaseModel):
     # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     url: AnyHttpUrl
-    insecure_skip_ssl_verify = False
+    insecure_skip_tls_verify = False
     oidc: OmadaOIDCSettings | None = None
     basic_auth: OmadaBasicAuthSettings | None = None
 
