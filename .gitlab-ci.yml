@@ -10,8 +10,8 @@ variables:
   RELEASE_REGISTRY_IMAGE: index.docker.io/magentaaps/os2mint-omada
   IMAGE_SHA: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
 
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
+  PRECOMMIT_USE_POETRY: "true"
+  POETRY_VERSION: "1.3"
 
 
 stages:
@@ -22,16 +22,13 @@ stages:
   - release
   - deploy
 
+
 workflow:
   rules:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH
 
 
-
-# ---------------------------------------------------------------------------
-# Templates
-# ---------------------------------------------------------------------------
 include:
   - project: labs/salt-automation
     file:
@@ -40,20 +37,6 @@ include:
       - gitlab-ci-templates/common/pre-commit.v1.yml
 
 
-# ---------------------------------------------------------------------------
-# Lint
-# ---------------------------------------------------------------------------
-Lint Python:
-  extends: .lint-python
-  image: python:3.10
-  stage: lint
-  script:
-    - poetry run pre-commit run --all-files
-
-
-# ---------------------------------------------------------------------------
-# Test
-# ---------------------------------------------------------------------------
 #.test-template: &test
 #  extends: .test-python
 #  stage: test
@@ -64,9 +47,6 @@ Lint Python:
 #  image: python:3.10
 
 
-# ---------------------------------------------------------------------------
-# Build
-# ---------------------------------------------------------------------------
 Build:
   stage: build
   image:
@@ -82,9 +62,6 @@ Build:
       --destination=$IMAGE_SHA
 
 
-# ---------------------------------------------------------------------------
-# Deploy
-# ---------------------------------------------------------------------------
 Deploy to Flux Dev:
   extends: .release-to-dev
   needs:
