@@ -18,8 +18,6 @@ from ramqp import AMQPSystem
 from os2mint_omada.backing.omada.api import OmadaAPI
 from os2mint_omada.backing.omada.models import RawOmadaUser
 from os2mint_omada.backing.omada.routing_keys import Event
-from os2mint_omada.backing.omada.routing_keys import PayloadType
-from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.config import OmadaSettings
 
 logger = structlog.get_logger(__name__)
@@ -121,7 +119,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
             )
             assert payload is not None  # mypy is so dumb
             await self.amqp_system.publish_message(
-                routing_key=RoutingKey(type=PayloadType.RAW, event=event),
+                routing_key=event,
                 payload=payload,
             )
 

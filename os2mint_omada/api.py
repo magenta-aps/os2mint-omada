@@ -11,15 +11,12 @@ from starlette.requests import Request
 
 from os2mint_omada.backing.mo.service import MOService
 from os2mint_omada.backing.omada.routing_keys import Event
-from os2mint_omada.backing.omada.routing_keys import PayloadType as OmadaPayloadType
-from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.backing.omada.service import OmadaService
 from os2mint_omada.config import Settings
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
 from os2mint_omada.sync.engagement import EngagementSyncer
 from os2mint_omada.sync.it_user import ITUserSyncer
-
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
@@ -78,7 +75,7 @@ async def sync_omada(request: Request, omada_filter: str) -> None:
     logger.info("Synchronising raw Omada users", omada_users=raw_omada_users)
     for raw_omada_user in raw_omada_users:
         await omada_service.amqp_system.publish_message(
-            routing_key=RoutingKey(type=OmadaPayloadType.RAW, event=Event.REFRESH),
+            routing_key=Event.REFRESH,
             payload=raw_omada_user,
         )
 

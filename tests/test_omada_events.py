@@ -4,11 +4,9 @@ from unittest.mock import AsyncMock
 from unittest.mock import call
 from unittest.mock import MagicMock
 
-from os2mint_omada.backing.omada.event_generator import OmadaEventGenerator
-from os2mint_omada.backing.omada.routing_keys import Event
-from os2mint_omada.backing.omada.routing_keys import PayloadType
-from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.config import OmadaSettings
+from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.omada.event_generator import OmadaEventGenerator
 
 
 async def test_generate(omada_settings: OmadaSettings):
@@ -40,15 +38,15 @@ async def test_generate(omada_settings: OmadaSettings):
     amqp_system.publish_message.assert_has_awaits(
         calls=[
             call(
-                routing_key=RoutingKey(type=PayloadType.RAW, event=Event.CREATE),
+                routing_key=Event.CREATE,
                 payload=new_d,
             ),
             call(
-                routing_key=RoutingKey(type=PayloadType.RAW, event=Event.DELETE),
+                routing_key=Event.DELETE,
                 payload=old_c,
             ),
             call(
-                routing_key=RoutingKey(type=PayloadType.RAW, event=Event.UPDATE),
+                routing_key=Event.UPDATE,
                 payload=new_b,
             ),
         ],

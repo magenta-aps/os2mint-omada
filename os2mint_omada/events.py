@@ -4,21 +4,18 @@ from typing import Any
 
 import structlog
 from aio_pika import IncomingMessage
-from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from ramqp import Router
 from ramqp.mo import MORouter
 from ramqp.mo.models import MORoutingKey
 from ramqp.mo.models import ObjectType
-from ramqp.mo.models import PayloadType as MOPayload
+from ramqp.mo.models import PayloadType
 from ramqp.mo.models import RequestType
 from ramqp.mo.models import ServiceType
 
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.backing.omada.routing_keys import Event
-from os2mint_omada.backing.omada.routing_keys import PayloadType as OmadaPayloadType
-from os2mint_omada.backing.omada.routing_keys import RoutingKey
 from os2mint_omada.models import Context
 from os2mint_omada.sync.address import AddressSyncer
 from os2mint_omada.sync.employee import EmployeeSyncer
@@ -31,50 +28,9 @@ omada_router = Router()
 
 
 #######################################################################################
-# Omada Raw
+# Omada
 #######################################################################################
-@omada_router.register(RoutingKey(type=OmadaPayloadType.RAW, event=Event.WILDCARD))
-async def parse_raw(message: IncomingMessage, context: Context, **_: Any) -> None:
-    """Parse raw omada user - often from the event generator.
-
-    The user's identity category is identified, and the parsed user is sent back to
-    the AMQP system under the related routing key, to be received below.
-
-    Args:
-        message: AMQP message containing the raw Omada user as body.
-        context: ASGI lifespan context.
-        **_: Additional kwargs, required for RAMQP forwards-compatibility.
-
-    Returns: None.
-    """
-    # Parse user
-    logger.debug("Handling raw omada user", raw=message.body)
-    try:
-        omada_user = OmadaUser.parse_raw(message.body)
-    except ValidationError:
-        logger.exception("Failed to parse user", raw=message.body)
-        # We don't raise an error in this case, as we will never be able to parse this
-        # user, so retrying delivery is never necessary.
-        # TODO: Metrics?
-        return
-    logger.debug("Parsed Omada user", parsed=omada_user)
-
-    # Publish parsed user to AMQP
-    assert message.routing_key
-    original_routing_key = RoutingKey.from_str(message.routing_key)
-    await context["omada_service"].amqp_system.publish_message(
-        routing_key=RoutingKey(
-            type=OmadaPayloadType.PARSED,
-            event=original_routing_key.event,
-        ),
-        payload=jsonable_encoder(omada_user.dict()),
-    )
-
-
-#######################################################################################
-# Omada Parsed
-#######################################################################################
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
+@omada_router.register(Event.WILDCARD)
 async def sync_omada_employee(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -99,7 +55,7 @@ async def sync_omada_employee(
     ).sync(omada_user)
 
 
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
+@omada_router.register(Event.WILDCARD)
 async def sync_omada_engagements(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -133,7 +89,7 @@ async def sync_omada_engagements(
     ).sync(employee_uuid)
 
 
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
+@omada_router.register(Event.WILDCARD)
 async def sync_omada_addresses(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -163,7 +119,7 @@ async def sync_omada_addresses(
     ).sync(employee_uuid)
 
 
-@omada_router.register(RoutingKey(type=OmadaPayloadType.PARSED, event=Event.WILDCARD))
+@omada_router.register(Event.WILDCARD)
 async def sync_omada_it_users(
     message: IncomingMessage, context: Context, **_: Any
 ) -> None:
@@ -216,7 +172,7 @@ async def sync_omada_it_users(
         request_type=RequestType.WILDCARD,
     )
 )
-async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) -> None:
+async def sync_mo_engagements(payload: PayloadType, context: Context, **_: Any) -> None:
     """Synchronise a MO user's engagements with Omada.
 
     Args:
@@ -241,7 +197,7 @@ async def sync_mo_engagements(payload: MOPayload, context: Context, **_: Any) ->
         request_type=RequestType.WILDCARD,
     )
 )
-async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> None:
+async def sync_mo_addresses(payload: PayloadType, context: Context, **_: Any) -> None:
     """Synchronise a MO user's addresses with Omada.
 
     Args:
@@ -266,7 +222,7 @@ async def sync_mo_addresses(payload: MOPayload, context: Context, **_: Any) -> N
         request_type=RequestType.WILDCARD,
     )
 )
-async def sync_mo_it_users(payload: MOPayload, context: Context, **_: Any) -> None:
+async def sync_mo_it_users(payload: PayloadType, context: Context, **_: Any) -> None:
     """Synchronise a MO user's IT users with Omada.
 
     Args:
