@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "os2mint_omada"
-version = "4.3.3"
+version = "0.0.0"  # versioning handled by conventional commits
 description = "OS2mo Omada integration"
 authors = ["Magenta <info@magenta.dk>"]
 license = "MPL-2.0"
@@ -43,10 +43,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode="auto"
-
-[tool.autopub]
-git-username = "MagentaBot"
-git-email = "info@magenta.dk"
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
