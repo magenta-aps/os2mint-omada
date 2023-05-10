@@ -8,6 +8,7 @@ import random
 from asyncio import CancelledError
 from asyncio import Task
 from contextlib import AbstractAsyncContextManager
+from enum import Enum
 from types import TracebackType
 from typing import Type
 
@@ -19,9 +20,18 @@ from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.omada.models import OmadaUser
 from os2mint_omada.omada.models import RawOmadaUser
-from os2mint_omada.omada.routing_keys import Event
 
 logger = structlog.get_logger(__name__)
+
+
+class Event(str, Enum):
+    """Omada AMQP event type."""
+
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    REFRESH = "refresh"
+    WILDCARD = "*"
 
 
 class OmadaEventGenerator(AbstractAsyncContextManager):
