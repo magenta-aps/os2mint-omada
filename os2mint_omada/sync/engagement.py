@@ -134,51 +134,12 @@ class EngagementSyncer(Syncer):
         ]
 
         # Synchronise engagements to MO
-        await self.ensure_engagements(
-            omada_users=manual_omada_users,
-            employee_uuid=employee_uuid,
-            engagements=omada_engagements,
-            job_functions=job_functions,
-            job_function_default=self.settings.mo.manual_job_function_default,
-            engagement_type_uuid_for_visibility=omada_engagement_type_for_visibility,
-            primary_type_uuid=primary_type_uuid,
-        )
-
-    async def ensure_engagements(
-        self,
-        omada_users: list[ManualOmadaUser],
-        employee_uuid: UUID,
-        engagements: list[Engagement],
-        job_functions: dict[str, UUID],
-        job_function_default: str,
-        engagement_type_uuid_for_visibility: dict[bool, UUID],
-        primary_type_uuid: UUID,
-    ) -> None:
-        """Ensure that the MO engagements are synchronised with the Omada users.
-
-        Synchronisation is done on ALL Omada user entries for the employee, since total
-        knowledge of all of a user's Omada entries is needed to avoid potentially
-        deleting engagements related to a different Omada user entry.
-
-        Args:
-            omada_users: List of Omada users to synchronise.
-            employee_uuid: MO employee UUID.
-            engagements: Existing MO engagements.
-            job_functions: Map of all engagement job functions in MO.
-            job_function_default: Fallback job function used if the one defined on a
-             Omada user does not exist in MO.
-            engagement_type_uuid_for_visibility: Engagement type for visible/hidden
-             engagements.
-            primary_type_uuid: Primary class of the engagements.
-
-        Returns: None.
-        """
         logger.info("Ensuring engagements", employee_uuid=employee_uuid)
 
         # Actual engagements in MO
         actual: dict[ComparableEngagement, Engagement] = {
             ComparableEngagement(**engagement.dict()): engagement
-            for engagement in engagements
+            for engagement in omada_engagements
         }
 
         # Expected engagements from Omada
@@ -197,13 +158,13 @@ class EngagementSyncer(Syncer):
                 org_unit_uuid=org_unit_uuid,
                 org_unit_validity=org_unit_validity,
                 job_functions=job_functions,
-                job_function_default=job_function_default,
-                engagement_type_uuid_for_visibility=engagement_type_uuid_for_visibility,
+                job_function_default=self.settings.mo.manual_job_function_default,
+                engagement_type_uuid_for_visibility=omada_engagement_type_for_visibility,
                 primary_type_uuid=primary_type_uuid,
             )
 
         expected_tasks = (
-            build_comparable_engagement(omada_user) for omada_user in omada_users
+            build_comparable_engagement(omada_user) for omada_user in manual_omada_users
         )
         expected_tuples = await asyncio.gather(*expected_tasks)
         expected: set[ComparableEngagement] = set(expected_tuples)

@@ -64,32 +64,7 @@ class EmployeeSyncer(Syncer):
         else:
             employee_states = set()
 
-        await self.ensure_employee(
-            omada_user=omada_user,
-            employee_uuid=employee_uuid,
-            employee_states=employee_states,
-        )
-
-    async def ensure_employee(
-        self,
-        omada_user: ManualOmadaUser,
-        employee_uuid: UUID | None,
-        employee_states: set[Employee],
-    ) -> None:
-        """Ensure that the MO employee is synchronised with the Omada user.
-
-        Note that the employee objects are never deleted or terminated, as that is
-        usually not done (some argue it being slightly morbid) -- and also not
-        supported by MO (yet).
-
-        Args:
-            omada_user: Manual Omada user.
-            employee_uuid: MO employee UUID. Can be None.
-            employee_states: (Potentially) pre-existing MO employee states. Can be
-             empty.
-
-        Returns: None.
-        """
+        # Synchronise employee to MO
         logger.info(
             "Ensuring employee",
             omada_user=omada_user,

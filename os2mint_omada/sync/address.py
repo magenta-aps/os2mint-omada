@@ -102,50 +102,14 @@ class AddressSyncer(Syncer):
         omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
 
         # Synchronise addresses to MO
-        await self.ensure_addresses(
-            omada_users=omada_users,
-            employee_uuid=employee_uuid,
-            engagements=engagements,
-            addresses=mo_addresses,
-            address_map=self.settings.mo.address_map,
-            address_types=address_types,
-            visibility_uuid=visibility_classes[self.settings.mo.address_visibility],
-        )
-
-    async def ensure_addresses(
-        self,
-        omada_users: list[OmadaUser],
-        employee_uuid: UUID,
-        engagements: dict[str, Engagement],
-        addresses: set[Address],
-        address_map: dict[str, str],
-        address_types: dict[str, UUID],
-        visibility_uuid: UUID,
-    ) -> None:
-        """Ensure that the MO addresses are synchronised with the Omada users.
-
-        Synchronisation is done on ALL Omada user entries for the employee, since total
-        knowledge of all of a user's Omada entries is needed to avoid potentially
-        deleting addresses related to a different Omada user entry.
-
-        Args:
-            omada_users: List of Omada users to synchronise.
-            employee_uuid: MO employee UUID.
-            engagements: Dict from Omada service numbers to MO engagements.
-            addresses: Existing MO addresses.
-            address_map: Maps from Omada user attribute to address type user key in MO.
-            address_types: Address types for employee addresses.
-            visibility_uuid: Visibility class of the addresses.
-
-        Returns: None.
-        """
         logger.info("Ensuring addresses", employee_uuid=employee_uuid)
         # Actual addresses in MO
         actual: dict[ComparableAddress, Address] = {
-            ComparableAddress(**address.dict()): address for address in addresses
+            ComparableAddress(**address.dict()): address for address in mo_addresses
         }
 
         # Expected addresses from Omada
+        visibility_uuid = visibility_classes[self.settings.mo.address_visibility]
         expected_with_none: set[ComparableAddress | None] = {
             ComparableAddress.from_omada(
                 omada_user=omada_user,
@@ -156,7 +120,7 @@ class AddressSyncer(Syncer):
                 visibility_uuid=visibility_uuid,
             )
             for omada_user in omada_users
-            for omada_attr, mo_address_user_key in address_map.items()
+            for omada_attr, mo_address_user_key in self.settings.mo.address_map.items()
         }
         expected: set[ComparableAddress] = cast(
             set[ComparableAddress], expected_with_none - {None}

@@ -90,44 +90,10 @@ class ITUserSyncer(Syncer):
         omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
 
         # Synchronise IT users to MO
-        await self.ensure_it_users(
-            omada_users=omada_users,
-            employee_uuid=employee_uuid,
-            engagements=engagements,
-            it_users=mo_it_users,
-            it_user_map=self.settings.mo.it_user_map,
-            it_systems=it_systems,
-        )
-
-    async def ensure_it_users(
-        self,
-        omada_users: list[OmadaUser],
-        employee_uuid: UUID,
-        engagements: dict[str, Engagement],
-        it_users: set[ITUser],
-        it_user_map: dict[str, str],
-        it_systems: ITSystems,
-    ) -> None:
-        """Ensure that MO IT users are synchronised with the Omada users.
-
-        Synchronisation is done on ALL Omada user entries for the employee, since total
-        knowledge of all of a user's Omada entries is needed to avoid potentially
-        deleting it users related to a different Omada user entry.
-
-        Args:
-            omada_users: List of Omada users to synchronise.
-            employee_uuid: MO employee UUID.
-            engagements: Dict from Omada service numbers to MO engagements.
-            it_users: Existing MO IT users.
-            it_user_map: Maps from Omada user attribute to IT system user key in MO.
-            it_systems: IT systems configured in MO.
-
-        Returns: None.
-        """
         logger.info("Ensuring IT users", employee_uuid=employee_uuid)
         # Actual IT users in MO
         actual: dict[ComparableITUser, ITUser] = {
-            ComparableITUser(**it_user.dict()): it_user for it_user in it_users
+            ComparableITUser(**it_user.dict()): it_user for it_user in mo_it_users
         }
 
         # Expected IT users from Omada
@@ -140,7 +106,7 @@ class ITUserSyncer(Syncer):
                 it_system_uuid=it_systems[mo_it_system_user_key],
             )
             for omada_user in omada_users
-            for omada_attr, mo_it_system_user_key in it_user_map.items()
+            for omada_attr, mo_it_system_user_key in self.settings.mo.it_user_map.items()
         }
 
         # Delete excess existing
