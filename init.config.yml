@@ -19,6 +19,9 @@ facets:
     Public:
       title: "Må vises eksternt"
       scope: "PUBLIC"
+    Secret:
+      title: "Hemmelig"
+      scope: "SECRET"
   engagement_job_function:
     not_applicable:
       title: "N/A"
