@@ -63,24 +63,3 @@ class OmadaService(AbstractAsyncContextManager):
         logger.debug("Closing Omada Service")
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
-
-    async def _is_api_ready(self) -> bool:
-        """Check that the Omada API is reachable.
-
-        Returns: Whether the API is reachable.
-        """
-        return await self.api.is_ready()
-
-    async def _is_amqp_ready(self) -> bool:
-        """Check the connection to Omada's AMQP system.
-
-        Returns: Whether a connection to the AMQP system is established..
-        """
-        return self.amqp_system.healthcheck()
-
-    async def is_ready(self) -> bool:
-        """Check the connection to the Omada API and AMQP system.
-
-        Returns: Whether the Omada backing service is ready.
-        """
-        return all(await asyncio.gather(self._is_api_ready(), self._is_amqp_ready()))

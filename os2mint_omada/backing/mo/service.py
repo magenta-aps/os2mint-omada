@@ -88,42 +88,6 @@ class MOService(AbstractAsyncContextManager):
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 
-    async def _is_api_ready(self) -> bool:
-        """Check the connection to MO's GraphQL endpoint.
-
-        Returns: Whether the connection is ready.
-        """
-        query = gql(
-            """
-            query ReadinessQuery {
-              org {
-                uuid
-              }
-            }
-            """
-        )
-        try:
-            result = await self.graphql.execute(query)
-            if result["org"]["uuid"]:
-                return True
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("Exception occurred during GraphQL healthcheck")
-        return False
-
-    async def _is_amqp_ready(self) -> bool:
-        """Check the connection to MO's AMQP system.
-
-        Returns: Whether a connection to the AMQP system is established.
-        """
-        return self.amqp_system.healthcheck()
-
-    async def is_ready(self) -> bool:
-        """Check the connection to MO.
-
-        Returns: Whether the MO backing service is reachable.
-        """
-        return all(await asyncio.gather(self._is_api_ready(), self._is_amqp_ready()))
-
     async def get_it_systems(self) -> ITSystems:
         """Get IT Systems configured in MO.
 

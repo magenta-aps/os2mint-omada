@@ -66,19 +66,6 @@ class OmadaAPI(AbstractAsyncContextManager):
         await self.stack.aclose()
         return await super().__aexit__(__exc_type, __exc_value, __traceback)
 
-    async def is_ready(self) -> bool:
-        """Check the connection to Omada's API.
-
-        Returns: Whether the connection can be made.
-        """
-        try:
-            response = await self.client.head(self.settings.url)
-            response.raise_for_status()
-            return True
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("Exception occurred during Omada healthcheck")
-        return False
-
     async def get_users(self, omada_filter: str | None = None) -> list[RawOmadaUser]:
         """Retrieve IT users from Omada.
 
