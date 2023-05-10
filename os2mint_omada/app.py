@@ -21,17 +21,16 @@ from os2mint_omada.events import omada_router
 from os2mint_omada.models import Context
 
 
-def create_app(*args: Any, **kwargs: Any) -> FastAPI:
+def create_app(*_: Any, **kwargs: Any) -> FastAPI:
     """FastAPI application factory.
 
     Args:
-        *args: Additional arguments passed to the settings module.
         **kwargs: Additional keyword arguments passed to the settings module.
 
     Returns: FastAPI application.
     """
     # Config
-    settings = Settings(*args, **kwargs)
+    settings = Settings(**kwargs)
     configure_logging(settings.log_level)
     context = Context(settings=settings)
 
