@@ -39,57 +39,20 @@ logger = structlog.get_logger(__name__)
 ITSystems = NewType("ITSystems", dict[str, UUID])
 
 
-class MOService(AbstractAsyncContextManager):
-    def __init__(self, settings: MoSettings, amqp_system: MOAMQPSystem) -> None:
+class MOService:
+    def __init__(self, graphql_session: AsyncClientSession) -> None:
         """The MO backing service manages the connection to MO's AMQP and API.
 
         Args:
-            settings: MO-specific settings.
-            amqp_system: MO AMQP System.
+            graphql_session: MO GraphQL session.
         """
-        super().__init__()
-        self.settings = settings
-        self.amqp_system = amqp_system
+        self.graphql_session = graphql_session
 
-        self.stack = AsyncExitStack()
-
-    async def __aenter__(self) -> MOService:
-        """Start clients for persistent connections to the MO API and AMQP system."""
-        settings = self.settings
-
-        # GraphQL Client
-        graphql = GraphQLClient(
-            url=f"{settings.url}/graphql/v3",
-            **settings.auth.dict(),
-            # Ridiculous timeout to support fetching all employee uuids until MO
-            # supports pagination/streaming of GraphQL responses.
-            httpx_client_kwargs=dict(timeout=300),
-            execute_timeout=300,
-        )
-        self.graphql: AsyncClientSession = await self.stack.enter_async_context(graphql)
-
-        # Model Client
-        model = MoModelClient(base_url=settings.url, **settings.auth.dict())
-        self.model: MoModelClient = await self.stack.enter_async_context(model)
-
-        # The AMQP system is started last so the API clients, which are used from the
-        # AMQP handlers, are ready before messages are received.
-        await self.stack.enter_async_context(self.amqp_system)
-
-        return await super().__aenter__()
-
-    async def __aexit__(
-        self,
-        __exc_type: Type[BaseException] | None,
-        __exc_value: BaseException | None,
-        __traceback: TracebackType | None,
-    ) -> bool | None:
-        """Close connections to the MO API and AMQP system."""
-        await self.stack.aclose()
-        return await super().__aexit__(__exc_type, __exc_value, __traceback)
-
-    async def get_it_systems(self) -> ITSystems:
+    async def get_it_systems(self, user_keys: Collection[str]) -> ITSystems:
         """Get IT Systems configured in MO.
+
+        Args:
+            user_keys: IT systems to fetch.
 
         Returns: Mapping from IT system user key to UUID.
         """
@@ -104,8 +67,9 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        variables = {"user_keys": list(self.settings.it_user_map.values())}
-        result = await self.graphql.execute(query, variable_values=variables)
+        dict().values()
+        variables = {"user_keys": list(user_keys)}
+        result = await self.graphql_session.execute(query, variable_values=variables)
         it_systems = result["itsystems"]
         return ITSystems({s["user_key"]: UUID(s["uuid"]) for s in it_systems})
 
@@ -130,7 +94,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "user_keys": [facet_user_key],
@@ -166,7 +130,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "user_keys": [service_number],
@@ -199,7 +163,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "cpr_numbers": [cpr],
@@ -238,7 +202,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -294,7 +258,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -359,7 +323,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -418,7 +382,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -460,7 +424,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(query)
+        result = await self.graphql_session.execute(query)
         employees = result["employees"]
         return {UUID(e["uuid"]) for e in employees}
 
@@ -484,7 +448,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "user_keys": [user_key],
@@ -516,7 +480,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -553,7 +517,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -589,7 +553,7 @@ class MOService(AbstractAsyncContextManager):
             }}
             """
         )
-        await self.graphql.execute(
+        await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
