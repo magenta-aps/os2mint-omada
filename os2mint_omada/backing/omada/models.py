@@ -27,7 +27,8 @@ class IdentityCategory(BaseModel):
 class OmadaUser(BaseModel):
     """Omada API user with relevant fields.
 
-    Types derived from Omada OData. See: docs/odata.dataobjects.metadata.xml or #42613.
+    Types derived from Silkeborg Omada OData. See: schemas/silkeborg/odata.{json,xml}
+    or #42613.
     """
 
     identity_category: IdentityCategory = Field(alias="IDENTITYCATEGORY")

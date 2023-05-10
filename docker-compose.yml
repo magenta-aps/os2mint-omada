@@ -48,7 +48,7 @@ services:
   omada-api:
     image: nginx:latest
     volumes:
-      - ./docs/odata.dataobjects.identity.view.json:/usr/share/nginx/html/odata.json:ro
+      - ./schemas/silkeborg/odata.json:/odata.json:ro
 
 networks:
   default:
