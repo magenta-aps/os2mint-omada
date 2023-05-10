@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0"
+  xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="OIS"
+      xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <ComplexType Name="ReferenceValue">
+        <Property Name="Id" Type="Edm.Int32" />
+        <Property Name="UId" Type="Edm.Guid" />
+        <Property Name="KeyValue" Type="Edm.String" />
+        <Property Name="KeyProperty" Type="Edm.String" />
+      </ComplexType>
+      <ComplexType Name="SetValue">
+        <Property Name="Id" Type="Edm.Int32" />
+        <Property Name="UId" Type="Edm.Guid" />
+      </ComplexType>
+      <ComplexType Name="LangString">
+        <Property Name="LanguageId" Type="Edm.Int32" />
+        <Property Name="Value" Type="Edm.String" />
+      </ComplexType>
+      <EntityType Name="Identity">
+        <Key>
+          <PropertyRef Name="Id" />
+        </Key>
+        <Property Name="Id" Type="Edm.Int32" Nullable="false" />
+        <Property Name="UId" Type="Edm.Guid" Nullable="false" />
+        <Property Name="CreateTime" Type="Edm.DateTimeOffset" Nullable="false" />
+        <Property Name="ChangeTime" Type="Edm.DateTimeOffset" Nullable="false" />
+        <Property Name="DisplayName" Type="Edm.String" Nullable="false" />
+        <Property Name="IDENTITYID" Type="Edm.String" />
+        <Property Name="FIRSTNAME" Type="Edm.String" />
+        <Property Name="LASTNAME" Type="Edm.String" />
+        <Property Name="EMAIL" Type="Edm.String" />
+        <Property Name="OUREF" Type="OIS.ReferenceValue" />
+        <Property Name="JOBTITLE" Type="Edm.String" />
+        <Property Name="IDENTITYSTATUS" Type="OIS.SetValue" />
+        <Property Name="VALIDFROM" Type="Edm.DateTimeOffset" />
+        <Property Name="VALIDTO" Type="Edm.DateTimeOffset" />
+        <Property Name="IDENTITYCATEGORY" Type="OIS.SetValue" />
+        <Property Name="IDENTITYTYPE" Type="OIS.SetValue" />
+        <Property Name="IDENTITYOWNER" Type="OIS.ReferenceValue" />
+        <Property Name="PRIMARYCONTEXTTYPE" Type="OIS.ReferenceValue" />
+        <Property Name="TIMEZONE" Type="OIS.SetValue" />
+        <Property Name="EXPLICITOWNER" Type="Collection(OIS.ReferenceValue)" />
+        <Property Name="OISID" Type="Edm.Int32" />
+        <Property Name="MANAGER" Type="Collection(OIS.ReferenceValue)" />
+        <Property Name="INITIALPASSWORD" Type="Edm.String" />
+        <Property Name="ODWBUSIKEY" Type="Edm.String" />
+        <Property Name="RISKSCORE" Type="Edm.Int32" />
+        <Property Name="STATE_REGION" Type="Edm.String" />
+        <Property Name="BIRTHDAY" Type="Edm.DateTimeOffset" />
+        <Property Name="GENDER" Type="OIS.SetValue" />
+        <Property Name="ADDRESS2" Type="Edm.String" />
+        <Property Name="ADDRESS1" Type="Edm.String" />
+        <Property Name="CITY" Type="Edm.String" />
+        <Property Name="ZIPCODE" Type="Edm.String" />
+        <Property Name="EMAIL2" Type="Edm.String" />
+        <Property Name="COUNTRY" Type="OIS.ReferenceValue" />
+        <Property Name="CLT_TAGS" Type="Collection(OIS.ReferenceValue)" />
+        <Property Name="IDENTSODXML" Type="Edm.String" />
+        <Property Name="IDENTSODRECALCSURV" Type="Edm.Boolean" />
+        <Property Name="PWR_LOCKOUT" Type="Edm.Boolean" />
+        <Property Name="EMPLOYMENTS" Type="Collection(OIS.ReferenceValue)" />
+        <Property Name="ADLOGON" Type="Edm.String" />
+        <Property Name="C_ADDN" Type="Edm.String" />
+        <Property Name="C_NOITUSER" Type="Edm.Boolean" />
+        <Property Name="C_MOBILE" Type="Edm.String" />
+        <Property Name="C_TELEPHONENUMBER" Type="Edm.String" />
+        <Property Name="C_POSTALCODE" Type="Edm.String" />
+        <Property Name="C_STREETADDRESS" Type="Edm.String" />
+        <Property Name="C_ISONBOARDE" Type="Edm.Boolean" />
+        <Property Name="C_POSITIONID" Type="Edm.String" />
+        <Property Name="RISKLEVEL" Type="OIS.SetValue" />
+        <Property Name="SUBAREA" Type="OIS.ReferenceValue" />
+        <Property Name="BUILDING" Type="OIS.ReferenceValue" />
+        <Property Name="JOBTITLE_REF" Type="OIS.ReferenceValue" />
+        <Property Name="DIVISION" Type="OIS.ReferenceValue" />
+        <Property Name="BUSINESSUNIT" Type="OIS.ReferenceValue" />
+        <Property Name="COMPANY" Type="OIS.ReferenceValue" />
+        <Property Name="COSTCENTER" Type="OIS.ReferenceValue" />
+        <Property Name="LOCATION" Type="OIS.ReferenceValue" />
+        <Property Name="C_EXTERNALCOMPANYREF" Type="OIS.ReferenceValue" />
+        <Property Name="C_EXTERNALTYPEREF" Type="OIS.ReferenceValue" />
+        <Property Name="C_EXTERNALRISKLEVELREF" Type="OIS.ReferenceValue" />
+        <Property Name="C_CPRNUMBER" Type="Edm.String" />
+        <Property Name="C_EXTPERSONALEMAIL" Type="Edm.String" />
+        <Property Name="JOBTITLE_ID" Type="Edm.String" />
+        <Property Name="CELLPHONE" Type="Edm.String" />
+        <Property Name="C_ONBOARDING_MAIL_SENT" Type="Edm.Boolean" />
+        <Property Name="C_DEPARTMENTTYPE" Type="Edm.String" />
+        <Property Name="C_JOBTITLE_ODATA" Type="Edm.String" />
+        <Property Name="C_IDENCATEGORY_ODATA" Type="Edm.String" />
+        <Property Name="C_ORGUNIT_ODATA" Type="Edm.String" />
+        <Property Name="C_MANDISNAME_ODATA" Type="Edm.String" />
+        <Property Name="C_IDENTITYSTATUS_ODATA" Type="Edm.String" />
+        <Property Name="C_DISPLAYNAME_ODATA" Type="Edm.String" />
+        <Property Name="OUID" Type="Edm.String" />
+        <Property Name="C_OUID_ODATA" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="Job_titles">
+        <Key>
+          <PropertyRef Name="Id" />
+        </Key>
+        <Property Name="Id" Type="Edm.Int32" Nullable="false" />
+        <Property Name="UId" Type="Edm.Guid" Nullable="false" />
+        <Property Name="CreateTime" Type="Edm.DateTimeOffset" Nullable="false" />
+        <Property Name="ChangeTime" Type="Edm.DateTimeOffset" Nullable="false" />
+        <Property Name="DisplayName" Type="Edm.String" Nullable="false" />
+        <Property Name="NAME" Type="Edm.String" />
+        <Property Name="ODWBUSIKEY" Type="Edm.String" />
+        <Property Name="EXPLICITOWNER" Type="Collection(OIS.ReferenceValue)" />
+        <Property Name="OWNERREF" Type="Collection(OIS.ReferenceValue)" />
+        <Property Name="LASTEXEC_DELETEDCONTEXTSURV" Type="Edm.DateTimeOffset" />
+        <Property Name="CONTEXTSTATUS" Type="OIS.SetValue" />
+        <Property Name="DESCRIPTION" Type="Edm.String" />
+        <Property Name="JOBTITLE_ID" Type="Edm.String" />
+        <Property Name="C_JOBTYPE" Type="Edm.String" />
+      </EntityType>
+      <EntityType Name="C_externalcompany">
+        <Key>
+          <PropertyRef Name="Id" />
+        </Key>
+        <Property Name="Id" Type="Edm.Int32" Nullable="false" />
+        <Property Name="UId" Type="Edm.Guid" Nullable="false" />
+        <Property Name="CreateTime" Type="Edm.DateTimeOffset" Nullable="false" />
+        <Property Name="ChangeTime" Type="Edm.DateTimeOffset" Nullable="false" />
+        <Property Name="DisplayName" Type="Edm.String" Nullable="false" />
+        <Property Name="NAME" Type="Edm.String" />
+      </EntityType>
+      <EntityContainer Name="DataObjects">
+        <EntitySet Name="Identity" EntityType="OIS.Identity" />
+        <EntitySet Name="Job_titles" EntityType="OIS.Job_titles" />
+        <EntitySet Name="C_externalcompany" EntityType="OIS.C_externalcompany" />
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
