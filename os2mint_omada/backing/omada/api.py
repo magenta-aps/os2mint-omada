@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import AbstractAsyncContextManager
-from contextlib import AsyncExitStack
-from types import TracebackType
 from typing import Any
 from typing import Iterable
 from typing import Type
@@ -22,49 +19,14 @@ from os2mint_omada.config import OmadaSettings
 logger = structlog.get_logger(__name__)
 
 
-class OmadaAPI(AbstractAsyncContextManager):
-    def __init__(self, settings: OmadaSettings) -> None:
+class OmadaAPI:
+    def __init__(self, client: AsyncClient | AuthenticatedAsyncHTTPXClient) -> None:
         """Facade for the Omada API.
 
         Args:
-            settings: Omada-specific settings.
+            client: HTTPX Client.
         """
-        super().__init__()
-        self.settings = settings
-        self.stack = AsyncExitStack()
-
-    async def __aenter__(self) -> OmadaAPI:
-        """Setup and start the client for persistent connection to the Omada API."""
-        settings = self.settings
-
-        # HTTPX Client
-        client_cls: Type[AsyncClient | AuthenticatedAsyncHTTPXClient] = AsyncClient
-        client_kwargs: dict[str, Any] = {}
-        if settings.insecure_skip_tls_verify:
-            logger.warning("INSECURE: Skipping TLS verification for Omada API!")
-            client_kwargs["verify"] = False
-        if settings.oidc is not None:
-            client_cls = AuthenticatedAsyncHTTPXClient
-            client_kwargs.update(**settings.oidc.dict())
-        if settings.basic_auth is not None:
-            client_kwargs["auth"] = BasicAuth(**settings.basic_auth.dict())
-
-        logger.debug("Setting up Omada API", client_kwargs=client_kwargs)
-        client = client_cls(timeout=60, **client_kwargs)
-        self.client: AsyncClient = await self.stack.enter_async_context(client)
-
-        return await super().__aenter__()
-
-    async def __aexit__(
-        self,
-        __exc_type: Type[BaseException] | None,
-        __exc_value: BaseException | None,
-        __traceback: TracebackType | None,
-    ) -> bool | None:
-        """Close the connection to the Oamda API."""
-        logger.debug("Closing Omada API")
-        await self.stack.aclose()
-        return await super().__aexit__(__exc_type, __exc_value, __traceback)
+        self.client = client
 
     async def get_users(self, omada_filter: str | None = None) -> list[RawOmadaUser]:
         """Retrieve IT users from Omada.
@@ -78,9 +40,8 @@ class OmadaAPI(AbstractAsyncContextManager):
         if omada_filter is not None:
             params["$filter"] = omada_filter
 
-        url = self.settings.url
-        logger.info("Getting Omada IT users", odata_url=url, params=params)
-        response = await self.client.get(url, params=params)
+        logger.info("Getting Omada IT users", params=params)
+        response = await self.client.get("", params=params)
         response.raise_for_status()
         users = response.json()["value"]
         logger.info("Retrieved Omada IT users")
@@ -123,3 +84,32 @@ class OmadaAPI(AbstractAsyncContextManager):
         Returns: List of raw omada users with the given CPR number.
         """
         return await self.get_users_by("C_CPRNR", [f"'{cpr_number}'"])
+
+
+def create_client(
+    settings: OmadaSettings,
+) -> AsyncClient | AuthenticatedAsyncHTTPXClient:
+    """Create HTTPX Client for the Omada API.
+
+    Args:
+        settings: Omada-specific settings.
+
+    Returns: HTTPX Client.
+    """
+    client_cls: Type[AsyncClient | AuthenticatedAsyncHTTPXClient] = AsyncClient
+    kwargs: dict[str, Any] = dict(
+        base_url=settings.url,
+        timeout=60,
+    )
+    if settings.insecure_skip_tls_verify:
+        logger.warning("INSECURE: Skipping TLS verification for Omada API!")
+        kwargs["verify"] = False
+    if settings.oidc is not None:
+        client_cls = AuthenticatedAsyncHTTPXClient
+        kwargs.update(**settings.oidc.dict())
+    if settings.basic_auth is not None:
+        kwargs["auth"] = BasicAuth(**settings.basic_auth.dict())
+
+    logger.debug("Creating Omada client", kwargs=kwargs)
+    client = client_cls(**kwargs)
+    return client
