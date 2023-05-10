@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 import structlog
-from os2mint_omada.sync.base import ComparableMixin
-from os2mint_omada.sync.base import StripUserKeyMixin
+from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Employee
+
+from .models import ManualSilkeborgOmadaUser
+from os2mint_omada.mo import MO
+from os2mint_omada.sync.models import ComparableMixin
+from os2mint_omada.sync.models import StripUserKeyMixin
 
 logger = structlog.get_logger(__name__)
 
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
     @classmethod
-    def from_omada(cls, omada_user: ManualOmadaUser) -> ComparableEmployee:
+    def from_omada(cls, omada_user: ManualSilkeborgOmadaUser) -> ComparableEmployee:
         """Construct (comparable) MO employee from a manual omada user.
 
         Args:
@@ -28,7 +32,7 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
 
 
 async def sync_manual_employee(
-    omada_user: ManualOmadaUser,
+    omada_user: ManualSilkeborgOmadaUser,
     mo: MO,
     model_client: ModelClient,
 ) -> None:

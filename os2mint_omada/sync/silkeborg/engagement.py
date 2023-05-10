@@ -7,8 +7,8 @@ from uuid import UUID
 
 import structlog
 from more_itertools import only
-from os2mint_omada.sync.base import ComparableMixin
 from pydantic import parse_obj_as
+from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementType
 from ramodels.mo._shared import JobFunction
@@ -17,6 +17,11 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
 
+from .models import ManualSilkeborgOmadaUser
+from .models import SilkeborgOmadaUser
+from os2mint_omada.mo import MO
+from os2mint_omada.omada.api import OmadaAPI
+from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.util import validity_intersection
 
 logger = structlog.get_logger(__name__)
@@ -26,7 +31,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
     @classmethod
     def from_omada(
         cls,
-        omada_user: ManualOmadaUser,
+        omada_user: ManualSilkeborgOmadaUser,
         person_uuid: UUID,
         org_unit_uuid: UUID,
         org_unit_validity: Validity,
@@ -103,8 +108,12 @@ async def sync_engagements(
 
     # Get current user data from Omada
     raw_omada_users = await omada_api.get_users_by_cpr_number(cpr_number)
-    omada_users = parse_obj_as(list[ManualOmadaUser | OmadaUser], raw_omada_users)
-    manual_omada_users = [u for u in omada_users if isinstance(u, ManualOmadaUser)]
+    omada_users = parse_obj_as(
+        list[ManualSilkeborgOmadaUser | SilkeborgOmadaUser], raw_omada_users
+    )
+    manual_omada_users = [
+        u for u in omada_users if isinstance(u, ManualSilkeborgOmadaUser)
+    ]
 
     # Get MO classes configuration
     job_functions = await mo.get_classes("engagement_job_function")
@@ -140,7 +149,7 @@ async def sync_engagements(
 
     # Expected engagements from Omada
     async def build_comparable_engagement(
-        omada_user: ManualOmadaUser,
+        omada_user: ManualSilkeborgOmadaUser,
     ) -> ComparableEngagement:
         # By default, engagements for manual Omada users are linked to the org unit
         # which has an IT system with user key equal to the 'org_unit' field on the

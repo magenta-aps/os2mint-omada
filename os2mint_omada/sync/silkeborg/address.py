@@ -15,11 +15,11 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 
-from os2mint_omada.sync.base import ComparableMixin
-from os2mint_omada.sync.base import StripUserKeyMixin
-
+from .models import SilkeborgOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
+from os2mint_omada.sync.models import ComparableMixin
+from os2mint_omada.sync.models import StripUserKeyMixin
 
 logger = structlog.get_logger(__name__)
 
@@ -28,7 +28,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
     @classmethod
     def from_omada(
         cls,
-        omada_user: OmadaUser,
+        omada_user: SilkeborgOmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
         engagement_uuid: UUID,
@@ -105,7 +105,7 @@ async def sync_addresses(
     raw_omada_users = await omada_api.get_users_by_service_numbers(
         service_numbers=engagements.keys()
     )
-    omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
+    omada_users = parse_obj_as(list[SilkeborgOmadaUser], raw_omada_users)
 
     # Synchronise addresses to MO
     logger.info("Ensuring addresses", employee_uuid=employee_uuid)

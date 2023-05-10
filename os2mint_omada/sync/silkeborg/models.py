@@ -26,7 +26,7 @@ class SilkeborgOmadaUser(OmadaUser):
     phone_institution: str = Field(alias="C_INST_PHONE")
 
 
-class ManualOmadaUser(SilkeborgOmadaUser):
+class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     """Silkeborg-specific Omada user with additional fields for 'manual' users.
 
     Manual users not only have addresses and IT users synchronised, but also the

@@ -6,12 +6,17 @@ import asyncio
 from uuid import UUID
 
 import structlog
-from os2mint_omada.sync.base import ComparableMixin
 from pydantic import parse_obj_as
+from raclients.modelclient.mo import ModelClient
 from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
+
+from .models import SilkeborgOmadaUser
+from os2mint_omada.mo import MO
+from os2mint_omada.omada.api import OmadaAPI
+from os2mint_omada.sync.models import ComparableMixin
 
 logger = structlog.get_logger(__name__)
 
@@ -20,7 +25,7 @@ class ComparableITUser(ComparableMixin, ITUser):
     @classmethod
     def from_omada(
         cls,
-        omada_user: OmadaUser,
+        omada_user: SilkeborgOmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
         engagement_uuid: UUID,
@@ -83,7 +88,7 @@ async def sync_it_users(
     raw_omada_users = await omada_api.get_users_by_service_numbers(
         service_numbers=engagements.keys()
     )
-    omada_users = parse_obj_as(list[OmadaUser], raw_omada_users)
+    omada_users = parse_obj_as(list[SilkeborgOmadaUser], raw_omada_users)
 
     # Synchronise IT users to MO
     logger.info("Ensuring IT users", employee_uuid=employee_uuid)
