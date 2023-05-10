@@ -2,11 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
-import asyncio
-from contextlib import AbstractAsyncContextManager
-from contextlib import AsyncExitStack
 from itertools import chain
-from types import TracebackType
 from typing import Collection
 from typing import Iterable
 from typing import NewType
@@ -19,8 +15,6 @@ from gql import gql
 from gql.client import AsyncClientSession
 from more_itertools import one
 from more_itertools import only
-from raclients.graph.client import GraphQLClient
-from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
 from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementRef
@@ -29,9 +23,7 @@ from ramodels.mo._shared import UUIDBase
 from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
-from ramqp.mo import MOAMQPSystem
 
-from os2mint_omada.config import MoSettings
 from os2mint_omada.util import validity_union
 
 logger = structlog.get_logger(__name__)
@@ -408,25 +400,6 @@ class MO:
         # Ideally IT users would be filtered directly in GraphQL, but it is not
         # currently supported.
         return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
-
-    async def get_all_employee_uuids(self) -> set[UUID]:
-        """Retrieve a set of all employee UUIDs in MO.
-
-        Returns: Set of MO employee UUIDs.
-        """
-        logger.info("Getting all MO employees")
-        query = gql(
-            """
-            query EmployeesQuery {
-              employees(from_date: null, to_date: null) {
-                uuid
-              }
-            }
-            """
-        )
-        result = await self.graphql_session.execute(query)
-        employees = result["employees"]
-        return {UUID(e["uuid"]) for e in employees}
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         """Find organisational unit with the given IT system user user_key.
