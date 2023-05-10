@@ -4,23 +4,19 @@ from typing import Any
 
 import structlog
 from aio_pika import IncomingMessage
-from pydantic import ValidationError
-from ramqp import Router
-from ramqp.mo import MORouter
-from ramqp.mo.models import MORoutingKey
-from ramqp.mo.models import ObjectType
-from ramqp.mo.models import PayloadType
-from ramqp.mo.models import RequestType
-from ramqp.mo.models import ServiceType
-
 from os2mint_omada.backing.omada.models import ManualOmadaUser
 from os2mint_omada.backing.omada.models import OmadaUser
 from os2mint_omada.backing.omada.routing_keys import Event
 from os2mint_omada.models import Context
-from os2mint_omada.sync.address import AddressSyncer
-from os2mint_omada.sync.employee import EmployeeSyncer
-from os2mint_omada.sync.engagement import EngagementSyncer
-from os2mint_omada.sync.it_user import ITUserSyncer
+from pydantic import ValidationError
+from ramqp import Router
+from ramqp.mo import MORouter
+from ramqp.mo import PayloadType
+
+from .address import sync_addresses
+from .employee import sync_manual_employee
+from .engagement import sync_engagements
+from .it_user import sync_it_users
 
 logger = structlog.get_logger(__name__)
 mo_router = MORouter()
@@ -48,10 +44,11 @@ async def sync_omada_employee(
     except ValidationError:
         # User is not manual, so we have nothing to do
         return
-    await EmployeeSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(omada_user)
+    await sync_manual_employee(
+        omada_user=omada_user,
+        mo=todo,
+        model_client=todo,
+    )
 
 
 @omada_router.register(Event.WILDCARD)
@@ -81,10 +78,12 @@ async def sync_omada_engagements(
         logger.info("No employee in MO: skipping engagements synchronisation")
         return
 
-    await EngagementSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    await sync_engagements(
+        employee_uuid=employee_uuid,
+        mo=todo,
+        omada_api=todo,
+        model_client=todo,
+    )
 
 
 @omada_router.register(Event.WILDCARD)
@@ -110,10 +109,12 @@ async def sync_omada_addresses(
         logger.info("No employee in MO: skipping addresses synchronisation")
         return
 
-    await AddressSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    await sync_addresses(
+        employee_uuid=employee_uuid,
+        mo=todo,
+        omada_api=todo,
+        model_client=todo,
+    )
 
 
 @omada_router.register(Event.WILDCARD)
@@ -139,10 +140,12 @@ async def sync_omada_it_users(
         logger.info("No employee in MO: skipping IT user synchronisation")
         return
 
-    await ITUserSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    await sync_it_users(
+        employee_uuid=employee_uuid,
+        mo=todo,
+        omada_api=todo,
+        model_client=todo,
+    )
 
 
 #######################################################################################
@@ -179,10 +182,12 @@ async def sync_mo_engagements(payload: PayloadType, context: Context, **_: Any) 
     Returns: None.
     """
     employee_uuid = payload.uuid
-    await EngagementSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    await sync_engagements(
+        employee_uuid=employee_uuid,
+        mo=todo,
+        omada_api=todo,
+        model_client=todo,
+    )
 
 
 @mo_router.register(
@@ -203,10 +208,12 @@ async def sync_mo_addresses(payload: PayloadType, context: Context, **_: Any) ->
     Returns: None.
     """
     employee_uuid = payload.uuid
-    await AddressSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    await sync_addresses(
+        employee_uuid=employee_uuid,
+        mo=todo,
+        omada_api=todo,
+        model_client=todo,
+    )
 
 
 @mo_router.register(
@@ -227,7 +234,9 @@ async def sync_mo_it_users(payload: PayloadType, context: Context, **_: Any) -> 
     Returns: None.
     """
     employee_uuid = payload.uuid
-    await ITUserSyncer(
-        mo_service=context["mo_service"],
-        omada_service=context["omada_service"],
-    ).sync(employee_uuid)
+    await sync_it_users(
+        employee_uuid=employee_uuid,
+        mo=todo,
+        omada_api=todo,
+        model_client=todo,
+    )
