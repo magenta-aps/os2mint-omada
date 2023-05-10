@@ -39,7 +39,7 @@ logger = structlog.get_logger(__name__)
 ITSystems = NewType("ITSystems", dict[str, UUID])
 
 
-class MOService:
+class MO:
     def __init__(self, graphql_session: AsyncClientSession) -> None:
         """The MO backing service manages the connection to MO's AMQP and API.
 
