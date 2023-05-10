@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 from uuid import UUID
 
 import structlog
@@ -184,19 +185,7 @@ class EngagementSyncer(Syncer):
         async def build_comparable_engagement(
             omada_user: ManualOmadaUser,
         ) -> ComparableEngagement:
-            # Engagements are linked to org units through an IT system on the unit
-            # containing the UUID of the C_ORGANISATIONSKODE from Omada.
-            try:
-                org_unit_uuid = (
-                    await self.mo_service.get_org_unit_with_it_system_user_key(
-                        str(omada_user.org_unit)
-                    )
-                )
-            except KeyError:
-                # Ugly fallback in case the org unit IT system does not exist
-                org_unit_uuid = await self.mo_service.get_org_unit_with_uuid(
-                    omada_user.org_unit
-                )
+            org_unit_uuid = await self._get_org_unit_uuid_for_user(omada_user)
             # The org unit's validity is needed to ensure the engagement's validity
             # does not lie outside this interval.
             org_unit_validity = await self.mo_service.get_org_unit_validity(
@@ -239,3 +228,24 @@ class EngagementSyncer(Syncer):
                 "Creating missing engagements", engagements=missing_mo_engagements
             )
             await self.mo_service.model.upload(missing_mo_engagements)
+
+    async def _get_org_unit_uuid_for_user(self, omada_user: ManualOmadaUser) -> UUID:
+        """Get the org unit UUID a manual Omada user's engagement should be created in.
+
+        Args:
+            omada_user: Manual Omada user.
+
+        Returns: UUID of the org unit if found, otherwise raises KeyError.
+        """
+        # By default, engagements for manual Omada users are linked to the org unit
+        # which has an IT system with user key equal to the 'org_unit' field on the
+        # user.
+        with suppress(KeyError):
+            return await self.mo_service.get_org_unit_with_it_system_user_key(
+                str(omada_user.org_unit)
+            )
+
+        # Unfortunately, some org units are imported into MO with the UUID from the
+        # system we are integrating with, so as a fallback, we check for an org unit
+        # with the UUID directly. The KeyError of this lookup isn't caught.
+        return await self.mo_service.get_org_unit_with_uuid(omada_user.org_unit)

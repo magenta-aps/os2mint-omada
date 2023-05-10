@@ -503,14 +503,6 @@ class MOService(AbstractAsyncContextManager):
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         """Find organisational unit with the given IT system user user_key.
 
-        Engagements for manual Omada users are created in the organisational unit which
-        has an IT system with user key equal to the 'org_unit'/'C_ORGANISATIONSKODE'
-        field on the Omada user. While some org units are imported into MO with the
-        UUID from the connected system, it isn't always the case, so in the general
-        case we want to link the UUIDs through a special IT system on the org unit.
-        Because we cannot know what this IT system is called, we don't filter on the
-        name, but error if more than one is returned.
-
         Args:
             user_key: IT system user_key to find org unit for.
 
@@ -544,10 +536,6 @@ class MOService(AbstractAsyncContextManager):
 
     async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
         """Get organisational unit with the given UUID, validating that it exists.
-
-        Since some org units are imported into MO with special UUIDs, this check serves
-        as a fallback to the omada/mo engagement linking otherwise handled by
-        get_org_unit_with_it_system_user_key.
 
         Args:
             uuid: UUID of the org unit to look up.
