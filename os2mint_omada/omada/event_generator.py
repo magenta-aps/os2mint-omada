@@ -9,23 +9,22 @@ from asyncio import CancelledError
 from asyncio import Task
 from contextlib import AbstractAsyncContextManager
 from types import TracebackType
-from typing import Any
 from typing import Type
 
 import structlog
+from pydantic import parse_obj_as
 from ramqp import AMQPSystem
 
-from os2mint_omada.backing.omada.api import OmadaAPI
-from os2mint_omada.backing.omada.models import RawOmadaUser
-from os2mint_omada.backing.omada.routing_keys import Event
 from os2mint_omada.config import OmadaSettings
+from os2mint_omada.omada.api import OmadaAPI
+from os2mint_omada.omada.models import OmadaUser
+from os2mint_omada.omada.models import RawOmadaUser
+from os2mint_omada.omada.routing_keys import Event
 
 logger = structlog.get_logger(__name__)
 
 
 class OmadaEventGenerator(AbstractAsyncContextManager):
-    user_identifier: str = "UId"
-
     def __init__(
         self, settings: OmadaSettings, api: OmadaAPI, amqp_system: AMQPSystem
     ) -> None:
@@ -86,17 +85,19 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         old_users_list = self._load_users()
         new_users_list = await self.api.get_users()
 
-        # Structure by user's identifier to allow detecting changes in values
-        def by_identifier(users: list[RawOmadaUser]) -> dict[Any, RawOmadaUser]:
-            return {u[self.user_identifier]: u for u in users}
+        def by_identifier(raw_users: list[RawOmadaUser]) -> dict[str, OmadaUser]:
+            """Structure by user identifier to allow detecting changes in values."""
+            users = parse_obj_as(list[OmadaUser], raw_users)
+            users_by_uid = {u.uid: u for u in users}
+            return users_by_uid
 
         old_users = by_identifier(old_users_list)
         new_users = by_identifier(new_users_list)
 
         # Generate event for each user
-        for key in old_users.keys() | new_users.keys():
-            old = old_users.get(key)
-            new = new_users.get(key)
+        for uid in old_users.keys() | new_users.keys():
+            old = old_users.get(uid)
+            new = new_users.get(uid)
             # Skip if user is unchanged
             if new == old:
                 continue
@@ -111,16 +112,11 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 event = Event.UPDATE
                 payload = new
             # Publish to AMQP
-            logger.info(
-                "Detected Omada event",
-                change=event,
-                user_key=key,
-                user_identifier=self.user_identifier,
-            )
+            logger.info("Detected Omada event", change=event, uid=uid)
             assert payload is not None  # mypy is so dumb
             await self.amqp_system.publish_message(
                 routing_key=event,
-                payload=payload,
+                payload=payload.json(),
             )
 
         self._save_users(new_users_list)
