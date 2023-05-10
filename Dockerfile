@@ -28,4 +28,4 @@ COPY . ./
 
 VOLUME ["/data/"]
 
-CMD ["uvicorn", "os2mint_omada.main:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "--factory", "os2mint_omada.app:create_app", "--host", "0.0.0.0"]

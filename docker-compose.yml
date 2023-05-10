@@ -21,7 +21,7 @@ services:
 
   omada:
     build: .
-    command: ["uvicorn", "os2mint_omada.main:app", "--host", "0.0.0.0", "--reload"]
+    command: ["uvicorn", "--factory", "os2mint_omada.app:create_app", "--host", "0.0.0.0", "--reload"]
     environment:
       LOG_LEVEL: DEBUG
 
