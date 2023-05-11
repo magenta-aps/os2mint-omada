@@ -1,25 +1,44 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from datetime import datetime
 from unittest.mock import AsyncMock
 from unittest.mock import call
 from unittest.mock import MagicMock
+from uuid import uuid4
+
+from fastapi.encoders import jsonable_encoder
 
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.event_generator import Event
 from os2mint_omada.omada.event_generator import OmadaEventGenerator
+from os2mint_omada.omada.models import IdentityCategory
+from os2mint_omada.omada.models import OmadaUser
+
+
+def get_test_user(id: str) -> OmadaUser:
+    return OmadaUser(
+        id=id,
+        uid=uuid4(),
+        valid_from=datetime(2023, 1, 2),
+        identity_category=IdentityCategory(
+            id="123",
+            uid=uuid4(),
+        ),
+    )
 
 
 async def test_generate(omada_settings: OmadaSettings):
     """Test that create/update/delete events are detected correctly."""
     # Setup fake users
-    old_a = {"UId": "A", "name": 1}
-    old_b = {"UId": "B", "name": 2}
-    old_c = {"UId": "C", "name": 3}
+
+    old_a = get_test_user("a")
+    old_b = get_test_user("b")
+    old_c = get_test_user("c")
     old_users = [old_a, old_b, old_c]
 
     new_a = old_a  # A is unchanged
-    new_b = {"UId": "B", "name": 99}  # B is changed
-    new_d = {"UId": "D", "name": 4}  # D is added
+    new_b = old_b.copy(update=dict(id=99))  # B is changed
+    new_d = get_test_user("d")  # D is added
     new_users = [new_a, new_b, new_d]  # C is deleted
 
     # The "API" returns the new users
@@ -39,15 +58,15 @@ async def test_generate(omada_settings: OmadaSettings):
         calls=[
             call(
                 routing_key=Event.CREATE,
-                payload=new_d,
+                payload=jsonable_encoder(new_d),
             ),
             call(
                 routing_key=Event.DELETE,
-                payload=old_c,
+                payload=jsonable_encoder(old_c),
             ),
             call(
                 routing_key=Event.UPDATE,
-                payload=new_b,
+                payload=jsonable_encoder(new_b),
             ),
         ],
         any_order=True,

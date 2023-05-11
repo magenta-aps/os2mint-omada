@@ -11,8 +11,10 @@ from contextlib import AbstractAsyncContextManager
 from enum import StrEnum
 from types import TracebackType
 from typing import Type
+from uuid import UUID
 
 import structlog
+from fastapi.encoders import jsonable_encoder
 from pydantic import parse_obj_as
 from ramqp import AMQPSystem
 
@@ -95,7 +97,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         old_users_list = self._load_users()
         new_users_list = await self.api.get_users()
 
-        def by_identifier(raw_users: list[RawOmadaUser]) -> dict[str, OmadaUser]:
+        def by_identifier(raw_users: list[RawOmadaUser]) -> dict[UUID, OmadaUser]:
             """Structure by user identifier to allow detecting changes in values."""
             users = parse_obj_as(list[OmadaUser], raw_users)
             users_by_uid = {u.uid: u for u in users}
@@ -126,7 +128,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
             assert payload is not None  # mypy is so dumb
             await self.amqp_system.publish_message(
                 routing_key=event,
-                payload=payload.json(),
+                payload=jsonable_encoder(payload),
             )
 
         self._save_users(new_users_list)
@@ -135,7 +137,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         """Save known Omada users (dicts) to disk."""
         logger.info("Saving known Omada users", num_users=len(users))
         with self.settings.persistence_file.open("w") as file:
-            json.dump(users, file)
+            json.dump(jsonable_encoder(users), file)
 
     def _load_users(self) -> list[RawOmadaUser]:
         """Load known Omada users (dicts) from disk."""
