@@ -42,9 +42,9 @@ include:
 #  stage: test
 #  needs: []
 #
-#Test on Python 3.10:
+#Test on Python 3.11:
 #  <<: *test
-#  image: python:3.10
+#  image: python:3.11
 
 
 Build:

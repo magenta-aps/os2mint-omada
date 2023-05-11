@@ -4,7 +4,7 @@
 # Poetry install based on:
 # https://github.com/python-poetry/poetry/issues/6288#issuecomment-1235974678
 
-FROM python:3.10
+FROM python:3.11
 
 WORKDIR /app
 
