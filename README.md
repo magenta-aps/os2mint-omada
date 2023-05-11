@@ -43,6 +43,14 @@ MO. To force-synchronise Omada users for the newly created organisation unit,
 the `/sync/omada` endpoint can be used.
 
 
+## Development
+The following command is useful to force-synchronise all users from the fake
+Omada API:
+```
+curl -X POST 'http://localhost:9000/sync/omada'
+```
+
+
 ## Versioning
 This project uses [Semantic Versioning](https://semver.org/) with the following
 strategy:

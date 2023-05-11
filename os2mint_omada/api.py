@@ -15,7 +15,7 @@ logger = structlog.get_logger(__name__)
 
 
 @router.post("/sync/omada", status_code=status.HTTP_204_NO_CONTENT)
-async def sync_omada(request: Request, omada_filter: str) -> None:
+async def sync_omada(request: Request, omada_filter: str | None = None) -> None:
     """Force-synchronise Omada user(s) matching the given Omada filter."""
     logger.info("Synchronising Omada users", omada_filter=omada_filter)
     context: Context = request.app.state.context
