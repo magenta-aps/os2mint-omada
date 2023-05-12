@@ -224,12 +224,12 @@
       "C_LOGIN": "DRV1216",
       "C_SYNLIG_I_OS2MO": false,
       "C_OPRETTES_I_OS2MO": null,
-      "C_ORGANISATIONSKODE": "b9ccccba-1ed8-4800-b800-0000012a0002",
+      "C_ORGANISATIONSKODE": "f06ee470-9f17-566f-acbe-e938112d46d9",
       "C_INSTITUTIONSKODE": null,
       "OUREF": null,
       "IDENTITYSTATUS": null,
       "IDENTITYCATEGORY": {
-        "Id": 111,
+        "Id": 561,
         "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b"
       },
       "IDENTITYTYPE": null,
