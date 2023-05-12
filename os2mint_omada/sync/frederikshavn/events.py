@@ -112,7 +112,7 @@ async def sync_omada_addresses(
     omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_service_number(
+    employee_uuid = await mo.get_employee_uuid_from_user_key(
         omada_user.service_number
     )
     if employee_uuid is None:
@@ -148,7 +148,7 @@ async def sync_omada_it_users(
     omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_service_number(
+    employee_uuid = await mo.get_employee_uuid_from_user_key(
         omada_user.service_number
     )
     if employee_uuid is None:

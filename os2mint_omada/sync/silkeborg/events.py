@@ -112,9 +112,7 @@ async def sync_omada_addresses(
     omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_service_number(
-        omada_user.service_number
-    )
+    employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping addresses synchronisation")
         return
@@ -148,9 +146,7 @@ async def sync_omada_it_users(
     omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_service_number(
-        omada_user.service_number
-    )
+    employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping IT user synchronisation")
         return

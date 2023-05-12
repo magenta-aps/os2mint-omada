@@ -95,20 +95,20 @@ class MO:
         classes = one(result["facets"])["classes"]
         return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 
-    async def get_employee_uuid_from_service_number(
-        self, service_number: str
+    async def get_employee_uuid_from_user_key(
+        self, user_key: str
     ) -> UUID | None:
-        """Find employee UUID by Omada service number.
+        """Find employee UUID by user key.
 
         Omada users are linked to MO employees through user keys on the employee's
         engagements.
 
         Args:
-            service_number: Service number to find employee for.
+            user_key: User key to find employee for.
 
         Returns: Employee UUID if found, otherwise None.
         """
-        logger.debug("Getting MO employee UUID", service_number=service_number)
+        logger.debug("Getting MO employee UUID", user_key=user_key)
         query = gql(
             """
             query EmployeeServiceNumberQuery($user_keys: [String!]) {
@@ -125,7 +125,7 @@ class MO:
         result = await self.graphql_session.execute(
             query,
             variable_values={
-                "user_keys": [service_number],
+                "user_keys": [user_key],
             },
         )
         engagements = result["engagements"]
