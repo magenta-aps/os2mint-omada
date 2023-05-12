@@ -82,6 +82,8 @@ async def sync_addresses(
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
         "email": "EmailEmployee",
+        "phone": "PhoneEmployee",
+        "cellphone": "MobilePhoneEmployee",
     }
 
     # Get MO classes configuration
