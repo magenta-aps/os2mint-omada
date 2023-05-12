@@ -1,5 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from typing import AsyncGenerator
+
 import pytest
 from httpx import AsyncClient
 from httpx import Request
@@ -39,13 +41,14 @@ async def test_create_client_basic_auth(omada_settings: OmadaSettings) -> None:
     )
     client = create_client(omada_settings)
     assert isinstance(client, AsyncClient)
+    assert client.auth is not None
     request = next(client.auth.auth_flow(Request("GET", "example.com")))
     # base64("AzureDiamond:hunter2") == "QXp1cmVEaWFtb25kOmh1bnRlcjI="
     assert request.headers["Authorization"] == "Basic QXp1cmVEaWFtb25kOmh1bnRlcjI="
 
 
 @pytest.fixture
-async def omada_api(omada_settings: OmadaSettings) -> OmadaAPI:
+async def omada_api(omada_settings: OmadaSettings) -> AsyncGenerator[OmadaAPI, None]:
     """Omada API."""
     client = create_client(settings=omada_settings)
     async with client:

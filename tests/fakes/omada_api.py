@@ -15,6 +15,8 @@ async def get(request: Request) -> dict:
         omada_json: dict = json.load(f)
     values = omada_json["value"]
     if omada_filter := request.query_params.get("$filter"):
-        key, value = re.match(r"(.+) eq '(.+)'", omada_filter).groups()
+        match = re.match(r"(.+) eq '(.+)'", omada_filter)
+        assert match is not None
+        key, value = match.groups()
         values = [v for v in values if v[key] == value]
     return {"value": values}

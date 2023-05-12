@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+# mypy: disable-error-code=assignment
 from unittest import TestCase
 from unittest.mock import ANY
 from unittest.mock import AsyncMock
