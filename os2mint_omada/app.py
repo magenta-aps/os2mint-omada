@@ -14,8 +14,12 @@ from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import create_client
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.omada.event_generator import OmadaEventGenerator
-from os2mint_omada.sync.silkeborg.events import mo_router
-from os2mint_omada.sync.silkeborg.events import omada_router
+from os2mint_omada.sync.frederikshavn.events import mo_router as frederikshavn_mo_router
+from os2mint_omada.sync.frederikshavn.events import (
+    omada_router as frederikshavn_omada_router,
+)
+from os2mint_omada.sync.silkeborg.events import mo_router as silkeborg_mo_router
+from os2mint_omada.sync.silkeborg.events import omada_router as silkeborg_omada_router
 
 
 def create_app(**kwargs: Any) -> FastAPI:
@@ -30,6 +34,16 @@ def create_app(**kwargs: Any) -> FastAPI:
     fastramqpi = FastRAMQPI(application_name="omada", settings=settings.fastramqpi)
     fastramqpi.add_context(settings=settings)
     context = fastramqpi.get_context()
+
+    match settings.customer:
+        case "frederikshavn":
+            mo_router = frederikshavn_mo_router
+            omada_router = frederikshavn_omada_router
+        case "silkeborg":
+            mo_router = silkeborg_mo_router
+            omada_router = silkeborg_omada_router
+        case _:
+            raise ValueError("Improperly configured")
 
     # FastAPI router
     app = fastramqpi.get_app()

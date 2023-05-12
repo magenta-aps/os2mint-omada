@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
+from typing import Literal
 
 from fastramqpi.config import Settings as FastRAMQPISettings
 from pydantic import AnyHttpUrl
@@ -50,6 +51,7 @@ class Settings(BaseSettings):
     fastramqpi: FastRAMQPISettings
 
     omada: OmadaSettings
+    customer: Literal["frederikshavn", "silkeborg"]
 
     class Config:
         frozen = True

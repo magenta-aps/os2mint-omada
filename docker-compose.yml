@@ -24,6 +24,7 @@ services:
     command: ["uvicorn", "--factory", "os2mint_omada.app:create_app", "--host", "0.0.0.0", "--reload"]
     environment:
       LOG_LEVEL: DEBUG
+      CUSTOMER: silkeborg
 
       # OS2mo
       FASTRAMQPI__MO_URL: "http://mo"
