@@ -40,4 +40,5 @@ facets:
 
 it_systems:
   omada_ad_guid: "Omada - AD GUID"
+  omada_ad_login: "Omada - AD LOGIN"
   omada_login: "Omada - LOGIN"

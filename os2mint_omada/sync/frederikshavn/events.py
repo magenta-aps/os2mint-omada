@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import structlog
-from pydantic import ValidationError
 from ramqp import Router
 from ramqp.depends import PayloadBytes
 from ramqp.depends import SleepOnError
@@ -10,11 +9,10 @@ from ramqp.mo import PayloadType
 
 from ... import depends
 from .address import sync_addresses
-from .employee import sync_manual_employee
+from .employee import sync_employee
 from .engagement import sync_engagements
 from .it_user import sync_it_users
 from .models import FrederikshavnOmadaUser
-from .models import ManualFrederikshavnOmadaUser
 from os2mint_omada.omada.event_generator import Event
 
 logger = structlog.get_logger(__name__)
@@ -32,7 +30,7 @@ async def sync_omada_employee(
     model_client: depends.ModelClient,
     _: SleepOnError,
 ) -> None:
-    """Synchronise a manual Omada user to a MO employee.
+    """Synchronise a Omada user to a MO employee.
 
     Args:
         body: AMQP message body.
@@ -41,12 +39,9 @@ async def sync_omada_employee(
 
     Returns: None.
     """
-    try:
-        omada_user = ManualFrederikshavnOmadaUser.parse_raw(body)
-    except ValidationError:
-        # User is not manual, so we have nothing to do
-        return
-    await sync_manual_employee(
+    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+
+    await sync_employee(
         omada_user=omada_user,
         mo=mo,
         model_client=model_client,
@@ -61,7 +56,7 @@ async def sync_omada_engagements(
     model_client: depends.ModelClient,
     _: SleepOnError,
 ) -> None:
-    """Synchronise a manual Omada user to a MO engagements.
+    """Synchronise a Omada user to a MO engagements.
 
     Args:
         body: AMQP message body.
@@ -71,11 +66,7 @@ async def sync_omada_engagements(
 
     Returns: None.
     """
-    try:
-        omada_user = ManualFrederikshavnOmadaUser.parse_raw(body)
-    except ValidationError:
-        # User is not manual, so we have nothing to do
-        return
+    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
@@ -112,9 +103,7 @@ async def sync_omada_addresses(
     omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_user_key(
-        omada_user.service_number
-    )
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping addresses synchronisation")
         return
@@ -148,9 +137,7 @@ async def sync_omada_it_users(
     omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_user_key(
-        omada_user.service_number
-    )
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping IT user synchronisation")
         return
@@ -169,14 +156,6 @@ async def sync_omada_it_users(
 # TODO: MO ITUsers and Addresses are not watched since the Omada integration is
 #  authoritative for these objects, so we do not expect them to be modified. This
 #  invariant should be enforced by RBAC.
-
-# TODO: Engagements for manual Omada users are created in the organisational unit with
-#  an IT user on the unit containing the UUID of the 'org_unit'/'C_ORGANISATIONSKODE'
-#  attribute of the Omada user, and as a fallback on the org unit with the given UUID
-#  directly. For this reason, we should also watch changes to IT users on org units,
-#  as well as the creation of org units themselves (for the fallback).
-#  For now, however, it is assumed that all organisational unit are created in MO
-#  before the users appear in Omada.
 
 
 @mo_router.register("employee.employee.*")

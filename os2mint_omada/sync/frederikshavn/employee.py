@@ -7,7 +7,7 @@ from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Employee
 from ramqp.depends import handle_exclusively_decorator
 
-from .models import ManualFrederikshavnOmadaUser
+from .models import FrederikshavnOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
@@ -17,11 +17,11 @@ logger = structlog.get_logger(__name__)
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
     @classmethod
-    def from_omada(cls, omada_user: ManualFrederikshavnOmadaUser) -> ComparableEmployee:
-        """Construct (comparable) MO employee from a manual omada user.
+    def from_omada(cls, omada_user: FrederikshavnOmadaUser) -> ComparableEmployee:
+        """Construct (comparable) MO employee from a omada user.
 
         Args:
-            omada_user: Manual omada user.
+            omada_user: Omada user.
 
         Returns: Comparable MO employee.
         """
@@ -33,26 +33,22 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
 
 
 @handle_exclusively_decorator(key=lambda omada_user, *_, **__: omada_user.cpr_number)
-async def sync_manual_employee(
-    omada_user: ManualFrederikshavnOmadaUser,
+async def sync_employee(
+    omada_user: FrederikshavnOmadaUser,
     mo: MO,
     model_client: ModelClient,
 ) -> None:
     """Synchronise an Omada user to MO.
 
     Args:
-        omada_user: (Manual) Omada user to synchronise.
+        omada_user: Omada user to synchronise.
 
     Returns: None.
     """
-    logger.info("Synchronising manual employee", omada_user=omada_user)
+    logger.info("Synchronising employee", omada_user=omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
-
-    if employee_uuid is not None:
-        logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
-        return
 
     # Get employee objects from MO
     employee_states: set[Employee] = set()

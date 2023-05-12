@@ -82,9 +82,6 @@ async def sync_addresses(
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
         "email": "EmailEmployee",
-        "phone_direct": "PhoneEmployee",
-        "phone_cell": "MobilePhoneEmployee",
-        "phone_institution": "InstitutionPhoneEmployee",
     }
 
     # Get MO classes configuration
@@ -121,7 +118,7 @@ async def sync_addresses(
             omada_user=omada_user,
             omada_attr=omada_attr,
             employee_uuid=employee_uuid,
-            engagement_uuid=engagements[omada_user.service_number].uuid,
+            engagement_uuid=engagements[omada_user.employee_number].uuid,
             address_type_uuid=address_types[mo_address_user_key],
             visibility_uuid=visibility_uuid,
         )

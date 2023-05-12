@@ -95,9 +95,7 @@ class MO:
         classes = one(result["facets"])["classes"]
         return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 
-    async def get_employee_uuid_from_user_key(
-        self, user_key: str
-    ) -> UUID | None:
+    async def get_employee_uuid_from_user_key(self, user_key: str) -> UUID | None:
         """Find employee UUID by user key.
 
         Omada users are linked to MO employees through user keys on the employee's
@@ -392,7 +390,7 @@ class MO:
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
             it_user["engagement"] = only(
-                {EngagementRef(**p) for p in it_user.pop("engagement")}
+                {EngagementRef(**p) for p in (it_user.pop("engagement") or {})}
             )
             return ITUser.parse_obj(it_user)
 
@@ -465,6 +463,36 @@ class MO:
             org_unit = one(result["org_units"])
         except ValueError as e:
             raise KeyError(f"No organisation unit with {uuid=} found") from e
+        return UUID(org_unit["uuid"])
+
+    async def get_org_unit_with_user_key(self, user_key: str) -> UUID:
+        """Get organisational unit with the given user key, validating that it exists.
+
+        Args:
+            user_key: User key of the org unit to look up.
+
+        Returns: UUID of the org unit if it exists, otherwise raises KeyError.
+        """
+        logger.debug("Getting org unit with user key", user_key=user_key)
+        query = gql(
+            """
+            query OrgUnitQuery($user_keys: [String!]) {
+              org_units(user_keys: $user_keys, from_date: null, to_date: null) {
+                uuid
+              }
+            }
+            """
+        )
+        result = await self.graphql_session.execute(
+            query,
+            variable_values={
+                "user_keys": [user_key],
+            },
+        )
+        try:
+            org_unit = one(result["org_units"])
+        except ValueError as e:
+            raise KeyError(f"No organisation unit with {user_key=} found") from e
         return UUID(org_unit["uuid"])
 
     async def get_org_unit_validity(self, uuid: UUID) -> Validity:
