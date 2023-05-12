@@ -12,6 +12,7 @@ from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
+from ramqp.depends import handle_exclusively_decorator
 
 from .models import SilkeborgOmadaUser
 from os2mint_omada.mo import MO
@@ -51,6 +52,7 @@ class ComparableITUser(ComparableMixin, ITUser):
         )
 
 
+@handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
 async def sync_it_users(
     employee_uuid: UUID,
     mo: MO,
@@ -66,13 +68,14 @@ async def sync_it_users(
     """
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
-    # Get MO classes configuration
-    it_systems = await mo.get_it_systems()
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_guid": "omada_ad_guid",
         "login": "omada_login",
     }
+
+    # Get MO classes configuration
+    it_systems = await mo.get_it_systems(user_keys=it_user_map.values())
     omada_it_systems = [it_systems[user_key] for user_key in it_user_map.values()]
 
     # Get current user data from MO

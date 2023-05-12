@@ -5,6 +5,7 @@ from __future__ import annotations
 import structlog
 from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Employee
+from ramqp.depends import handle_exclusively_decorator
 
 from .models import ManualSilkeborgOmadaUser
 from os2mint_omada.mo import MO
@@ -31,6 +32,7 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
         )
 
 
+@handle_exclusively_decorator(key=lambda omada_user, *_, **__: omada_user.cpr_number)
 async def sync_manual_employee(
     omada_user: ManualSilkeborgOmadaUser,
     mo: MO,
@@ -53,10 +55,9 @@ async def sync_manual_employee(
         return
 
     # Get employee objects from MO
+    employee_states: set[Employee] = set()
     if employee_uuid is not None:
         employee_states = await mo.get_employee_states(uuid=employee_uuid)
-    else:
-        employee_states = set()
 
     # Synchronise employee to MO
     logger.info("Ensuring employee", omada_user=omada_user, employee_uuid=employee_uuid)

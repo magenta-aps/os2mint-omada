@@ -16,6 +16,7 @@ from ramodels.mo._shared import OrgUnitRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
+from ramqp.depends import handle_exclusively_decorator
 
 from .models import ManualSilkeborgOmadaUser
 from .models import SilkeborgOmadaUser
@@ -77,6 +78,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
         )
 
 
+@handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
 async def sync_engagements(
     employee_uuid: UUID,
     mo: MO,

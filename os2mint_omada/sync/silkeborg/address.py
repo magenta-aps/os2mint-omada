@@ -14,6 +14,7 @@ from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
+from ramqp.depends import handle_exclusively_decorator
 
 from .models import SilkeborgOmadaUser
 from os2mint_omada.mo import MO
@@ -62,6 +63,7 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         )
 
 
+@handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
 async def sync_addresses(
     employee_uuid: UUID,
     mo: MO,
@@ -77,8 +79,6 @@ async def sync_addresses(
     """
     logger.info("Synchronising addresses", employee_uuid=employee_uuid)
 
-    # Get MO classes configuration
-    address_types = await mo.get_classes("employee_address_type")
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
         "email": "EmailEmployee",
@@ -86,6 +86,9 @@ async def sync_addresses(
         "phone_cell": "MobilePhoneEmployee",
         "phone_institution": "InstitutionPhoneEmployee",
     }
+
+    # Get MO classes configuration
+    address_types = await mo.get_classes("employee_address_type")
     omada_address_types = [address_types[user_key] for user_key in address_map.values()]
 
     # Visibility class for created addresses
