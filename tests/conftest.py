@@ -1,11 +1,13 @@
 # # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
+
 import pytest
 from _pytest.nodes import Item
 from pydantic import AmqpDsn
 from pydantic import AnyHttpUrl
 from pydantic import parse_obj_as
+
 from os2mint_omada.config import OmadaAMQPConnectionSettings
 from os2mint_omada.config import OmadaSettings
 
@@ -18,20 +20,6 @@ def pytest_collection_modifyitems(items: list[Item]) -> None:
         item.add_marker(pytest.mark.respx(assert_all_called=True))
 
 
-#
-#
-# @pytest.fixture
-# def mo_settings() -> MoSettings:
-#     """Fixed settings so tests work without specific environment variables."""
-#     return MoSettings(
-#         auth=MOAuthSettings(
-#             client_secret="hunter2",
-#             server=parse_obj_as(AnyHttpUrl, "https://keycloak.example.org"),
-#         ),
-#         amqp=MOAMQPConnectionSettings(),
-#     )
-#
-#
 @pytest.fixture
 def omada_settings(tmp_path: Path) -> OmadaSettings:
     """Fixed settings so tests work without specific environment variables."""

@@ -266,7 +266,7 @@ class MO:
             """Convert GraphQL address to be RA-Models compatible."""
             address["person"] = one({PersonRef(**p) for p in address["person"]})
             address["engagement"] = only(
-                {EngagementRef(**p) for p in address.pop("engagement")}
+                {EngagementRef(**p) for p in (address.pop("engagement") or {})}
             )
 
             return Address.parse_obj(address)
