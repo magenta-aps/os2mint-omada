@@ -11,6 +11,7 @@ import structlog
 from httpx import AsyncClient
 from httpx import BasicAuth
 from more_itertools import flatten
+from pydantic import AnyHttpUrl
 from raclients.auth import AuthenticatedAsyncHTTPXClient
 
 from os2mint_omada.config import OmadaSettings
@@ -20,12 +21,16 @@ logger = structlog.get_logger(__name__)
 
 
 class OmadaAPI:
-    def __init__(self, client: AsyncClient | AuthenticatedAsyncHTTPXClient) -> None:
+    def __init__(
+        self, url: AnyHttpUrl, client: AsyncClient | AuthenticatedAsyncHTTPXClient
+    ) -> None:
         """Facade for the Omada API.
 
         Args:
+            url: Omada OData URL.
             client: HTTPX Client.
         """
+        self.url = url
         self.client = client
 
     async def get_users(self, omada_filter: str | None = None) -> list[RawOmadaUser]:
@@ -41,7 +46,7 @@ class OmadaAPI:
             params["$filter"] = omada_filter
 
         logger.info("Getting Omada IT users", params=params)
-        response = await self.client.get("", params=params)
+        response = await self.client.get(self.url, params=params)
         response.raise_for_status()
         users = response.json()["value"]
         logger.info("Retrieved Omada IT users")
@@ -75,7 +80,6 @@ def create_client(
     """
     client_cls: Type[AsyncClient | AuthenticatedAsyncHTTPXClient] = AsyncClient
     kwargs: dict[str, Any] = dict(
-        base_url=settings.url,
         timeout=60,
     )
     if settings.insecure_skip_tls_verify:

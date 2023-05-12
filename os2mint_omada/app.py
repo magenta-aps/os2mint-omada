@@ -76,7 +76,7 @@ def create_app(**kwargs: Any) -> FastAPI:
     omada_client = create_client(settings.omada)
     # priority ensures the client is started before the event generator tries to use it
     fastramqpi.add_lifespan_manager(omada_client, priority=1300)
-    omada_api = OmadaAPI(omada_client)
+    omada_api = OmadaAPI(url=settings.omada.url, client=omada_client)
     fastramqpi.add_context(omada_api=omada_api)
 
     # Omada event generator
