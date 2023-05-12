@@ -18,8 +18,8 @@ from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
 from ramqp.depends import handle_exclusively_decorator
 
-from .models import ManualSilkeborgOmadaUser
-from .models import SilkeborgOmadaUser
+from .models import FrederikshavnOmadaUser
+from .models import ManualFrederikshavnOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
@@ -32,7 +32,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
     @classmethod
     def from_omada(
         cls,
-        omada_user: ManualSilkeborgOmadaUser,
+        omada_user: ManualFrederikshavnOmadaUser,
         person_uuid: UUID,
         org_unit_uuid: UUID,
         org_unit_validity: Validity,
@@ -111,10 +111,10 @@ async def sync_engagements(
     # Get current user data from Omada
     raw_omada_users = await omada_api.get_users_by_cpr_number(cpr_number)
     omada_users = parse_obj_as(
-        list[ManualSilkeborgOmadaUser | SilkeborgOmadaUser], raw_omada_users
+        list[ManualFrederikshavnOmadaUser | FrederikshavnOmadaUser], raw_omada_users
     )
     manual_omada_users = [
-        u for u in omada_users if isinstance(u, ManualSilkeborgOmadaUser)
+        u for u in omada_users if isinstance(u, ManualFrederikshavnOmadaUser)
     ]
 
     # Get MO classes configuration
@@ -151,7 +151,7 @@ async def sync_engagements(
 
     # Expected engagements from Omada
     async def build_comparable_engagement(
-        omada_user: ManualSilkeborgOmadaUser,
+        omada_user: ManualFrederikshavnOmadaUser,
     ) -> ComparableEngagement:
         # By default, engagements for manual Omada users are linked to the org unit
         # which has an IT system with user key equal to the 'org_unit' field on the

@@ -13,8 +13,8 @@ from .address import sync_addresses
 from .employee import sync_manual_employee
 from .engagement import sync_engagements
 from .it_user import sync_it_users
-from .models import ManualSilkeborgOmadaUser
-from .models import SilkeborgOmadaUser
+from .models import FrederikshavnOmadaUser
+from .models import ManualFrederikshavnOmadaUser
 from os2mint_omada.omada.event_generator import Event
 
 logger = structlog.get_logger(__name__)
@@ -42,7 +42,7 @@ async def sync_omada_employee(
     Returns: None.
     """
     try:
-        omada_user = ManualSilkeborgOmadaUser.parse_raw(body)
+        omada_user = ManualFrederikshavnOmadaUser.parse_raw(body)
     except ValidationError:
         # User is not manual, so we have nothing to do
         return
@@ -72,7 +72,7 @@ async def sync_omada_engagements(
     Returns: None.
     """
     try:
-        omada_user = ManualSilkeborgOmadaUser.parse_raw(body)
+        omada_user = ManualFrederikshavnOmadaUser.parse_raw(body)
     except ValidationError:
         # User is not manual, so we have nothing to do
         return
@@ -109,7 +109,7 @@ async def sync_omada_addresses(
 
     Returns: None.
     """
-    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_service_number(
@@ -145,7 +145,7 @@ async def sync_omada_it_users(
 
     Returns: None.
     """
-    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_service_number(

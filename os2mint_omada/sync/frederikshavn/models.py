@@ -9,8 +9,8 @@ from os2mint_omada.omada.models import IdentityCategory
 from os2mint_omada.omada.models import OmadaUser
 
 
-class SilkeborgOmadaUser(OmadaUser):
-    """Silkeborg-specific Omada user model."""
+class FrederikshavnOmadaUser(OmadaUser):
+    """Frederikshavn-specific Omada user model."""
 
     # Engagement
     service_number: str = Field(alias="C_TJENESTENR")
@@ -26,8 +26,8 @@ class SilkeborgOmadaUser(OmadaUser):
     phone_institution: str = Field(alias="C_INST_PHONE")
 
 
-class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
-    """Silkeborg-specific Omada user with additional fields for 'manual' users.
+class ManualFrederikshavnOmadaUser(FrederikshavnOmadaUser):
+    """Frederikshavn-specific Omada user with additional fields for 'manual' users.
 
     Manual users not only have addresses and IT users synchronised, but also the
     employee object itself, as well as associated engagements.
@@ -56,7 +56,7 @@ class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
         user could pass validation as a manual one (and vice-versa) unless we check
         the identity category explicitly.
 
-        Manually created users have ID 561 in Silkeborg
+        Manually created users have ID 561 in Frederikshavn
         """
         if identity_category.id != "561":
             raise ValueError("Identity category is not manual")
