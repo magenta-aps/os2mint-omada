@@ -109,7 +109,7 @@ async def sync_engagements(
     mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
     # Get current user data from Omada
-    raw_omada_users = await omada_api.get_users_by_cpr_number(cpr_number)
+    raw_omada_users = await omada_api.get_users_by("C_CPRNUMBER", [cpr_number])
     omada_users = parse_obj_as(
         list[ManualFrederikshavnOmadaUser | FrederikshavnOmadaUser], raw_omada_users
     )

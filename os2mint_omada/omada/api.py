@@ -49,7 +49,7 @@ class OmadaAPI:
         return users
 
     async def get_users_by(self, key: str, values: Iterable[str]) -> list[RawOmadaUser]:
-        """Convenience wrapper for filtering on multiple criteria simultaneously.
+        """Convenience wrapper for filtering on multiple values simultaneously.
 
         Args:
             key: Filter key.
@@ -58,32 +58,9 @@ class OmadaAPI:
         Returns: List of raw omada users matching the filter.
         """
         # Omada does not support OR or IN operators, so we have to do it like this
-        get_users = (self.get_users(f"{key} eq {value}") for value in values)
+        get_users = (self.get_users(f"{key} eq '{value}'") for value in values)
         users = await asyncio.gather(*get_users)
         return list(flatten(users))
-
-    async def get_users_by_service_numbers(
-        self, service_numbers: Iterable[str]
-    ) -> list[RawOmadaUser]:
-        """Retrieve IT users with the given service number ("C_TJENESTENR").
-
-        Args:
-            service_numbers: Service number to retrieve users for.
-
-        Returns: List of raw omada users with the given service number.
-        """
-        service_number_strings = (f"'{n}'" for n in service_numbers)
-        return await self.get_users_by("C_TJENESTENR", service_number_strings)
-
-    async def get_users_by_cpr_number(self, cpr_number: str) -> list[RawOmadaUser]:
-        """Retrieve IT users with the given CPR number ("C_CPRNR").
-
-        Args:
-            cpr_number: CPR number to retrieve users for.
-
-        Returns: List of raw omada users with the given CPR number.
-        """
-        return await self.get_users_by("C_CPRNR", [f"'{cpr_number}'"])
 
 
 def create_client(

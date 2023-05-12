@@ -105,9 +105,7 @@ async def sync_addresses(
     # Get current user data from Omada. Note that we are fetching Omada users for
     # ALL engagements to avoid deleting too many addresses
     engagements = {e.user_key: e for e in mo_engagements}
-    raw_omada_users = await omada_api.get_users_by_service_numbers(
-        service_numbers=engagements.keys()
-    )
+    raw_omada_users = await omada_api.get_users_by("C_POSITIONID", engagements.keys())
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
     # Synchronise addresses to MO
