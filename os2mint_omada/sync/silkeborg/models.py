@@ -43,11 +43,6 @@ class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     org_unit: UUID = Field(alias="C_ORGANISATIONSKODE")
     is_visible: bool = Field(alias="C_SYNLIG_I_OS2MO", default=True)
 
-    @validator("cpr_number")
-    def strip_cpr_dash(cls, cpr_number: str) -> str:
-        """Strip dashes from CPR, e.g. "xxxxxx-xxxx", to be MO-compatible."""
-        return cpr_number.replace("-", "")
-
     @validator("identity_category")
     def check_is_manual(cls, identity_category: IdentityCategory) -> IdentityCategory:
         """Validate that the identity category is indeed that of a manual user.
