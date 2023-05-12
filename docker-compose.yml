@@ -24,7 +24,7 @@ services:
     command: ["uvicorn", "--factory", "os2mint_omada.app:create_app", "--host", "0.0.0.0", "--reload"]
     environment:
       LOG_LEVEL: DEBUG
-      CUSTOMER: silkeborg
+      CUSTOMER: frederikshavn
 
       # OS2mo
       FASTRAMQPI__MO_URL: "http://mo"
@@ -49,7 +49,7 @@ services:
     build: .
     command: ["uvicorn", "tests.fakes.omada_api:app", "--host", "0.0.0.0", "--port", "80"]
     volumes:
-      - ./schemas/silkeborg/odata.json:/odata.json:ro
+      - ./schemas/frederikshavn/odata.json:/odata.json:ro
 
 networks:
   default:
