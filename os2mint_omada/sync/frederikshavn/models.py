@@ -27,6 +27,8 @@ class FrederikshavnOmadaUser(OmadaUser):
 
     # Address
     email: str = Field(alias="EMAIL")
+    phone: str = Field(alias="C_TELEPHONENUMBER")
+    cellphone: str = Field(alias="CELLPHONE")
 
     @validator("cpr_number")
     def strip_cpr_dash(cls, cpr_number: str) -> str:
@@ -44,3 +46,8 @@ class FrederikshavnOmadaUser(OmadaUser):
         MO-compatible.
         """
         return value.lstrip("0")
+
+    @validator("phone", "cellphone")
+    def strip_phone_number_spaces(cls, value: str) -> str:
+        """Strip spaces from phone numbers to be MO-compatible."""
+        return value.replace(" ", "")

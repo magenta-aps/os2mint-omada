@@ -396,14 +396,14 @@ test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==23.1.0)", "coverage[toml] (>=6
 
 [[package]]
 name = "fastramqpi"
-version = "1.4.1"
+version = "1.4.2"
 description = "Rammearkitektur AMQP framework (FastAPI + RAMQP)"
 category = "main"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "fastramqpi-1.4.1-py3-none-any.whl", hash = "sha256:c32f54e356208b5664c12735e3a8debf3d5db6277a676f5989e44d99a639ee3c"},
-    {file = "fastramqpi-1.4.1.tar.gz", hash = "sha256:37a5d4e69e7f9064be2547f16950b00b292097208ccbc1535a315b4fc3ebfb84"},
+    {file = "fastramqpi-1.4.2-py3-none-any.whl", hash = "sha256:487fccd34745d8f49ad80991ecbb5a3fce8933dff4b023b0430934484bf58395"},
+    {file = "fastramqpi-1.4.2.tar.gz", hash = "sha256:f82e1fbb085eae84a323767814cff2129845f34accb03bc5f5b186cb480d2256"},
 ]
 
 [package.dependencies]
@@ -1475,14 +1475,14 @@ python-dateutil = ">=2.8.2,<3.0.0"
 
 [[package]]
 name = "ramqp"
-version = "8.3.0"
+version = "8.4.0"
 description = "Rammearkitektur AMQP library (aio_pika wrapper)"
 category = "main"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "ramqp-8.3.0-py3-none-any.whl", hash = "sha256:30cca33abd396a588c37a010eecd09ffcdbca458b1519e388aa25430a36bb1fd"},
-    {file = "ramqp-8.3.0.tar.gz", hash = "sha256:e6fbe551f8bdf05ed7ac0afbe6306e754f1ecfb413920d4e6b951f6b83d92552"},
+    {file = "ramqp-8.4.0-py3-none-any.whl", hash = "sha256:37a4ee0b5d04b5217b539b0fb622cc12effa90343111cf479d2c3ab56408bd3d"},
+    {file = "ramqp-8.4.0.tar.gz", hash = "sha256:1218e92f552583b97905081dfd34dbd9f1b039d6a7e599e8401fdad3714be4c5"},
 ]
 
 [package.dependencies]
@@ -1851,4 +1851,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "28fba9963ea145360cce3d32b29fe458bfa0dabdf6bb7826deb6a26a64fa6da7"
+content-hash = "74ffde6d7d164eb5793ec15ff3edcf0651085fb817fe4c10cc2f48b971056cad"
