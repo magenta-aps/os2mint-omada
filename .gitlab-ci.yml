@@ -72,3 +72,22 @@ Deploy to Flux Prod:
   needs: []
   variables:
     ENDPOINT: os2mo/flux/omada/update-prod
+
+Deploy to Salt Dev:
+  extends: .release-to-dev
+  needs:
+    - Release version
+  variables:
+    ENDPOINT: os2mo/salt/omada/update-dev
+
+Deploy to Salt Test:
+  extends: .release-to-test
+  needs: []
+  variables:
+    ENDPOINT: os2mo/salt/omada/update-test
+
+Deploy to Salt Prod:
+  extends: .release-to-prod
+  needs: []
+  variables:
+    ENDPOINT: os2mo/salt/omada/update-prod
