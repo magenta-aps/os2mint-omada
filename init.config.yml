@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 ---
 facets:
@@ -19,6 +19,9 @@ facets:
     Public:
       title: "Må vises eksternt"
       scope: "PUBLIC"
+    Secret:
+      title: "Hemmelig"
+      scope: "SECRET"
   engagement_job_function:
     not_applicable:
       title: "N/A"
@@ -37,4 +40,5 @@ facets:
 
 it_systems:
   omada_ad_guid: "Omada - AD GUID"
+  omada_ad_login: "Omada - AD LOGIN"
   omada_login: "Omada - LOGIN"

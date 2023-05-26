@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Magenta ApS
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 ---
 services:
@@ -21,22 +21,22 @@ services:
 
   omada:
     build: .
-    command: ["uvicorn", "os2mint_omada.main:app", "--host", "0.0.0.0", "--reload"]
+    command: ["uvicorn", "--factory", "os2mint_omada.app:create_app", "--host", "0.0.0.0", "--reload"]
     environment:
       LOG_LEVEL: DEBUG
+      CUSTOMER: frederikshavn
 
       # OS2mo
-      MO__URL: "http://mo"
-      MO__AUTH__CLIENT_ID: "dipex"
-      MO__AUTH__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
-      MO__AUTH__REALM: "mo"
-      MO__AUTH__SERVER: "http://keycloak:8080/auth"
-      MO__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
+      FASTRAMQPI__MO_URL: "http://mo"
+      FASTRAMQPI__CLIENT_ID: "dipex"
+      FASTRAMQPI__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+      FASTRAMQPI__AUTH_SERVER: "http://keycloak:8080/auth"
+      FASTRAMQPI__AUTH_REALM: "mo"
+      FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
 
       # Omada
-      OMADA__URL: "http://omada-api/odata.json"
+      OMADA__URL: "http://fake-omada-api/"
       OMADA__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
-      OMADA__INTERVAL: 30
     ports:
       - "127.0.0.1:9000:8000"
     volumes:
@@ -45,10 +45,11 @@ services:
       init:
         condition: service_completed_successfully
 
-  omada-api:
-    image: nginx:latest
+  fake-omada-api:
+    build: .
+    command: ["uvicorn", "tests.fakes.omada_api:app", "--host", "0.0.0.0", "--port", "80"]
     volumes:
-      - ./docs/odata.dataobjects.identity.view.json:/usr/share/nginx/html/odata.json:ro
+      - ./schemas/frederikshavn/odata.json:/odata.json:ro
 
 networks:
   default:

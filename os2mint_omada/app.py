@@ -1,91 +1,90 @@
-# SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from contextlib import AsyncExitStack
-from functools import partial
 from typing import Any
+from typing import AsyncGenerator
 
 from fastapi import FastAPI
-from prometheus_fastapi_instrumentator import Instrumentator
+from fastramqpi.main import FastRAMQPI
 from ramqp import AMQPSystem
-from ramqp.mo import MOAMQPSystem
 
 from os2mint_omada import api
-from os2mint_omada.backing.mo.service import MOService
-from os2mint_omada.backing.omada.service import OmadaService
-from os2mint_omada.config import configure_logging
 from os2mint_omada.config import Settings
-from os2mint_omada.events import mo_router
-from os2mint_omada.events import omada_router
-from os2mint_omada.models import Context
+from os2mint_omada.mo import MO
+from os2mint_omada.omada.api import create_client
+from os2mint_omada.omada.api import OmadaAPI
+from os2mint_omada.omada.event_generator import OmadaEventGenerator
+from os2mint_omada.sync.frederikshavn.events import mo_router as frederikshavn_mo_router
+from os2mint_omada.sync.frederikshavn.events import (
+    omada_router as frederikshavn_omada_router,
+)
+from os2mint_omada.sync.silkeborg.events import mo_router as silkeborg_mo_router
+from os2mint_omada.sync.silkeborg.events import omada_router as silkeborg_omada_router
 
 
-def create_app(*args: Any, **kwargs: Any) -> FastAPI:
-    """FastAPI application factory.
+def create_app(**kwargs: Any) -> FastAPI:
+    """FastRAMQPI application factory.
 
     Args:
-        *args: Additional arguments passed to the settings module.
         **kwargs: Additional keyword arguments passed to the settings module.
 
     Returns: FastAPI application.
     """
-    # Config
-    settings = Settings(*args, **kwargs)
-    configure_logging(settings.log_level)
-    context = Context(settings=settings)
+    settings = Settings(**kwargs)
+    fastramqpi = FastRAMQPI(application_name="omada", settings=settings.fastramqpi)
+    fastramqpi.add_context(settings=settings)
+    context = fastramqpi.get_context()
 
-    # AMQP
-    mo_amqp_system = MOAMQPSystem(
-        settings=settings.mo.amqp,
-        router=mo_router,
-        context=context,
-    )
+    match settings.customer:
+        case "frederikshavn":
+            mo_router = frederikshavn_mo_router
+            omada_router = frederikshavn_omada_router
+        case "silkeborg":
+            mo_router = silkeborg_mo_router
+            omada_router = silkeborg_omada_router
+        case _:
+            raise ValueError("Improperly configured")
+
+    # FastAPI router
+    app = fastramqpi.get_app()
+    app.include_router(api.router)
+
+    # MO AMQP
+    mo_amqp_system = fastramqpi.get_amqpsystem()
+    mo_amqp_system.router.registry.update(mo_router.registry)
+
+    # MO API
+    @asynccontextmanager
+    async def mo_api() -> AsyncGenerator[None, None]:
+        mo = MO(graphql_session=context["graphql_session"])
+        fastramqpi.add_context(mo=mo)
+        yield
+
+    # priority ensures we start mo api after the graphql_session has been started
+    fastramqpi.add_lifespan_manager(mo_api(), priority=1100)
+
+    # Omada AMQP
     omada_amqp_system = AMQPSystem(
         settings=settings.omada.amqp,
         router=omada_router,
         context=context,
     )
+    fastramqpi.add_context(omada_amqp_system=omada_amqp_system)
+    fastramqpi.add_lifespan_manager(omada_amqp_system, priority=1200)
 
-    # App
-    app = FastAPI()
-    app.state.context = context
-    # Ideally, FastAPI would support the `lifespan=` keyword-argument like Starlette,
-    # but that is not supported: https://github.com/tiangolo/fastapi/issues/2943.
-    app.router.lifespan_context = partial(
-        lifespan, settings, context, mo_amqp_system, omada_amqp_system
+    # Omada API
+    omada_client = create_client(settings.omada)
+    # priority ensures the client is started before the event generator tries to use it
+    fastramqpi.add_lifespan_manager(omada_client, priority=1300)
+    omada_api = OmadaAPI(url=settings.omada.url, client=omada_client)
+    fastramqpi.add_context(omada_api=omada_api)
+
+    # Omada event generator
+    omada_event_generator = OmadaEventGenerator(
+        settings=settings.omada,
+        api=omada_api,
+        amqp_system=omada_amqp_system,
     )
-
-    # Routes
-    app.include_router(api.router)
-
-    # Metrics
-    if settings.enable_metrics:
-        Instrumentator().instrument(app).expose(app)
+    fastramqpi.add_lifespan_manager(omada_event_generator, priority=1400)
 
     return app
-
-
-@asynccontextmanager
-async def lifespan(
-    settings: Settings,
-    context: Context,
-    mo_amqp_system: MOAMQPSystem,
-    omada_amqp_system: AMQPSystem,
-    app: FastAPI,
-) -> AsyncGenerator:
-    async with AsyncExitStack() as stack:
-        mo_service = context["mo_service"] = MOService(
-            settings=settings.mo, amqp_system=mo_amqp_system
-        )
-        omada_service = context["omada_service"] = OmadaService(
-            settings=settings.omada, amqp_system=omada_amqp_system
-        )
-
-        # Start services last to ensure the context is set up before handling events
-        await stack.enter_async_context(mo_service)
-        await stack.enter_async_context(omada_service)
-
-        # Yield to keep the AMQP system open until the ASGI application is closed.
-        # Control will be returned to here when the ASGI application is shut down.
-        yield

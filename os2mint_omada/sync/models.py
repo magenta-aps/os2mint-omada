@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
@@ -11,10 +11,6 @@ import structlog
 from pydantic import BaseModel
 from pydantic import validator
 from ramodels.mo import Validity
-
-from os2mint_omada.backing.mo.service import MOService
-from os2mint_omada.backing.omada.service import OmadaService
-from os2mint_omada.config import Settings
 
 logger = structlog.get_logger(__name__)
 
@@ -54,19 +50,3 @@ class StripUserKeyMixin(BaseModel):
         if absent).
         """
         return None
-
-
-class Syncer:
-    def __init__(
-        self, settings: Settings, mo_service: MOService, omada_service: OmadaService
-    ) -> None:
-        """The logic responsible for taking actions to synchronise MO with Omada.
-
-        Args:
-            settings: Configuration.
-            mo_service: MO backing service.
-            omada_service: Omada backing service.
-        """
-        self.settings = settings
-        self.mo_service = mo_service
-        self.omada_service = omada_service

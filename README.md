@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 SPDX-License-Identifier: MPL-2.0
 -->
 
@@ -31,22 +31,24 @@ be given as JSON strings, as specified by Pydantic's settings parser.
 The API can be viewed from the host through http://localhost:9000/.
 
 After the initial import of Omada users, it can be useful to force-synchronise
-information for already-existing MO users. This is done by executing the
-following:
-```commandline
-curl -X POST http://localhost/sync/mo
-```
-The call returns immediately, but processing can take upwards of 12 hours to
-complete. Alternatively, a subset of MO users can be synchronised as follows:
-```commandline
-curl -X POST http://localhost/sync/mo -H 'Content-Type: application/json' --data '["3fa85f64-5717-4562-b3fc-2c963f66afa6"]'
-```
+information for already-existing MO users. This _could_ be handled by code in
+this integration (and was originally), but should probably be handled by a
+generic management script. The reader is highly encouraged to develop and link
+such program here.
 
 **NOTE** that MO organisation units are not watched for changes, so manual Omada
 users, which should be inserted into a non-existent organisation unit will not
 be synchronised automatically when (and if) this organisation unit is created in
 MO. To force-synchronise Omada users for the newly created organisation unit,
 the `/sync/omada` endpoint can be used.
+
+
+## Development
+The following command is useful to force-synchronise all users from the fake
+Omada API:
+```
+curl -X POST 'http://localhost:9000/sync/omada'
+```
 
 
 ## Versioning

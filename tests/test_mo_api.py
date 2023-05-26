@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: 2022 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+# mypy: disable-error-code=assignment
 from unittest import TestCase
 from unittest.mock import ANY
 from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
 from uuid import UUID
 from uuid import uuid4
 
@@ -11,17 +11,17 @@ import pytest
 from ramodels.mo import Employee
 from ramodels.mo.details import ITUser
 
-from os2mint_omada.backing.mo.service import MOService
-from os2mint_omada.config import MoSettings
+from os2mint_omada.mo import MO
 
 
 @pytest.fixture
-async def mo_service(mo_settings: MoSettings) -> MOService:
-    async with MOService(settings=mo_settings, amqp_system=MagicMock()) as mo_service:
-        yield mo_service
+async def mo_api() -> MO:
+    """MO API."""
+    mo_api = MO(graphql_session=AsyncMock())
+    return mo_api
 
 
-async def test_get_it_systems(mo_service: MOService) -> None:
+async def test_get_it_systems(mo_api: MO) -> None:
     graphql_response = {
         "itsystems": [
             {
@@ -30,14 +30,14 @@ async def test_get_it_systems(mo_service: MOService) -> None:
             },
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_it_systems()
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_it_systems(user_keys=["foo"])
     assert actual == {
         "omada_ad_guid": UUID("1760947e-0496-1483-fba8-98af2b98ef4f"),
     }
 
 
-async def test_get_classes(mo_service: MOService) -> None:
+async def test_get_classes(mo_api: MO) -> None:
     graphql_response = {
         "facets": [
             {
@@ -50,14 +50,14 @@ async def test_get_classes(mo_service: MOService) -> None:
             },
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_classes(facet_user_key="foo")
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_classes(facet_user_key="foo")
     assert actual == {
         "omada_manually_created": UUID("4eae3fc5-7307-4ede-911f-90bf383aebcc"),
     }
 
 
-async def test_get_employee_uuid_from_service_number(mo_service: MOService) -> None:
+async def test_get_employee_uuid_from_user_key(mo_api: MO) -> None:
     graphql_response = {
         "engagements": [
             {
@@ -86,26 +86,24 @@ async def test_get_employee_uuid_from_service_number(mo_service: MOService) -> N
             },
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee_uuid_from_service_number(
-        service_number="foo"
-    )
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_employee_uuid_from_user_key(user_key="foo")
     assert actual == UUID("57561cc7-5e07-4a7b-b2bb-af5a22fa1f65")
 
 
-async def test_get_employee_uuid_from_cpr(mo_service: MOService) -> None:
+async def test_get_employee_uuid_from_cpr(mo_api: MO) -> None:
     graphql_response = {
         "employees": [
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee_uuid_from_cpr(cpr="foo")
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_employee_uuid_from_cpr(cpr="foo")
     assert actual == UUID("0004b952-a513-430b-b696-8d393d7eb2bb")
 
 
-async def test_get_employee(mo_service: MOService) -> None:
+async def test_get_employee_states(mo_api: MO) -> None:
     graphql_response = {
         "employees": [
             {
@@ -126,8 +124,8 @@ async def test_get_employee(mo_service: MOService) -> None:
             },
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee_states(uuid=uuid4())
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_employee_states(uuid=uuid4())
     expected = {
         Employee(
             uuid=UUID("0004b952-a513-430b-b696-8d393d7eb2bb"),
@@ -145,13 +143,16 @@ async def test_get_employee(mo_service: MOService) -> None:
     assert actual == expected
 
 
-async def test_get_employee_addresses(mo_service: MOService) -> None:
+async def test_get_employee_addresses(mo_api: MO) -> None:
     address_1 = {
         "uuid": "97d1d3e0-3d27-418d-8e87-35c4eb6ad660",
         "value": "12345678",
         "address_type": {"uuid": "87e64001-5669-56a1-69ae-26ba50357fe8"},
         "person": [
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
+        ],
+        "engagement": [
+            {"uuid": "81c9e1ac-f78f-407c-aea1-7ff7c1064a56"},
         ],
         "visibility": {"uuid": "6efe732e-daf3-463d-a5c0-519867b2c27b"},
         "validity": {
@@ -167,6 +168,7 @@ async def test_get_employee_addresses(mo_service: MOService) -> None:
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
+        "engagement": [],
         "visibility": None,
         "validity": {
             "from": "1985-05-19T00:00:00+02:00",
@@ -181,6 +183,7 @@ async def test_get_employee_addresses(mo_service: MOService) -> None:
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
+        "engagement": None,
         "visibility": None,
         "validity": {
             "from": "1985-05-19T00:00:00+02:00",
@@ -198,8 +201,8 @@ async def test_get_employee_addresses(mo_service: MOService) -> None:
             }
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee_addresses(uuid=uuid4(), address_types=())
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_employee_addresses(uuid=uuid4(), address_types=())
     actual_uuids = [a.uuid for a in actual]
     expected_uuids = [
         UUID("97d1d3e0-3d27-418d-8e87-35c4eb6ad660"),
@@ -209,7 +212,7 @@ async def test_get_employee_addresses(mo_service: MOService) -> None:
     TestCase().assertCountEqual(actual_uuids, expected_uuids)
 
 
-async def test_get_employee_engagements(mo_service: MOService) -> None:
+async def test_get_employee_engagements(mo_api: MO) -> None:
     engagement_1 = {
         "uuid": "70b3d446-f4d9-4389-a5f8-c2111841cc11",
         "user_key": "foo",
@@ -268,8 +271,8 @@ async def test_get_employee_engagements(mo_service: MOService) -> None:
             }
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee_engagements(uuid=uuid4())
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_employee_engagements(uuid=uuid4())
     actual_uuids = [a.uuid for a in actual]
     expected_uuids = [
         UUID("70b3d446-f4d9-4389-a5f8-c2111841cc11"),
@@ -279,7 +282,7 @@ async def test_get_employee_engagements(mo_service: MOService) -> None:
     TestCase().assertCountEqual(actual_uuids, expected_uuids)
 
 
-async def test_get_employee_it_users(mo_service: MOService) -> None:
+async def test_get_employee_it_users(mo_api: MO) -> None:
     it_system_1 = "a1608e69-c422-404f-a6cc-b873c50af111"
     it_system_2 = "1760947e-0496-1483-fba8-98af2b98ef4f"
     it_user_1 = {
@@ -289,6 +292,9 @@ async def test_get_employee_it_users(mo_service: MOService) -> None:
         "person": [
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
+        ],
+        "engagement": [
+            {"uuid": "08823b92-5b12-4f99-aace-0dfd9018b885"},
         ],
         "validity": {
             "from": "1985-05-19T00:00:00+02:00",
@@ -303,6 +309,7 @@ async def test_get_employee_it_users(mo_service: MOService) -> None:
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
+        "engagement": [],
         "validity": {
             "from": "2030-06-15T00:00:00+02:00",
             "to": "2040-12-03T00:00:00+01:00",
@@ -315,6 +322,7 @@ async def test_get_employee_it_users(mo_service: MOService) -> None:
         "person": [
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
+        "engagement": None,
         "validity": {
             "from": "2030-06-15T00:00:00+02:00",
             "to": "2040-12-03T00:00:00+01:00",
@@ -331,8 +339,8 @@ async def test_get_employee_it_users(mo_service: MOService) -> None:
             }
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_employee_it_users(
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_employee_it_users(
         uuid=uuid4(),
         it_systems=(UUID(it_system_1), UUID(it_system_2)),
     )
@@ -345,48 +353,47 @@ async def test_get_employee_it_users(mo_service: MOService) -> None:
     TestCase().assertCountEqual(actual_uuids, expected_uuids)
 
 
-async def test_get_all_employee_uuids(mo_service: MOService) -> None:
-    graphql_response = {
-        "employees": [
-            {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
-            {"uuid": "002a1aed-d015-4b86-86a4-c37cd8df1e18"},
-        ]
-    }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_all_employee_uuids()
-    assert actual == {
-        UUID("0004b952-a513-430b-b696-8d393d7eb2bb"),
-        UUID("002a1aed-d015-4b86-86a4-c37cd8df1e18"),
-    }
-
-
-async def test_get_org_unit_with_it_system_user_key(mo_service: MOService) -> None:
+async def test_get_org_unit_with_it_system_user_key(mo_api: MO) -> None:
     graphql_response = {
         "itusers": [
             {"objects": [{"org_unit_uuid": "f06ee470-9f17-566f-acbe-e938112d46d9"}]},
             {"objects": [{"org_unit_uuid": "f06ee470-9f17-566f-acbe-e938112d46d9"}]},
         ]
     }
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_org_unit_with_it_system_user_key("foo")
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_org_unit_with_it_system_user_key("foo")
     assert actual == UUID("f06ee470-9f17-566f-acbe-e938112d46d9")
 
 
-async def test_get_org_unit_with_uuid(mo_service: MOService) -> None:
+async def test_get_org_unit_with_uuid(mo_api: MO) -> None:
     graphql_response = {"org_units": [{"uuid": "f06ee470-9f17-566f-acbe-e938112d46d9"}]}
-    mo_service.graphql.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_service.get_org_unit_with_uuid(uuid4())
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_org_unit_with_uuid(uuid4())
     assert actual == UUID("f06ee470-9f17-566f-acbe-e938112d46d9")
 
 
-async def test_delete(mo_service: MOService) -> None:
-    mo_service.graphql.execute = AsyncMock()
+async def test_get_org_unit_with_user_key(mo_api: MO) -> None:
+    graphql_response = {"org_units": [{"uuid": "f06ee470-9f17-566f-acbe-e938112d46d9"}]}
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_org_unit_with_user_key("foo")
+    assert actual == UUID("f06ee470-9f17-566f-acbe-e938112d46d9")
+
+
+async def test_get_org_unit_validity(mo_api: MO) -> None:
+    graphql_response = {"org_units": [{"uuid": "f06ee470-9f17-566f-acbe-e938112d46d9"}]}
+    mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
+    actual = await mo_api.get_org_unit_with_user_key("foo")
+    assert actual == UUID("f06ee470-9f17-566f-acbe-e938112d46d9")
+
+
+async def test_delete(mo_api: MO) -> None:
+    mo_api.graphql_session.execute = AsyncMock()
     it_user = ITUser.from_simplified_fields(
         user_key="foo",
         itsystem_uuid=uuid4(),
         from_date="2012-01-01",
     )
-    await mo_service.delete(it_user)
-    mo_service.graphql.execute.assert_awaited_once_with(
+    await mo_api.delete(it_user)
+    mo_api.graphql_session.execute.assert_awaited_once_with(
         ANY, variable_values={"uuid": str(it_user.uuid)}
     )

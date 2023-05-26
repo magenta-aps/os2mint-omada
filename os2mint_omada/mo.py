@@ -1,12 +1,8 @@
-# SPDX-FileCopyrightText: 2021 Magenta ApS <https://magenta.dk>
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
-import asyncio
-from contextlib import AbstractAsyncContextManager
-from contextlib import AsyncExitStack
 from itertools import chain
-from types import TracebackType
 from typing import Collection
 from typing import Iterable
 from typing import NewType
@@ -19,8 +15,6 @@ from gql import gql
 from gql.client import AsyncClientSession
 from more_itertools import one
 from more_itertools import only
-from raclients.graph.client import GraphQLClient
-from raclients.modelclient.mo import ModelClient as MoModelClient
 from ramodels.mo import Employee
 from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementRef
@@ -29,9 +23,7 @@ from ramodels.mo._shared import UUIDBase
 from ramodels.mo.details import Address
 from ramodels.mo.details import Engagement
 from ramodels.mo.details import ITUser
-from ramqp.mo import MOAMQPSystem
 
-from os2mint_omada.config import MoSettings
 from os2mint_omada.util import validity_union
 
 logger = structlog.get_logger(__name__)
@@ -39,93 +31,20 @@ logger = structlog.get_logger(__name__)
 ITSystems = NewType("ITSystems", dict[str, UUID])
 
 
-class MOService(AbstractAsyncContextManager):
-    def __init__(self, settings: MoSettings, amqp_system: MOAMQPSystem) -> None:
+class MO:
+    def __init__(self, graphql_session: AsyncClientSession) -> None:
         """The MO backing service manages the connection to MO's AMQP and API.
 
         Args:
-            settings: MO-specific settings.
-            amqp_system: MO AMQP System.
+            graphql_session: MO GraphQL session.
         """
-        super().__init__()
-        self.settings = settings
-        self.amqp_system = amqp_system
+        self.graphql_session = graphql_session
 
-        self.stack = AsyncExitStack()
-
-    async def __aenter__(self) -> MOService:
-        """Start clients for persistent connections to the MO API and AMQP system."""
-        settings = self.settings
-
-        # GraphQL Client
-        graphql = GraphQLClient(
-            url=f"{settings.url}/graphql/v3",
-            **settings.auth.dict(),
-            # Ridiculous timeout to support fetching all employee uuids until MO
-            # supports pagination/streaming of GraphQL responses.
-            httpx_client_kwargs=dict(timeout=300),
-            execute_timeout=300,
-        )
-        self.graphql: AsyncClientSession = await self.stack.enter_async_context(graphql)
-
-        # Model Client
-        model = MoModelClient(base_url=settings.url, **settings.auth.dict())
-        self.model: MoModelClient = await self.stack.enter_async_context(model)
-
-        # The AMQP system is started last so the API clients, which are used from the
-        # AMQP handlers, are ready before messages are received.
-        await self.stack.enter_async_context(self.amqp_system)
-
-        return await super().__aenter__()
-
-    async def __aexit__(
-        self,
-        __exc_type: Type[BaseException] | None,
-        __exc_value: BaseException | None,
-        __traceback: TracebackType | None,
-    ) -> bool | None:
-        """Close connections to the MO API and AMQP system."""
-        await self.stack.aclose()
-        return await super().__aexit__(__exc_type, __exc_value, __traceback)
-
-    async def _is_api_ready(self) -> bool:
-        """Check the connection to MO's GraphQL endpoint.
-
-        Returns: Whether the connection is ready.
-        """
-        query = gql(
-            """
-            query ReadinessQuery {
-              org {
-                uuid
-              }
-            }
-            """
-        )
-        try:
-            result = await self.graphql.execute(query)
-            if result["org"]["uuid"]:
-                return True
-        except Exception:  # pylint: disable=broad-except
-            logger.exception("Exception occurred during GraphQL healthcheck")
-        return False
-
-    async def _is_amqp_ready(self) -> bool:
-        """Check the connection to MO's AMQP system.
-
-        Returns: Whether a connection to the AMQP system is established.
-        """
-        return self.amqp_system.healthcheck()
-
-    async def is_ready(self) -> bool:
-        """Check the connection to MO.
-
-        Returns: Whether the MO backing service is reachable.
-        """
-        return all(await asyncio.gather(self._is_api_ready(), self._is_amqp_ready()))
-
-    async def get_it_systems(self) -> ITSystems:
+    async def get_it_systems(self, user_keys: Collection[str]) -> ITSystems:
         """Get IT Systems configured in MO.
+
+        Args:
+            user_keys: IT systems to fetch.
 
         Returns: Mapping from IT system user key to UUID.
         """
@@ -140,8 +59,9 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        variables = {"user_keys": list(self.settings.it_user_map.values())}
-        result = await self.graphql.execute(query, variable_values=variables)
+        dict().values()
+        variables = {"user_keys": list(user_keys)}
+        result = await self.graphql_session.execute(query, variable_values=variables)
         it_systems = result["itsystems"]
         return ITSystems({s["user_key"]: UUID(s["uuid"]) for s in it_systems})
 
@@ -166,7 +86,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "user_keys": [facet_user_key],
@@ -175,20 +95,18 @@ class MOService(AbstractAsyncContextManager):
         classes = one(result["facets"])["classes"]
         return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 
-    async def get_employee_uuid_from_service_number(
-        self, service_number: str
-    ) -> UUID | None:
-        """Find employee UUID by Omada service number.
+    async def get_employee_uuid_from_user_key(self, user_key: str) -> UUID | None:
+        """Find employee UUID by user key.
 
         Omada users are linked to MO employees through user keys on the employee's
         engagements.
 
         Args:
-            service_number: Service number to find employee for.
+            user_key: User key to find employee for.
 
         Returns: Employee UUID if found, otherwise None.
         """
-        logger.info("Getting MO employee UUID", service_number=service_number)
+        logger.debug("Getting MO employee UUID", user_key=user_key)
         query = gql(
             """
             query EmployeeServiceNumberQuery($user_keys: [String!]) {
@@ -202,10 +120,10 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
-                "user_keys": [service_number],
+                "user_keys": [user_key],
             },
         )
         engagements = result["engagements"]
@@ -225,7 +143,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Employee UUID if matching employee exists, otherwise None.
         """
-        logger.info("Getting MO employee UUID", cpr=cpr)
+        logger.debug("Getting MO employee UUID", cpr=cpr)
         query = gql(
             """
             query EmployeeCPRQuery($cpr_numbers: [CPR!]) {
@@ -235,7 +153,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "cpr_numbers": [cpr],
@@ -259,7 +177,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of employee objects; one for each state.
         """
-        logger.info("Getting MO employee", uuid=uuid)
+        logger.debug("Getting MO employee", uuid=uuid)
         query = gql(
             """
             query EmployeeQuery($uuids: [UUID!]) {
@@ -274,7 +192,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -299,7 +217,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of addresses related to the employee.
         """
-        logger.info("Getting MO addresses", employee_uuid=uuid)
+        logger.debug("Getting MO addresses", employee_uuid=uuid)
         query = gql(
             """
             query AddressesQuery($employee_uuids: [UUID!], $address_types: [UUID!]) {
@@ -330,7 +248,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -348,7 +266,7 @@ class MOService(AbstractAsyncContextManager):
             """Convert GraphQL address to be RA-Models compatible."""
             address["person"] = one({PersonRef(**p) for p in address["person"]})
             address["engagement"] = only(
-                {EngagementRef(**p) for p in address.pop("engagement")}
+                {EngagementRef(**p) for p in (address.pop("engagement") or {})}
             )
 
             return Address.parse_obj(address)
@@ -363,7 +281,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of engagements related to the employee.
         """
-        logger.info("Getting MO engagements", employee_uuid=uuid)
+        logger.debug("Getting MO engagements", employee_uuid=uuid)
         query = gql(
             """
             query EngagementsQuery($employee_uuids: [UUID!]) {
@@ -395,7 +313,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -428,7 +346,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: Set of IT users related to the employee.
         """
-        logger.info("Getting MO IT users", employee_uuid=uuid)
+        logger.debug("Getting MO IT users", employee_uuid=uuid)
         query = gql(
             """
             query ITUsersQuery($employee_uuids: [UUID!]) {
@@ -454,7 +372,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -472,7 +390,7 @@ class MOService(AbstractAsyncContextManager):
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
             it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
             it_user["engagement"] = only(
-                {EngagementRef(**p) for p in it_user.pop("engagement")}
+                {EngagementRef(**p) for p in (it_user.pop("engagement") or {})}
             )
             return ITUser.parse_obj(it_user)
 
@@ -481,42 +399,15 @@ class MOService(AbstractAsyncContextManager):
         # currently supported.
         return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
 
-    async def get_all_employee_uuids(self) -> set[UUID]:
-        """Retrieve a set of all employee UUIDs in MO.
-
-        Returns: Set of MO employee UUIDs.
-        """
-        logger.info("Getting all MO employees")
-        query = gql(
-            """
-            query EmployeesQuery {
-              employees(from_date: null, to_date: null) {
-                uuid
-              }
-            }
-            """
-        )
-        result = await self.graphql.execute(query)
-        employees = result["employees"]
-        return {UUID(e["uuid"]) for e in employees}
-
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         """Find organisational unit with the given IT system user user_key.
-
-        Engagements for manual Omada users are created in the organisational unit which
-        has an IT system with user key equal to the 'org_unit'/'C_ORGANISATIONSKODE'
-        field on the Omada user. While some org units are imported into MO with the
-        UUID from the connected system, it isn't always the case, so in the general
-        case we want to link the UUIDs through a special IT system on the org unit.
-        Because we cannot know what this IT system is called, we don't filter on the
-        name, but error if more than one is returned.
 
         Args:
             user_key: IT system user_key to find org unit for.
 
         Returns: UUID of the org unit if found, otherwise raises KeyError.
         """
-        logger.info("Getting org unit with it system", user_key=user_key)
+        logger.debug("Getting org unit with it system", user_key=user_key)
         query = gql(
             """
             query OrgUnitITUserQuery($user_keys: [String!]) {
@@ -528,7 +419,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values={
                 "user_keys": [user_key],
@@ -545,16 +436,12 @@ class MOService(AbstractAsyncContextManager):
     async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
         """Get organisational unit with the given UUID, validating that it exists.
 
-        Since some org units are imported into MO with special UUIDs, this check serves
-        as a fallback to the omada/mo engagement linking otherwise handled by
-        get_org_unit_with_it_system_user_key.
-
         Args:
             uuid: UUID of the org unit to look up.
 
         Returns: UUID of the org unit if it exists, otherwise raises KeyError.
         """
-        logger.info("Getting org unit with uuid", uuid=uuid)
+        logger.debug("Getting org unit with uuid", uuid=uuid)
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
@@ -564,7 +451,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -578,6 +465,36 @@ class MOService(AbstractAsyncContextManager):
             raise KeyError(f"No organisation unit with {uuid=} found") from e
         return UUID(org_unit["uuid"])
 
+    async def get_org_unit_with_user_key(self, user_key: str) -> UUID:
+        """Get organisational unit with the given user key, validating that it exists.
+
+        Args:
+            user_key: User key of the org unit to look up.
+
+        Returns: UUID of the org unit if it exists, otherwise raises KeyError.
+        """
+        logger.debug("Getting org unit with user key", user_key=user_key)
+        query = gql(
+            """
+            query OrgUnitQuery($user_keys: [String!]) {
+              org_units(user_keys: $user_keys, from_date: null, to_date: null) {
+                uuid
+              }
+            }
+            """
+        )
+        result = await self.graphql_session.execute(
+            query,
+            variable_values={
+                "user_keys": [user_key],
+            },
+        )
+        try:
+            org_unit = one(result["org_units"])
+        except ValueError as e:
+            raise KeyError(f"No organisation unit with {user_key=} found") from e
+        return UUID(org_unit["uuid"])
+
     async def get_org_unit_validity(self, uuid: UUID) -> Validity:
         """Get organisational unit's validity.
 
@@ -586,7 +503,7 @@ class MOService(AbstractAsyncContextManager):
 
         Returns: The org unit's validity.
         """
-        logger.info("Getting org unit validity", uuid=uuid)
+        logger.debug("Getting org unit validity", uuid=uuid)
         query = gql(
             """
             query OrgUnitValidityQuery($uuids: [UUID!]) {
@@ -601,7 +518,7 @@ class MOService(AbstractAsyncContextManager):
             }
             """
         )
-        result = await self.graphql.execute(
+        result = await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
@@ -637,7 +554,7 @@ class MOService(AbstractAsyncContextManager):
             }}
             """
         )
-        await self.graphql.execute(
+        await self.graphql_session.execute(
             query,
             variable_values=jsonable_encoder(
                 {
