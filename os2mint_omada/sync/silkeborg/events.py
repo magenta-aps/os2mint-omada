@@ -109,7 +109,14 @@ async def sync_omada_addresses(
 
     Returns: None.
     """
-    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    try:
+        omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
@@ -143,7 +150,14 @@ async def sync_omada_it_users(
 
     Returns: None.
     """
-    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    try:
+        omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
