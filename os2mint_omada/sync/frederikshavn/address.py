@@ -48,10 +48,8 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
 
         Returns: Comparable MO address if the Omada attribute is set, otherwise None.
         """
-        # Omada often returns empty strings for non-existent attributes, which is
-        # falsy - and therefore also ignored, like None values.
         omada_value = getattr(omada_user, omada_attr)
-        if not omada_value:
+        if omada_value is None:
             return None
         return cls(  # type: ignore[call-arg]
             value=omada_value,

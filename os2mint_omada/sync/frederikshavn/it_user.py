@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import cast
 from uuid import UUID
 
 import structlog
@@ -31,7 +32,7 @@ class ComparableITUser(ComparableMixin, ITUser):
         employee_uuid: UUID,
         engagement_uuid: UUID,
         it_system_uuid: UUID,
-    ) -> ComparableITUser:
+    ) -> ComparableITUser | None:
         """Construct (comparable) MO IT user for a specific attribute on an Omada user.
 
         Args:
@@ -41,10 +42,13 @@ class ComparableITUser(ComparableMixin, ITUser):
             engagement_uuid: MO engagement UUID.
             it_system_uuid: IT system of the IT user.
 
-        Returns: Comparable MO IT user for the Omada attribute.
+        Returns: Comparable MO IT user if the Omada attribute is set, otherwise None.
         """
+        omada_value = getattr(omada_user, omada_attr)
+        if omada_value is None:
+            return None
         return cls(  # type: ignore[call-arg]
-            user_key=str(getattr(omada_user, omada_attr)),
+            user_key=str(omada_value),
             itsystem=ITSystemRef(uuid=it_system_uuid),
             person=PersonRef(uuid=employee_uuid),
             engagement=EngagementRef(uuid=engagement_uuid),
@@ -98,7 +102,7 @@ async def sync_it_users(
     }
 
     # Expected IT users from Omada
-    expected: set[ComparableITUser] = {
+    expected_with_none: set[ComparableITUser | None] = {
         ComparableITUser.from_omada(
             omada_user=omada_user,
             omada_attr=omada_attr,
@@ -109,6 +113,9 @@ async def sync_it_users(
         for omada_user in omada_users
         for omada_attr, mo_it_system_user_key in it_user_map.items()
     }
+    expected: set[ComparableITUser] = cast(
+        set[ComparableITUser], expected_with_none - {None}
+    )
 
     # Delete excess existing
     excess_it_users = actual.keys() - expected
