@@ -99,3 +99,28 @@ def frederikshavn_omada_user() -> dict:
 def test_parse_user(frederikshavn_omada_user: dict) -> None:
     """Test parsing of a user."""
     assert FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
+
+
+def test_strip_cpr_dash(frederikshavn_omada_user: dict) -> None:
+    """Test that CPR dashes are stripped."""
+    assert frederikshavn_omada_user["C_CPRNUMBER"] == "120390-0593"
+    user = FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
+    assert user.cpr_number == "1203900593"
+
+
+def test_strip_leading_zeroes(frederikshavn_omada_user: dict) -> None:
+    """Test that leading zeroes are stripped from employee and org unit numbers."""
+    assert frederikshavn_omada_user["C_POSITIONID"] == "00120589"
+    assert frederikshavn_omada_user["C_OUID_ODATA"] == "01012415"
+    user = FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
+    assert user.employee_number == "120589"
+    assert user.org_unit == "1012415"
+
+
+def test_strip_phone_number_spaces(frederikshavn_omada_user: dict) -> None:
+    """Test that spaces are stripped from phone numbers."""
+    assert frederikshavn_omada_user["C_TELEPHONENUMBER"] == "+45 12313212"
+    assert frederikshavn_omada_user["CELLPHONE"] == "12345678"
+    user = FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
+    assert user.phone == "+4512313212"
+    assert user.cellphone == "12345678"
