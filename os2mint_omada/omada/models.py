@@ -37,6 +37,13 @@ class OmadaUser(BaseModel):
 
     identity_category: IdentityCategory = Field(alias="IDENTITYCATEGORY")
 
+    @validator("*", pre=True)
+    def empty_string_is_none(cls, value: Any) -> Any:
+        """Omada often returns empty strings for non-existent attributes."""
+        if value == "":
+            return None
+        return value
+
     @validator("valid_to")
     def fix_pseudo_infinity(cls, value: datetime | None) -> datetime | None:
         """Convert Omada's pseudo-infinity to "actual"/MO infinity (None)."""

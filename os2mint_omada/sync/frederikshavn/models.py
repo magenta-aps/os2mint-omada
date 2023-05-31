@@ -23,12 +23,12 @@ class FrederikshavnOmadaUser(OmadaUser):
     org_unit: str = Field(alias="C_OUID_ODATA", min_length=1)
 
     # IT User
-    ad_login: str = Field(alias="ADLOGON", min_length=1)
+    ad_login: str | None = Field(alias="ADLOGON")
 
     # Address
-    email: str = Field(alias="EMAIL")
-    phone: str = Field(alias="C_TELEPHONENUMBER")
-    cellphone: str = Field(alias="CELLPHONE")
+    email: str | None = Field(alias="EMAIL")
+    phone: str | None = Field(alias="C_TELEPHONENUMBER")
+    cellphone: str | None = Field(alias="CELLPHONE")
 
     @validator("cpr_number")
     def strip_cpr_dash(cls, cpr_number: str) -> str:
@@ -48,6 +48,8 @@ class FrederikshavnOmadaUser(OmadaUser):
         return value.lstrip("0")
 
     @validator("phone", "cellphone")
-    def strip_phone_number_spaces(cls, value: str) -> str:
+    def strip_phone_number_spaces(cls, value: str | None) -> str | None:
         """Strip spaces from phone numbers to be MO-compatible."""
+        if value is None:
+            return None
         return value.replace(" ", "")

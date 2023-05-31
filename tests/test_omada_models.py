@@ -12,7 +12,7 @@ def omada_user() -> dict:
         "Id": 12345678,
         "UId": "5fe3ef67-c6e5-4d09-bdee-80b9bf40544d",
         "VALIDFROM": "2016-06-15T00:00:00+02:00",
-        "VALIDTO": "9999-12-31T01:00:00+01:00",
+        "VALIDTO": "2022-04-18T22:05:21+02:00",
         "IDENTITYCATEGORY": {
             "Id": 123,
             "UId": "e61de13e-d6fb-4c9e-90fd-75f9f1e1df5a",
@@ -22,6 +22,23 @@ def omada_user() -> dict:
 
 def test_parse_user(omada_user: dict) -> None:
     """Test parsing of a user."""
-    parsed = OmadaUser.parse_obj(omada_user)
-    # Omada's pseudo-infinity of 31/12/9999 should be converted to None
-    assert parsed.valid_to is None
+    assert OmadaUser.parse_obj(omada_user)
+
+
+def test_empty_string_is_none(omada_user: dict) -> None:
+    """Test that Omada's psuedo-None empty strings are converted to true None."""
+
+    class TestOmadaUser(OmadaUser):
+        name: str | None
+
+    omada_user["name"] = ""
+
+    user = TestOmadaUser.parse_obj(omada_user)
+    assert user.name is None
+
+
+def test_fix_pseudo_infinity(omada_user: dict) -> None:
+    """Test that Omada's pseudo-infinity of 31/12/9999 is converted to None."""
+    omada_user["VALIDTO"] = "9999-12-31T01:00:00+01:00"
+    user = OmadaUser.parse_obj(omada_user)
+    assert user.valid_to is None
