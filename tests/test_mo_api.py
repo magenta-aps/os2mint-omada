@@ -152,7 +152,12 @@ async def test_get_employee_addresses(mo_api: MO) -> None:
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
         "engagement": [
-            {"uuid": "81c9e1ac-f78f-407c-aea1-7ff7c1064a56"},
+            {
+                "uuid": "81c9e1ac-f78f-407c-aea1-7ff7c1064a56",
+                "engagement_type": {
+                    "uuid": "1c73952f-d728-4ca2-b775-56e40bf8eeb1",
+                },
+            },
         ],
         "visibility": {"uuid": "6efe732e-daf3-463d-a5c0-519867b2c27b"},
         "validity": {
@@ -161,14 +166,21 @@ async def test_get_employee_addresses(mo_api: MO) -> None:
         },
     }
     address_2 = {
-        "uuid": "97d1d3e0-3d27-418d-8e87-35c4eb6ad660",
+        "uuid": "a9d928ce-6d2c-4675-908b-8055045d74b1",
         "value": "12345678",
         "address_type": {"uuid": "87e64001-5669-56a1-69ae-26ba50357fe8"},
         "person": [
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
             {"uuid": "0004b952-a513-430b-b696-8d393d7eb2bb"},
         ],
-        "engagement": [],
+        "engagement": [
+            {
+                "uuid": "ff396985-71db-4727-a25f-37774ab006bf",
+                "engagement_type": {
+                    "uuid": "1c73952f-d728-4ca2-b775-56e40bf8eeb1",
+                },
+            },
+        ],
         "visibility": None,
         "validity": {
             "from": "1985-05-19T00:00:00+02:00",
@@ -202,12 +214,14 @@ async def test_get_employee_addresses(mo_api: MO) -> None:
         ]
     }
     mo_api.graphql_session.execute = AsyncMock(return_value=graphql_response)
-    actual = await mo_api.get_employee_addresses(uuid=uuid4(), address_types=())
+    actual = await mo_api.get_employee_addresses(
+        uuid=uuid4(),
+        engagement_types={UUID("1c73952f-d728-4ca2-b775-56e40bf8eeb1")},
+    )
     actual_uuids = [a.uuid for a in actual]
     expected_uuids = [
-        UUID("97d1d3e0-3d27-418d-8e87-35c4eb6ad660"),
-        UUID("97d1d3e0-3d27-418d-8e87-35c4eb6ad660"),
-        UUID("6063bd2a-905d-4089-a7de-e511f8f24edb"),
+        UUID("97d1d3e0-3d27-418d-8e87-35c4eb6ad660"),  # address 1
+        UUID("a9d928ce-6d2c-4675-908b-8055045d74b1"),  # address 2
     ]
     TestCase().assertCountEqual(actual_uuids, expected_uuids)
 
