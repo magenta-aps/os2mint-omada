@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import structlog
+from pydantic import ValidationError
 from ramqp import Router
 from ramqp.depends import PayloadBytes
 from ramqp.depends import SleepOnError
@@ -39,7 +40,14 @@ async def sync_omada_employee(
 
     Returns: None.
     """
-    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    try:
+        omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     await sync_employee(
         omada_user=omada_user,
@@ -66,7 +74,14 @@ async def sync_omada_engagements(
 
     Returns: None.
     """
-    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    try:
+        omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
@@ -100,7 +115,14 @@ async def sync_omada_addresses(
 
     Returns: None.
     """
-    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    try:
+        omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
@@ -134,7 +156,14 @@ async def sync_omada_it_users(
 
     Returns: None.
     """
-    omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    try:
+        omada_user: FrederikshavnOmadaUser = FrederikshavnOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
