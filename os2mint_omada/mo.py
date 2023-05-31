@@ -206,14 +206,14 @@ class MO:
         return {Employee.parse_obj(o) for o in employee["objects"]}
 
     async def get_employee_addresses(
-        self, uuid: UUID, address_types: Iterable[UUID]
+        self, uuid: UUID, engagement_types: Collection[UUID]
     ) -> set[Address]:
         """Retrieve addresses related to an employee.
 
         Args:
             uuid: Employee UUID.
-            address_types: Only retrieve the given address types, to avoid terminating
-             addresses irrelevant to Omada.
+            engagement_types: Only retrieve addresses for the given engagement types,
+             to avoid terminating addresses irrelevant to Omada.
 
         Returns: Set of addresses related to the employee.
         """
@@ -234,6 +234,9 @@ class MO:
                     }
                     engagement {
                       uuid
+                      engagement_type {
+                        uuid
+                      }
                     }
                     visibility {
                       uuid
@@ -253,20 +256,39 @@ class MO:
             variable_values=jsonable_encoder(
                 {
                     "employee_uuids": [uuid],
-                    "address_types": address_types,
                 }
             ),
         )
         employee = only(result["employees"])
         if employee is None:
             return set()
-        addresses = chain.from_iterable(o["addresses"] for o in employee["objects"])
+        addresses: Iterable[dict] = chain.from_iterable(
+            o["addresses"] for o in employee["objects"]
+        )
+
+        def filter_engagement_type(address: dict) -> bool:
+            """Filter addresses based on engagement type.
+
+            TODO: This should be done server-side when supported by the GraphQL API.
+            """
+            engagements = address["engagement"]
+            if engagements is None:
+                return False
+            engagement_type_uuids = {
+                UUID(e["engagement_type"]["uuid"]) for e in engagements
+            }
+            return not engagement_type_uuids.isdisjoint(engagement_types)
+
+        addresses = (a for a in addresses if filter_engagement_type(a))
 
         def convert(address: dict) -> Address:
             """Convert GraphQL address to be RA-Models compatible."""
             address["person"] = one({PersonRef(**p) for p in address["person"]})
             address["engagement"] = only(
-                {EngagementRef(**p) for p in (address.pop("engagement") or {})}
+                {
+                    EngagementRef(uuid=e["uuid"])
+                    for e in (address.pop("engagement") or {})
+                }
             )
 
             return Address.parse_obj(address)
