@@ -4,7 +4,7 @@ import structlog
 from pydantic import ValidationError
 from ramqp import Router
 from ramqp.depends import PayloadBytes
-from ramqp.depends import SleepOnError
+from ramqp.depends import RateLimit
 from ramqp.mo import MORouter
 from ramqp.mo import PayloadType
 
@@ -30,7 +30,7 @@ async def sync_omada_employee(
     body: PayloadBytes,
     mo: depends.MO,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise a manual Omada user to a MO employee.
 
@@ -59,7 +59,7 @@ async def sync_omada_engagements(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise a manual Omada user to a MO engagements.
 
@@ -97,7 +97,7 @@ async def sync_omada_addresses(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise an Omada user's addresses to MO.
 
@@ -138,7 +138,7 @@ async def sync_omada_it_users(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise an Omada user to MO IT users.
 
@@ -195,7 +195,7 @@ async def sync_mo_engagements(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise a MO user's engagements with Omada.
 
@@ -222,7 +222,7 @@ async def sync_mo_addresses(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise a MO user's addresses with Omada.
 
@@ -249,7 +249,7 @@ async def sync_mo_it_users(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: depends.ModelClient,
-    _: SleepOnError,
+    _: RateLimit,
 ) -> None:
     """Synchronise a MO user's IT users with Omada.
 

@@ -396,14 +396,14 @@ test = ["anyio[trio] (>=3.2.1,<4.0.0)", "black (==23.1.0)", "coverage[toml] (>=6
 
 [[package]]
 name = "fastramqpi"
-version = "1.4.2"
+version = "1.4.3"
 description = "Rammearkitektur AMQP framework (FastAPI + RAMQP)"
 category = "main"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "fastramqpi-1.4.2-py3-none-any.whl", hash = "sha256:487fccd34745d8f49ad80991ecbb5a3fce8933dff4b023b0430934484bf58395"},
-    {file = "fastramqpi-1.4.2.tar.gz", hash = "sha256:f82e1fbb085eae84a323767814cff2129845f34accb03bc5f5b186cb480d2256"},
+    {file = "fastramqpi-1.4.3-py3-none-any.whl", hash = "sha256:bce229ead5d3105e72880a88fe6a0c845f557a7a27396880351425d7303982d9"},
+    {file = "fastramqpi-1.4.3.tar.gz", hash = "sha256:fb30b424e44ef1fea3fe44c7f1a621b94d0e468a3eeea72e245c03e2431daf5e"},
 ]
 
 [package.dependencies]
@@ -414,7 +414,7 @@ prometheus-fastapi-instrumentator = ">=5.9.1,<7.0.0"
 pydantic = ">=1.10.5,<2.0.0"
 ra-utils = ">=1.12.2,<2.0.0"
 raclients = ">=3.0.5,<4.0.0"
-ramqp = ">=8.3.0,<9.0.0"
+ramqp = ">=9.0.0,<10.0.0"
 structlog = ">=23.1.0,<24.0.0"
 
 [[package]]
@@ -1475,14 +1475,14 @@ python-dateutil = ">=2.8.2,<3.0.0"
 
 [[package]]
 name = "ramqp"
-version = "8.4.0"
+version = "9.0.0"
 description = "Rammearkitektur AMQP library (aio_pika wrapper)"
 category = "main"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "ramqp-8.4.0-py3-none-any.whl", hash = "sha256:37a4ee0b5d04b5217b539b0fb622cc12effa90343111cf479d2c3ab56408bd3d"},
-    {file = "ramqp-8.4.0.tar.gz", hash = "sha256:1218e92f552583b97905081dfd34dbd9f1b039d6a7e599e8401fdad3714be4c5"},
+    {file = "ramqp-9.0.0-py3-none-any.whl", hash = "sha256:f8640ea2ca11c6ee4709ddc9eef44fe6604d81b6d0b5638942467f7295ee99c2"},
+    {file = "ramqp-9.0.0.tar.gz", hash = "sha256:09888e9b5db0389aa200c12c7a81392928e2fa5e86362c396b3547f37b3722b0"},
 ]
 
 [package.dependencies]
@@ -1490,7 +1490,7 @@ aio-pika = ">=8.3,<10.0"
 anyio = ">=3.6.2,<4.0.0"
 fastapi = ">=0.95.0,<1.0"
 more-itertools = ">=9.1.0,<10.0.0"
-prometheus-client = ">=0.16.0,<0.17.0"
+prometheus-client = ">=0.16,<0.18"
 pydantic = ">=1.10.5,<2.0.0"
 ra-utils = ">=1.12.4,<2.0.0"
 structlog = ">=23.1.0,<24.0.0"
@@ -1851,4 +1851,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "74ffde6d7d164eb5793ec15ff3edcf0651085fb817fe4c10cc2f48b971056cad"
+content-hash = "84ef37597220b3cf97b2bcbfa7a7fe721a62cf2a205550682204206370393aee"
