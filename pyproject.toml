@@ -20,8 +20,8 @@ raclients = "^3.0.5"
 prometheus-fastapi-instrumentator = "^5.10.0"
 more-itertools = "^9.1.0"
 ra-utils = "^1.12.2"
-fastramqpi = "^1.4.1"
-ramqp = "^8.3.0"
+fastramqpi = "1.4.3"
+ramqp = "^9.0.0"
 pytest-split = "^0.8.1"
 
 [tool.poetry.group.dev.dependencies]
