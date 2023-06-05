@@ -27,8 +27,8 @@ from os2mint_omada.omada.models import RawOmadaUser
 logger = structlog.get_logger(__name__)
 
 
-last_omada_event_generate_time = Gauge(
-    "last_omada_event_generate_time",
+omada_last_event_generate_time = Gauge(
+    "omada_last_event_generate_time",
     "Timestamp of when the Omada event generator last successfully ran.",
     unit="seconds",
 )
@@ -140,7 +140,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
             )
 
         self._save_users(new_users_list)
-        last_omada_event_generate_time.set_to_current_time()
+        omada_last_event_generate_time.set_to_current_time()
 
     def _save_users(self, users: list[RawOmadaUser]) -> None:
         """Save known Omada users (dicts) to disk."""
