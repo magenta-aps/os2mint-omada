@@ -206,13 +206,18 @@ class MO:
         return {Employee.parse_obj(o) for o in employee["objects"]}
 
     async def get_employee_addresses(
-        self, uuid: UUID, engagement_types: Collection[UUID]
+        self,
+        uuid: UUID,
+        address_types: Iterable[UUID] | None = None,
+        engagement_types: Collection[UUID] | None = None,
     ) -> set[Address]:
         """Retrieve addresses related to an employee.
 
         Args:
             uuid: Employee UUID.
-            engagement_types: Only retrieve addresses for the given engagement types,
+            address_types: Only retrieve the given address types to avoid terminating
+             addresses irrelevant to Omada.
+            engagement_types: Only retrieve addresses for the given engagement types
              to avoid terminating addresses irrelevant to Omada.
 
         Returns: Set of addresses related to the employee.
@@ -256,6 +261,7 @@ class MO:
             variable_values=jsonable_encoder(
                 {
                     "employee_uuids": [uuid],
+                    "address_types": address_types,
                 }
             ),
         )
@@ -271,6 +277,8 @@ class MO:
 
             TODO: This should be done server-side when supported by the GraphQL API.
             """
+            if engagement_types is None:
+                return True
             engagements = address["engagement"]
             if engagements is None:
                 return False
