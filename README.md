@@ -49,7 +49,10 @@ Omada API:
 ```
 curl -X POST 'http://localhost:9000/sync/omada'
 ```
-
+or a subset of users:
+```
+curl -X POST --get 'http://localhost:9000/sync/omada' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
+```
 
 ## Versioning
 This project uses [Semantic Versioning](https://semver.org/) with the following
