@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
+from collections import defaultdict
+
 import structlog
 from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Employee
@@ -54,33 +56,28 @@ async def sync_manual_employee(
         logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
         return
 
-    # Get employee objects from MO
     employee_states: set[Employee] = set()
     if employee_uuid is not None:
         employee_states = await mo.get_employee_states(uuid=employee_uuid)
 
-    # Synchronise employee to MO
-    logger.info("Ensuring employee", omada_user=omada_user, employee_uuid=employee_uuid)
-    # Actual employee states in MO
-    actual: dict[ComparableEmployee, Employee] = {
-        ComparableEmployee(**employee.dict()): employee for employee in employee_states
-    }
+    # Existing employee states in MO
+    existing: defaultdict[ComparableEmployee, set[Employee]] = defaultdict(set)
+    for mo_employee_state in employee_states:
+        comparable_employee = ComparableEmployee(**mo_employee_state.dict())
+        existing[comparable_employee].add(mo_employee_state)
 
-    # Expected employee states from Omada (only one)
-    expected = {ComparableEmployee.from_omada(omada_user)}
+    # Desired employee states from Omada (only one)
+    desired = {ComparableEmployee.from_omada(omada_user)}
 
     # Delete excess existing
     # TODO: Implement when supported by MO
 
-    # Create (edit) missing
-    missing_employee_states = expected - actual.keys()
-    if missing_employee_states:
-        missing_mo_employee_states = [
-            Employee(uuid=employee_uuid, **employee.dict(exclude={"uuid"}))
-            for employee in missing_employee_states
-        ]
-        logger.info(
-            "Creating missing Employeee states",
-            employees=missing_mo_employee_states,
-        )
-        await model_client.upload(missing_mo_employee_states)
+    # Create missing desired
+    missing_comparable = desired - existing.keys()
+    missing_mo = [
+        Employee(uuid=employee_uuid, **employee.dict(exclude={"uuid"}))
+        for employee in missing_comparable
+    ]
+    if missing_mo:
+        logger.info("Creating missing Employeee states", employees=missing_mo)
+        await model_client.upload(missing_mo)
