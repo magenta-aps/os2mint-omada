@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from typing import cast
 from uuid import UUID
 
@@ -108,15 +109,14 @@ async def sync_addresses(
     raw_omada_users = await omada_api.get_users_by("C_POSITIONID", engagements.keys())
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
-    # Synchronise addresses to MO
-    logger.info("Ensuring addresses", employee_uuid=employee_uuid)
-    # Actual addresses in MO
-    actual: dict[ComparableAddress, Address] = {
-        ComparableAddress(**address.dict()): address for address in mo_addresses
-    }
+    # Existing addresses in MO
+    existing: defaultdict[ComparableAddress, set[Address]] = defaultdict(set)
+    for mo_address in mo_addresses:
+        comparable_address = ComparableAddress(**mo_address.dict())
+        existing[comparable_address].add(mo_address)
 
-    # Expected addresses from Omada
-    expected_with_none: set[ComparableAddress | None] = {
+    # Desired addresses from Omada
+    desired_with_none: set[ComparableAddress | None] = {
         ComparableAddress.from_omada(
             omada_user=omada_user,
             omada_attr=omada_attr,
@@ -128,23 +128,24 @@ async def sync_addresses(
         for omada_user in omada_users
         for omada_attr, mo_address_user_key in address_map.items()
     }
-    expected: set[ComparableAddress] = cast(
-        set[ComparableAddress], expected_with_none - {None}
+    desired: set[ComparableAddress] = cast(
+        set[ComparableAddress], desired_with_none - {None}
     )
 
     # Delete excess existing
-    excess_addresses = actual.keys() - expected
-    if excess_addresses:
-        excess_mo_addresses = [actual[a] for a in excess_addresses]  # with UUID
-        logger.info("Deleting excess addresses", address=excess_mo_addresses)
-        delete = (mo.delete(a) for a in excess_mo_addresses)
-        await asyncio.gather(*delete)
+    excess: set[Address] = set()
+    for comparable_address, addresses in existing.items():
+        first, *duplicate = addresses
+        excess.update(duplicate)
+        if comparable_address not in desired:
+            excess.add(first)
+    if excess:
+        logger.info("Deleting excess addresses", addresses=excess)
+        await asyncio.gather(*(mo.delete(a) for a in excess))
 
-    # Create missing
-    missing_addresses = expected - actual.keys()
-    if missing_addresses:
-        missing_mo_addresses = [
-            Address(**address.dict()) for address in missing_addresses  # with UUID
-        ]
-        logger.info("Creating missing addresses", addresses=missing_mo_addresses)
-        await model_client.upload(missing_mo_addresses)
+    # Create missing desired
+    missing_comparable = desired - existing.keys()
+    missing_mo = [Address(**address.dict()) for address in missing_comparable]
+    if missing_mo:
+        logger.info("Creating missing addresses", addresses=missing_mo)
+        await model_client.upload(missing_mo)

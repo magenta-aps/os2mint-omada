@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from typing import cast
 from uuid import UUID
 
@@ -94,15 +95,14 @@ async def sync_it_users(
     raw_omada_users = await omada_api.get_users_by("C_POSITIONID", engagements.keys())
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
-    # Synchronise IT users to MO
-    logger.info("Ensuring IT users", employee_uuid=employee_uuid)
-    # Actual IT users in MO
-    actual: dict[ComparableITUser, ITUser] = {
-        ComparableITUser(**it_user.dict()): it_user for it_user in mo_it_users
-    }
+    # Existing IT users in MO
+    existing: defaultdict[ComparableITUser, set[ITUser]] = defaultdict(set)
+    for mo_it_user in mo_it_users:
+        comparable_it_user = ComparableITUser(**mo_it_user.dict())
+        existing[comparable_it_user].add(mo_it_user)
 
-    # Expected IT users from Omada
-    expected_with_none: set[ComparableITUser | None] = {
+    # Desired IT users from Omada
+    desired_with_none: set[ComparableITUser | None] = {
         ComparableITUser.from_omada(
             omada_user=omada_user,
             omada_attr=omada_attr,
@@ -113,21 +113,24 @@ async def sync_it_users(
         for omada_user in omada_users
         for omada_attr, mo_it_system_user_key in it_user_map.items()
     }
-    expected: set[ComparableITUser] = cast(
-        set[ComparableITUser], expected_with_none - {None}
+    desired: set[ComparableITUser] = cast(
+        set[ComparableITUser], desired_with_none - {None}
     )
 
     # Delete excess existing
-    excess_it_users = actual.keys() - expected
-    if excess_it_users:
-        excess_mo_users = [actual[u] for u in excess_it_users]  # with UUID
-        logger.info("Deleting excess IT users", it_users=excess_it_users)
-        delete = (mo.delete(u) for u in excess_mo_users)
-        await asyncio.gather(*delete)
+    excess: set[ITUser] = set()
+    for comparable_it_user, it_users in existing.items():
+        first, *duplicate = it_users
+        excess.update(duplicate)
+        if comparable_it_user not in desired:
+            excess.add(first)
+    if excess:
+        logger.info("Deleting excess IT users", it_users=excess)
+        await asyncio.gather(*(mo.delete(a) for a in excess))
 
-    # Create missing
-    missing_it_users = expected - actual.keys()
-    if missing_it_users:
-        missing_mo_it_users = [ITUser(**it_user.dict()) for it_user in missing_it_users]
-        logger.info("Creating missing IT users", users=missing_mo_it_users)
-        await model_client.upload(missing_mo_it_users)
+    # Create missing desired
+    missing_comparable = desired - existing.keys()
+    missing_mo = [ITUser(**it_user.dict()) for it_user in missing_comparable]
+    if missing_mo:
+        logger.info("Creating missing IT users", users=missing_mo)
+        await model_client.upload(missing_mo)

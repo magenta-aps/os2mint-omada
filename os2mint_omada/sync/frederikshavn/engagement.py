@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from uuid import UUID
 
 import structlog
@@ -125,20 +126,17 @@ async def sync_engagements(
 
     # Only process engagements we know Omada is authoritative for (created by us)
     # to avoid deleting those that have nothing to do with Omada.
-    omada_engagements = [
+    mo_omada_engagements = [
         e for e in mo_engagements if e.engagement_type.uuid == engagement_type_uuid
     ]
 
-    # Synchronise engagements to MO
-    logger.info("Ensuring engagements", employee_uuid=employee_uuid)
+    # Existing engagements in MO
+    existing: defaultdict[ComparableEngagement, set[Engagement]] = defaultdict(set)
+    for mo_engagement in mo_omada_engagements:
+        comparable_engagement = ComparableEngagement(**mo_engagement.dict())
+        existing[comparable_engagement].add(mo_engagement)
 
-    # Actual engagements in MO
-    actual: dict[ComparableEngagement, Engagement] = {
-        ComparableEngagement(**engagement.dict()): engagement
-        for engagement in omada_engagements
-    }
-
-    # Expected engagements from Omada
+    # Desired engagements from Omada
     async def build_comparable_engagement(
         omada_user: FrederikshavnOmadaUser,
     ) -> ComparableEngagement:
@@ -159,25 +157,25 @@ async def sync_engagements(
             primary_type_uuid=primary_type_uuid,
         )
 
-    expected_tasks = (
-        build_comparable_engagement(omada_user) for omada_user in omada_users
+    desired_tuples = await asyncio.gather(
+        *(build_comparable_engagement(omada_user) for omada_user in omada_users)
     )
-    expected_tuples = await asyncio.gather(*expected_tasks)
-    expected: set[ComparableEngagement] = set(expected_tuples)
+    desired: set[ComparableEngagement] = set(desired_tuples)
 
     # Delete excess existing
-    excess_engagements = actual.keys() - expected
-    if excess_engagements:
-        excess_mo_engagements = [actual[e] for e in excess_engagements]
-        logger.info("Deleting excess engagements", engagements=excess_mo_engagements)
-        delete = (mo.delete(e) for e in excess_mo_engagements)
-        await asyncio.gather(*delete)
+    excess: set[Engagement] = set()
+    for comparable_engagement, engagements in existing.items():
+        first, *duplicate = engagements
+        excess.update(duplicate)
+        if comparable_engagement not in desired:
+            excess.add(first)
+    if excess:
+        logger.info("Deleting excess engagements", engagements=excess)
+        await asyncio.gather(*(mo.delete(a) for a in excess))
 
-    # Create missing
-    missing_engagements = expected - actual.keys()
-    if missing_engagements:
-        missing_mo_engagements = [
-            Engagement(**engagement.dict()) for engagement in missing_engagements
-        ]
-        logger.info("Creating missing engagements", engagements=missing_mo_engagements)
-        await model_client.upload(missing_mo_engagements)
+    # Create missing desired
+    missing_comparable = desired - existing.keys()
+    missing_mo = [Engagement(**engagement.dict()) for engagement in missing_comparable]
+    if missing_mo:
+        logger.info("Creating missing engagements", engagements=missing_mo)
+        await model_client.upload(missing_mo)
