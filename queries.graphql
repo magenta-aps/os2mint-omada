@@ -1,0 +1,19 @@
+query GetEmployees($limit: int = 10) {
+  employees(limit: $limit) {
+    objects {
+      uuid
+      uuid
+      user_key
+      name
+      cpr_no
+    }
+  }
+}
+
+mutation CreateItUser($itsystem: UUID!, $from: DateTime!, $user_key: String!, $person: UUID = "") {
+  ituser_create(
+    input: {user_key: $user_key, itsystem: $itsystem, validity: {from: $from}, person: $person}
+  ) {
+    uuid
+  }
+}
