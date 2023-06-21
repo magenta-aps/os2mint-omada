@@ -3,9 +3,7 @@
 from uuid import UUID
 
 from pydantic import Field
-from pydantic import validator
 
-from os2mint_omada.omada.models import IdentityCategory
 from os2mint_omada.omada.models import OmadaUser
 
 
@@ -25,6 +23,11 @@ class SilkeborgOmadaUser(OmadaUser):
     phone_cell: str | None = Field(alias="CELLPHONE")
     phone_institution: str | None = Field(alias="C_INST_PHONE")
 
+    @property
+    def is_manual(self):
+        """Manually created users have IdentityCategory ID 561 in Silkeborg"""
+        return self.identity_category.id == "561"
+
 
 class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     """Silkeborg-specific Omada user with additional fields for 'manual' users.
@@ -39,20 +42,6 @@ class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     cpr_number: str = Field(alias="C_CPRNR")
 
     # Engagement
-    job_title: str = Field(alias="JOBTITLE")
+    job_title: str | None = Field(alias="JOBTITLE")
     org_unit: UUID = Field(alias="C_ORGANISATIONSKODE")
     is_visible: bool = Field(alias="C_SYNLIG_I_OS2MO", default=True)
-
-    @validator("identity_category")
-    def check_is_manual(cls, identity_category: IdentityCategory) -> IdentityCategory:
-        """Validate that the identity category is indeed that of a manual user.
-
-        All users in the Omada OData view have the same set of fields, so a 'normal'
-        user could pass validation as a manual one (and vice-versa) unless we check
-        the identity category explicitly.
-
-        Manually created users have ID 561 in Silkeborg
-        """
-        if identity_category.id != "561":
-            raise ValueError("Identity category is not manual")
-        return identity_category

@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import pytest
-from pydantic import ValidationError
 
 from os2mint_omada.sync.silkeborg.models import ManualSilkeborgOmadaUser
 from os2mint_omada.sync.silkeborg.models import SilkeborgOmadaUser
@@ -277,15 +276,11 @@ def manual_silkeborg_omada_user() -> dict:
 
 def test_parse_user(silkeborg_omada_user: dict) -> None:
     """Test parsing of a user."""
-    assert SilkeborgOmadaUser.parse_obj(silkeborg_omada_user)
+    omada_user = SilkeborgOmadaUser.parse_obj(silkeborg_omada_user)
+    assert omada_user.is_manual is False
 
 
 def test_parse_manual_user(manual_silkeborg_omada_user: dict) -> None:
     """Test parsing of a manual user."""
-    assert ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)
-
-
-def test_parse_non_manual_as_manual(silkeborg_omada_user: dict) -> None:
-    """Test that parsing a non-manual user as manual fails validation."""
-    with pytest.raises(ValidationError):
-        ManualSilkeborgOmadaUser.parse_obj(silkeborg_omada_user)
+    omada_user = ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)
+    assert omada_user.is_manual is True

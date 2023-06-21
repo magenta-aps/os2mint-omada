@@ -58,7 +58,9 @@ class ComparableEngagement(ComparableMixin, Engagement):
         Returns: Comparable MO engagement.
         """
         try:
-            job_function_uuid = job_functions[omada_user.job_title]
+            job_function_uuid = job_functions[
+                omada_user.job_title  # type: ignore[index]
+            ]
         except KeyError:
             # Fallback job function for engagements created for manual users if the
             # job title from Omada does not exist in MO.
