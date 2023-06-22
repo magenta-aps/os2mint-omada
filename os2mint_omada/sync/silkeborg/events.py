@@ -42,12 +42,18 @@ async def sync_omada_employee(
     Returns: None.
     """
     try:
-        omada_user = ManualSilkeborgOmadaUser.parse_raw(body)
+        omada_user = SilkeborgOmadaUser.parse_raw(body)
+        if not omada_user.is_manual:
+            return
+        manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
     except ValidationError:
-        # User is not manual, so we have nothing to do
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
         return
     await sync_manual_employee(
-        omada_user=omada_user,
+        omada_user=manual_omada_user,
         mo=mo,
         model_client=model_client,
     )
@@ -72,13 +78,19 @@ async def sync_omada_engagements(
     Returns: None.
     """
     try:
-        omada_user = ManualSilkeborgOmadaUser.parse_raw(body)
+        omada_user = SilkeborgOmadaUser.parse_raw(body)
+        if not omada_user.is_manual:
+            return
+        manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
     except ValidationError:
-        # User is not manual, so we have nothing to do
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
         return
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
+    employee_uuid = await mo.get_employee_uuid_from_cpr(manual_omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping engagements synchronisation")
         return
