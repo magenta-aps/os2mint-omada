@@ -51,3 +51,14 @@ class FrederikshavnOmadaUser(OmadaUser):
         if value is None:
             return None
         return value.replace(" ", "")
+
+
+def to_omada_cpr_number(cpr_number: str) -> str:
+    """Omada-compatible CPR-number representation.
+
+    Frederikshavn stores CPR numbers in Omada using the 'xxxxxx-xxxx' format,
+    whereas MO stores it as 'xxxxxxxxxx'. Therefore, to find a MO employee in
+    Omada, we have to convert back to the dash variation.
+    """
+    assert len(cpr_number) == 10
+    return f"{cpr_number[:6]}-{cpr_number[6:]}"
