@@ -18,7 +18,7 @@ class FrederikshavnOmadaUser(OmadaUser):
     cpr_number: str = Field(alias="C_CPRNUMBER", min_length=10)
 
     # Engagement
-    employee_number: str = Field(alias="C_POSITIONID", min_length=1)
+    employee_number: str = Field(alias="C_MEDARBEJDERNR_ODATA", min_length=1)
     job_title: str = Field(alias="C_JOBTITLE_ODATA", min_length=1)
     org_unit: str = Field(alias="C_OUID_ODATA", min_length=1)
 
