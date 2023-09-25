@@ -44,6 +44,7 @@ def frederikshavn_omada_user() -> dict:
         "C_STREETADDRESS": None,
         "C_ISONBOARDE": None,
         "C_POSITIONID": "00120589",
+        "C_MEDARBEJDERNR_ODATA": "120589",
         "C_CPRNUMBER": "120390-0593",
         "C_EXTPERSONALEMAIL": None,
         "JOBTITLE_ID": None,
@@ -110,7 +111,7 @@ def test_strip_cpr_dash(frederikshavn_omada_user: dict) -> None:
 
 def test_strip_leading_zeroes(frederikshavn_omada_user: dict) -> None:
     """Test that leading zeroes are stripped from employee and org unit numbers."""
-    assert frederikshavn_omada_user["C_POSITIONID"] == "00120589"
+    assert frederikshavn_omada_user["C_MEDARBEJDERNR_ODATA"] == "120589"
     assert frederikshavn_omada_user["C_OUID_ODATA"] == "01012415"
     user = FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
     assert user.employee_number == "120589"
