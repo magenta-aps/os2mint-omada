@@ -26,7 +26,6 @@ class OmadaBasicAuthSettings(BaseModel):
 class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
     exchange = "omada"
     queue_prefix = "omada"
-    prefetch_count = 1  # MO cannot handle too many requests
 
 
 class OmadaSettings(BaseModel):
