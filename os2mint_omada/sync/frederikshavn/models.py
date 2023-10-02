@@ -7,20 +7,17 @@ from os2mint_omada.omada.models import OmadaUser
 
 
 class FrederikshavnOmadaUser(OmadaUser):
-    """Frederikshavn-specific Omada user model.
-
-    `min_length=1` ensures that we do not accept empty strings.
-    """
+    """Frederikshavn-specific Omada user model."""
 
     # Employee
-    first_name: str = Field(alias="FIRSTNAME", min_length=1)
-    last_name: str = Field(alias="LASTNAME", min_length=1)
-    cpr_number: str = Field(alias="C_CPRNUMBER", min_length=10)
+    first_name: str = Field(alias="FIRSTNAME")
+    last_name: str = Field(alias="LASTNAME")
+    cpr_number: str = Field(alias="C_CPRNUMBER", min_length=10, max_length=10)
 
     # Engagement
-    employee_number: str = Field(alias="C_MEDARBEJDERNR_ODATA", min_length=1)
-    job_title: str = Field(alias="C_JOBTITLE_ODATA", min_length=1)
-    org_unit: str = Field(alias="C_OUID_ODATA", min_length=1)
+    employee_number: str = Field(alias="C_MEDARBEJDERNR_ODATA")
+    job_title: str = Field(alias="C_JOBTITLE_ODATA")
+    org_unit: str = Field(alias="C_OUID_ODATA")
 
     # IT User
     ad_login: str | None = Field(alias="ADLOGON")

@@ -39,7 +39,7 @@ class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     # Employee
     first_name: str = Field(alias="C_FORNAVNE")
     last_name: str = Field(alias="LASTNAME")
-    cpr_number: str = Field(alias="C_CPRNR")
+    cpr_number: str = Field(alias="C_CPRNR", min_length=10, max_length=10)
 
     # Engagement
     job_title: str | None = Field(alias="JOBTITLE")
