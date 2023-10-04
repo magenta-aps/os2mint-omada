@@ -3,16 +3,14 @@
 ---
 services:
   init:
-    image: magentaaps/os2mo-init:1.1
+    image: magentaaps/os2mo-init:2
     environment:
       # Keycloak
       AUTH_SERVER: "http://keycloak:8080/auth"
       # OS2mo
-      MO_URL: "http://mo"
+      MO_URL: "http://mo:5000"
       CLIENT_ID: "dipex"
       CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
-      # LoRa
-      LORA_URL: "http://mo/lora"
     volumes:
       - type: bind
         source: ./init.config.yml
@@ -27,28 +25,29 @@ services:
       CUSTOMER: frederikshavn
 
       # OS2mo
-      FASTRAMQPI__MO_URL: "http://mo"
+      FASTRAMQPI__MO_URL: "http://mo:5000"
       FASTRAMQPI__CLIENT_ID: "dipex"
       FASTRAMQPI__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
       FASTRAMQPI__AUTH_SERVER: "http://keycloak:8080/auth"
       FASTRAMQPI__AUTH_REALM: "mo"
-      FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
+      FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
 
       # Omada
       OMADA__URL: "http://fake-omada-api/"
-      OMADA__AMQP__URL: "amqp://guest:guest@msg_broker:5672/"
+      OMADA__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
     ports:
       - "127.0.0.1:9000:8000"
     volumes:
-      - ./os2mint_omada:/app/os2mint_omada:ro
+      - ./:/app/:ro
     depends_on:
       init:
         condition: service_completed_successfully
 
   fake-omada-api:
     build: .
-    command: ["uvicorn", "tests.fakes.omada_api:app", "--host", "0.0.0.0", "--port", "80"]
+    command: ["uvicorn", "--factory", "tests.fakes.fake_omada_api:create_app", "--host", "0.0.0.0", "--port", "80"]
     volumes:
+      - ./:/app/:ro
       - ./schemas/frederikshavn/odata.json:/odata.json:ro
 
 networks:
