@@ -33,14 +33,14 @@ class FrederikshavnOmadaUser(OmadaUser):
         """Strip dashes from CPR, e.g. "xxxxxx-xxxx", to be MO-compatible."""
         return cpr_number.replace("-", "")
 
-    @validator("employee_number", "org_unit")
+    @validator("org_unit")
     def strip_leading_zeroes(cls, value: str) -> str:
-        """Strip leading zeroes from employee and org unit numbers to be MO-compatible.
+        """Strip leading zeroes from org unit numbers to be MO-compatible.
 
-        The employee and organisation unit are 8 character, zero-padded numbers in
-        Opus. These numbers are exposed by the Opus webservice directly to Omada. OS2mo
-        imports data from Opus through the nightly XML export, however, which does
-        _not_ zero-pad the numbers. Therefore, the leading zeroes are stripped to be
+        The organisation unit are 8 character, zero-padded numbers in Opus. These
+        numbers are exposed by the Opus webservice directly to Omada. OS2mo imports
+        data from Opus through the nightly XML export, however, which does _not_
+        zero-pad the numbers. Therefore, the leading zeroes are stripped to be
         MO-compatible.
         """
         return value.lstrip("0")
