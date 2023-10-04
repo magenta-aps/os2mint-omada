@@ -18,16 +18,16 @@ facets:
       scope: "PHONE"
     # Frederikshavn and Egedal use Omada-specific classes
     OmadaEmailEmployee:
-      title: "Email"
+      title: "Email (Omada)"
       scope: "EMAIL"
     OmadaPhoneEmployee:
-      title: "Telefon"
+      title: "Telefon (Omada)"
       scope: "PHONE"
     OmadaMobilePhoneEmployee:
-      title: "Mobiltelefon"
+      title: "Mobiltelefon (Omada)"
       scope: "PHONE"
     OmadaInstitutionPhoneEmployee:
-      title: "Institutionstelefonnummer"
+      title: "Institutionstelefonnummer (Omada)"
       scope: "PHONE"
   visibility:
     Public:
