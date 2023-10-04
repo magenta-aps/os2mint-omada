@@ -80,17 +80,14 @@ async def sync_addresses(
 
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
-        "email": "EmailEmployee",
-        "phone": "PhoneEmployee",
-        "cellphone": "MobilePhoneEmployee",
+        "email": "OmadaEmailEmployee",
+        "phone": "OmadaPhoneEmployee",
+        "cellphone": "OmadaMobilePhoneEmployee",
     }
 
     # Get MO classes configuration
     address_types = await mo.get_classes("employee_address_type")
-
-    # Engagement type for engagements created for omada users
-    engagement_types = await mo.get_classes("engagement_type")
-    engagement_type_uuid = engagement_types["omada_manually_created"]
+    omada_address_types = [address_types[user_key] for user_key in address_map.values()]
 
     # Visibility class for created addresses
     visibility_classes = await mo.get_classes("visibility")
@@ -100,7 +97,7 @@ async def sync_addresses(
     mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
     mo_addresses = await mo.get_employee_addresses(
         uuid=employee_uuid,
-        engagement_types={engagement_type_uuid},
+        address_types=omada_address_types,
     )
 
     # Get current user data from Omada. Note that we are fetching Omada users for

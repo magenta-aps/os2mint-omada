@@ -3,6 +3,7 @@
 ---
 facets:
   employee_address_type:
+    # Silkeborg uses the "base" classes
     EmailEmployee:
       title: "Email"
       scope: "EMAIL"
@@ -13,6 +14,19 @@ facets:
       title: "Mobiltelefon"
       scope: "PHONE"
     InstitutionPhoneEmployee:
+      title: "Institutionstelefonnummer"
+      scope: "PHONE"
+    # Frederikshavn and Egedal use Omada-specific classes
+    OmadaEmailEmployee:
+      title: "Email"
+      scope: "EMAIL"
+    OmadaPhoneEmployee:
+      title: "Telefon"
+      scope: "PHONE"
+    OmadaMobilePhoneEmployee:
+      title: "Mobiltelefon"
+      scope: "PHONE"
+    OmadaInstitutionPhoneEmployee:
       title: "Institutionstelefonnummer"
       scope: "PHONE"
   visibility:
