@@ -5,6 +5,7 @@ from asyncio import CancelledError
 from asyncio import create_task
 from collections.abc import AsyncIterator
 from collections.abc import Callable
+from collections.abc import Iterator
 from contextlib import suppress
 from pathlib import Path
 
@@ -90,14 +91,15 @@ def omada_mock(respx_mock: MockRouter) -> Callable[[list], None]:
         app = fake_omada_api.create_app(values=values)
         respx_mock.route(host="fake-omada-api").mock(side_effect=ASGIHandler(app))
 
+    # Start mocking an empty Omada view immediately in case the integration makes calls
+    # before the test configures its mock users through the callback.
+    _omada_mock([])
     return _omada_mock
 
 
 @pytest.fixture
-def get_test_client(
-    monkeypatch: MonkeyPatch, tmp_path: Path
-) -> Callable[[], TestClient]:
-    """Create ASGI test app."""
+def test_client(monkeypatch: MonkeyPatch, tmp_path: Path) -> Iterator[TestClient]:
+    """Create ASGI test client."""
     # These connection strings should correspond to the CI job, NOT docker compose
     monkeypatch.setenv("FASTRAMQPI__MO_URL", "http://mo:5000")
     monkeypatch.setenv("FASTRAMQPI__CLIENT_ID", "dipex")
@@ -110,11 +112,12 @@ def get_test_client(
 
     monkeypatch.setenv("OMADA__URL", "http://fake-omada-api/")
     monkeypatch.setenv("OMADA__AMQP__URL", "amqp://guest:guest@msg-broker:5672/")
-    monkeypatch.setenv("OMADA__INTERVAL", "5")
+    monkeypatch.setenv("OMADA__INTERVAL", "2")
     monkeypatch.setenv("OMADA__PERSISTENCE_FILE", str(tmp_path / "omada.json"))
 
-    # It is not possible to start a FastAPI app multiple times, so we return a factory
-    return lambda: TestClient(app=create_app())
+    app = create_app()
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture

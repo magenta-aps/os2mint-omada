@@ -72,7 +72,7 @@ async def org_unit(mo_graphql_session: AsyncClientSession) -> str:
 @pytest.mark.integration_test
 async def test_egedal_manual(
     omada_mock: Callable[[list], None],
-    get_test_client: Callable[[], TestClient],
+    test_client: TestClient,
     mo_graphql_session: AsyncClientSession,
     org_unit: str,
 ) -> None:
@@ -200,8 +200,7 @@ async def test_egedal_manual(
             }
         ]
 
-    with get_test_client():
-        await verify()
+    await verify()
 
     # EDIT
     updated_omada_user = {
@@ -285,8 +284,7 @@ async def test_egedal_manual(
             "LK1337",
         }
 
-    with get_test_client():
-        await verify()
+    await verify()
 
     # DELETE
     omada_mock([])
@@ -303,5 +301,4 @@ async def test_egedal_manual(
         assert employee["addresses"] == []
         assert employee["itusers"] == []
 
-    with get_test_client():
-        await verify()
+    await verify()
