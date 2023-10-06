@@ -8,6 +8,7 @@ variables:
   POETRY_VERSION: "1.3"
   PYTEST_COV_MODULE: os2mint_omada
   PYTEST_COV_FAIL_UNDER: 0
+  OS2MO_INIT_CONFIG: "/builds/$CI_PROJECT_PATH/init.config.yml"
 
 
 stages:
@@ -51,6 +52,32 @@ include:
       - gitlab-ci-templates/common/docker-build.v1.yml
       - gitlab-ci-templates/common/docker-release.v1.yml
       - gitlab-ci-templates/common/config-updater-meta.v1.yml
+  - project: rammearkitektur/os2mo
+    file:
+      - gitlab-ci-templates/integration-test-meta.v1.yml
+
+
+# Test
+Test:
+  variables:
+    PYTEST_ADDOPTS: "-m 'not integration_test'"
+
+
+Integration-test:
+  extends:
+    - .integration-test:mo
+  variables:
+    # OS2mo
+    FASTRAMQPI__MO_URL: "http://mo:5000"
+    FASTRAMQPI__CLIENT_ID: "dipex"
+    FASTRAMQPI__CLIENT_SECRET: "603f1c82-d012-4d04-9382-dbe659c533fb"
+    FASTRAMQPI__AUTH_SERVER: "http://keycloak:8080/auth"
+    FASTRAMQPI__AUTH_REALM: "mo"
+    FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
+
+    # Omada
+    OMADA__URL: "http://fake-omada-api/"
+    OMADA__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
 
 
 # Release

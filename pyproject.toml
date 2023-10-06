@@ -11,32 +11,33 @@ keywords = ["os2mo", "os2mint", "omada"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^1.10.5"
+pydantic = "^1"
 structlog = "^23.1.0"
-uvicorn = "^0.20.0"
+uvicorn = "^0.23.2"
 httpx = "^0.23.3"
 ramodels = "^18.8.0"
-raclients = "^3.0.5"
+raclients = "^3.1.12"
 prometheus-fastapi-instrumentator = "^5.10.0"
 more-itertools = "^9.1.0"
-ra-utils = "^1.12.2"
-fastramqpi = "1.4.3"
-ramqp = "^9.0.0"
+ra-utils = "^1.13.9"
+fastramqpi = "1.5.5"
+ramqp = "^9.1.0"
 pytest-split = "^0.8.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
-black = "^22.8.0"
-flake8 = "^5.0.4"
-mypy = "^0.991"
-reorder-python-imports = "^3.1.0"
+black = "^23.9.1"
+flake8 = "^6.1.0"
+mypy = "^1.5.1"
+reorder-python-imports = "^3.12.0"
 pre-commit = "^2.20.0"
 pytest-cov = "^3.0.0"
 pytest-env = "^0.6.2"
-respx = "^0.20.1"
+respx = "^0.20.2"
 pytest-asyncio = "^0.18.3"
 freezegun = "^1.2.1"
 types-freezegun = "^1.1.10"
+tenacity = "^8.2.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -44,6 +45,9 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode="auto"
+markers = [
+  "integration_test: mark test as an integration test",
+]
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]

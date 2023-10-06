@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 ---
+root_organisation:
+  municipality_code: null
+
 facets:
   employee_address_type:
     # Silkeborg uses the "base" classes
@@ -29,16 +32,19 @@ facets:
     OmadaInstitutionPhoneEmployee:
       title: "Institutionstelefonnummer (Omada)"
       scope: "PHONE"
-  visibility:
-    Public:
-      title: "Må vises eksternt"
-      scope: "PUBLIC"
-    Secret:
-      title: "Hemmelig"
-      scope: "SECRET"
   engagement_job_function:
+    Medarbejder:
+      title: "Medarbejder"
+      scope: "TEXT"
+    Vikar:
+      title: "Vikar"
+      scope: "TEXT"
     not_applicable:
       title: "N/A"
+      scope: "TEXT"
+  org_unit_type:
+    Afdeling:
+      title: "Afdeling"
       scope: "TEXT"
   engagement_type:
     omada_manually_created:
@@ -47,12 +53,24 @@ facets:
     omada_manually_created_hidden:
       title: "(Omada) Manuelt oprettet (Skjult)"
       scope: "TEXT"
+  visibility:
+    Public:
+      title: "Må vises eksternt"
+      scope: "PUBLIC"
+    Secret:
+      title: "Hemmelig"
+      scope: "SECRET"
   primary_type:
     primary:
       title: "Primær"
       scope: "3000"
 
 it_systems:
-  omada_ad_guid: "Omada - AD GUID"
-  omada_ad_login: "Omada - AD LOGIN"
+  # Silkeborg
   omada_login: "Omada - LOGIN"
+  omada_ad_guid: "Omada - AD GUID"
+  # Organisation units can be found either directly by their UUID, or through an
+  # associated IT-user containing the UUID.
+  FK-ORG-UUID: "FK-org uuid"
+  # Frederikshavn
+  omada_ad_login: "Omada - AD LOGIN"
