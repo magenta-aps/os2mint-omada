@@ -16,7 +16,7 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
 from ramqp.depends import handle_exclusively_decorator
 
-from .models import SilkeborgOmadaUser
+from .models import EgedalOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
@@ -28,7 +28,7 @@ class ComparableITUser(ComparableMixin, ITUser):
     @classmethod
     def from_omada(
         cls,
-        omada_user: SilkeborgOmadaUser,
+        omada_user: EgedalOmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
         engagement_uuid: UUID,
@@ -94,7 +94,7 @@ async def sync_it_users(
     # ALL engagements to avoid deleting too many IT users
     engagements = {e.user_key: e for e in mo_engagements}
     raw_omada_users = await omada_api.get_users_by("C_TJENESTENR", engagements.keys())
-    omada_users = parse_obj_as(list[SilkeborgOmadaUser], raw_omada_users)
+    omada_users = parse_obj_as(list[EgedalOmadaUser], raw_omada_users)
 
     # Existing IT users in MO
     existing: defaultdict[ComparableITUser, set[ITUser]] = defaultdict(set)

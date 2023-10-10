@@ -13,8 +13,8 @@ from .address import sync_addresses
 from .employee import sync_manual_employee
 from .engagement import sync_engagements
 from .it_user import sync_it_users
-from .models import ManualSilkeborgOmadaUser
-from .models import SilkeborgOmadaUser
+from .models import EgedalOmadaUser
+from .models import ManualEgedalOmadaUser
 from os2mint_omada.omada.event_generator import Event
 
 logger = structlog.get_logger(__name__)
@@ -42,10 +42,10 @@ async def sync_omada_employee(
     Returns: None.
     """
     try:
-        omada_user = SilkeborgOmadaUser.parse_raw(body)
+        omada_user = EgedalOmadaUser.parse_raw(body)
         if not omada_user.is_manual:
             return
-        manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
+        manual_omada_user = ManualEgedalOmadaUser.parse_obj(omada_user)
     except ValidationError:
         # TODO (#51925): this message should be sent to the ghostoffice for manual
         # processing. For now, we simply drop the message, as we will never be able to
@@ -78,10 +78,10 @@ async def sync_omada_engagements(
     Returns: None.
     """
     try:
-        omada_user = SilkeborgOmadaUser.parse_raw(body)
+        omada_user = EgedalOmadaUser.parse_raw(body)
         if not omada_user.is_manual:
             return
-        manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
+        manual_omada_user = ManualEgedalOmadaUser.parse_obj(omada_user)
     except ValidationError:
         # TODO (#51925): this message should be sent to the ghostoffice for manual
         # processing. For now, we simply drop the message, as we will never be able to
@@ -122,7 +122,7 @@ async def sync_omada_addresses(
     Returns: None.
     """
     try:
-        omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+        omada_user: EgedalOmadaUser = EgedalOmadaUser.parse_raw(body)
     except ValidationError:
         # TODO (#51925): this message should be sent to the ghostoffice for manual
         # processing. For now, we simply drop the message, as we will never be able to
@@ -163,7 +163,7 @@ async def sync_omada_it_users(
     Returns: None.
     """
     try:
-        omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+        omada_user: EgedalOmadaUser = EgedalOmadaUser.parse_raw(body)
     except ValidationError:
         # TODO (#51925): this message should be sent to the ghostoffice for manual
         # processing. For now, we simply drop the message, as we will never be able to

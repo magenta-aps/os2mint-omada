@@ -7,8 +7,8 @@ from pydantic import Field
 from os2mint_omada.omada.models import OmadaUser
 
 
-class SilkeborgOmadaUser(OmadaUser):
-    """Silkeborg-specific Omada user model."""
+class EgedalOmadaUser(OmadaUser):
+    """Egedal-specific Omada user model."""
 
     # Engagement
     service_number: str = Field(alias="C_TJENESTENR")
@@ -25,12 +25,12 @@ class SilkeborgOmadaUser(OmadaUser):
 
     @property
     def is_manual(self):
-        """Manually created users have IdentityCategory ID 561 in Silkeborg"""
+        """Manually created users have IdentityCategory ID 561 in Egedal"""
         return self.identity_category.id == "561"
 
 
-class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
-    """Silkeborg-specific Omada user with additional fields for 'manual' users.
+class ManualEgedalOmadaUser(EgedalOmadaUser):
+    """Egedal-specific Omada user with additional fields for 'manual' users.
 
     Manual users not only have addresses and IT users synchronised, but also the
     employee object itself, as well as associated engagements.
