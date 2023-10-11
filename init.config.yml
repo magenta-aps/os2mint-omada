@@ -39,6 +39,9 @@ facets:
     Vikar:
       title: "Vikar"
       scope: "TEXT"
+    Sygeplejerske:
+      title: "Sygeplejerske"
+      scope: "TEXT"
     not_applicable:
       title: "N/A"
       scope: "TEXT"
