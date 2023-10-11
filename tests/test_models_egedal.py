@@ -1,286 +1,229 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from uuid import UUID
+
 import pytest
 
-from os2mint_omada.sync.silkeborg.models import ManualSilkeborgOmadaUser
-from os2mint_omada.sync.silkeborg.models import SilkeborgOmadaUser
+from os2mint_omada.sync.egedal.models import EgedalOmadaEmployment
+from os2mint_omada.sync.egedal.models import EgedalOmadaUser
+from os2mint_omada.sync.egedal.models import ManualEgedalOmadaUser
 
 
 @pytest.fixture
-def silkeborg_omada_user() -> dict:
-    """Silkeborg Omada user, as returned by the API."""
+def egedal_omada_user() -> dict:
+    """Egedal Omada user, as returned by the API."""
     return {
-        "Id": 1041073,
-        "UId": "e9802c93-ce17-41e6-b425-5ed3c9e41b4f",
-        "CreateTime": "2018-11-05T14:48:14.95+01:00",
-        "ChangeTime": "2022-06-14T13:59:41.11+02:00",
-        "DisplayName": "Anders W. Lemming [DRV2639]",
-        "IDENTITYID": None,
-        "FIRSTNAME": None,
-        "LASTNAME": "Lemming",
-        "EMAIL": "AndersW.Lemming@silkeborg.dk",
-        "JOBTITLE": "",
-        "VALIDFROM": "2016-06-15T00:00:00+02:00",
-        "VALIDTO": "2022-12-03T00:00:00+01:00",
-        "INITIALPASSWORD": None,
-        "ODWBUSIKEY": None,
-        "RISKSCORE": None,
-        "STATE_REGION": None,
-        "BIRTHDAY": None,
-        "ADDRESS2": None,
-        "ADDRESS1": None,
-        "CITY": None,
-        "ZIPCODE": None,
-        "EMAIL2": None,
-        "IDENTSODXML": None,
-        "IDENTSODRECALCSURV": None,
-        "PWR_LOCKOUT": None,
-        "C_APPOINTCODE": None,
-        "C_JOBPOSTIDENT": None,
-        "C_DEP_DEACT_DATE": None,
-        "C_DEP_ACT_DATE": None,
-        "C_LOKALENAVN": None,
-        "C_DIREKTE_TLF": "",
-        "C_GOLOGIN": None,
-        "C_O365": None,
-        "C_INST_PHONE": "",
-        "C_PRIV_MOBILNR": None,
-        "C_PRIV_PHONE": None,
-        "C_PRIV_COUNTRY": None,
-        "C_PRIV_ZIP": None,
-        "C_PRIV_CITY": None,
-        "C_PRIV_ADDRESS": None,
-        "C_PRIV_EMAIL": None,
-        "C_INST_NAME": None,
-        "C_FAX": None,
-        "C_SEN_DATE": None,
-        "C_SALARY_SCALE": None,
-        "C_SALARY_CLASS": None,
-        "C_SALARY_AGREE": None,
-        "C_PENSIONCODE": None,
-        "C_SALARYRATE": None,
-        "C_OCCUP_RATE": None,
-        "C_EMP_DEACT_DATE": None,
-        "C_EMP_ACT_DATE": None,
-        "C_EMP_STAT_CODE": None,
-        "C_EAN": None,
-        "C_KOMMENTAR": None,
-        "C_FILSERVER": None,
-        "C_MIDDLENAME": None,
-        "C_TJENESTENR": "bbb",
-        "C_CPRNR": "1907792583",
-        "C_VALIDFROM_SD": None,
-        "C_VALIDTO_SD": None,
-        "CELLPHONE": "12345678",
-        "C_SLETTET_SD": None,
-        "C_PHONE_WEB": None,
-        "C_SALARY_IND": None,
-        "C_DATA_WEB": None,
-        "C_FULLTIME": None,
-        "C_PREPAY": None,
-        "C_ITBRUGER_TID": None,
-        "C_ITBRUGER": None,
-        "C_FULLNAME": None,
-        "C_FIRMA": None,
-        "C_TITEL_SD": None,
-        "C_DESCRIPTION": None,
-        "C_SLETTEMAIL": None,
-        "C_ITBRUGER_SLET": None,
-        "C_LEDER_ANDR": None,
-        "OISID": None,
-        "C_EKSTRAFELT": None,
-        "C_FORNAVNE": "Anders W.",
-        "C_ANS_PROC_START": None,
-        "C_SIMS_USER_CODE": None,
-        "C_SIMS_CARD_CODE": None,
-        "C_SIMS_PIN_CODE": None,
-        "C_SIMS_INFO": None,
-        "C_OBJECTGUID_I_AD": "b71dccac-6611-4bf7-bb09-77c0bf510210",
-        "C_SIPADRESSE": None,
-        "C_LOGIN": "DRV2639",
-        "C_SYNLIG_I_OS2MO": True,
-        "C_OPRETTES_I_OS2MO": None,
-        "C_ORGANISATIONSKODE": "5a23d722-1be4-4f00-a200-000001500001",
-        "C_INSTITUTIONSKODE": None,
-        "OUREF": None,
-        "IDENTITYSTATUS": None,
-        "IDENTITYCATEGORY": {"Id": 564, "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b"},
-        "IDENTITYTYPE": None,
-        "IDENTITYOWNER": None,
-        "PRIMARYCONTEXTTYPE": None,
-        "TIMEZONE": None,
-        "EXPLICITOWNER": [],
-        "MANAGER": [],
-        "GENDER": None,
-        "COUNTRY": None,
-        "CLT_TAGS": [],
-        "C_SEKTION": None,
-        "C_TEKLEJE": None,
-        "C_AFDELING": None,
-        "C_BRUGERTYPE": None,
-        "C_AFDELING_SIKO": None,
-        "C_LEDER": None,
-        "C_BEST_IDENT": None,
-        "C_SIKOREF": None,
-        "EMPLOYMENTS": [],
-        "RISKLEVEL": None,
-        "C_O365_SETP": None,
-        "C_SEKTION_I_SIKO": None,
-        "SUBAREA": None,
-        "BUILDING": None,
-        "JOBTITLE_REF": None,
-        "DIVISION": None,
-        "BUSINESSUNIT": None,
-        "COMPANY": None,
-        "COSTCENTER": None,
-        "LOCATION": None,
-        "C_AFDELING_TMP": None,
-        "C_OPRETPROC": None,
-        "C_OPRETTER": None,
+        # Omada
+        "Id": 1001378,
+        "UId": "ae2923ea-2fb4-44bc-91b8-237a1ca5ee61",
+        "VALIDFROM": "2002-07-03T00:00:00+02:00",
+        "VALIDTO": "2003-07-01T00:00:00+01:00",
+        "IDENTITYCATEGORY": {
+            "Id": 560,
+            "UId": "ac0c67fc-5f47-4112-94e6-446bfb68326a",
+            "Value": "Employee",
+        },
+        # Employee
+        "C_EMPLOYEEID": "0307024004",
+        "C_OIS_FIRSTNAME": "Jaina",
+        "C_OIS_LASTNAME": "Proudmoore",
+        # Addresses
+        "EMAIL": "jaina@egepost.dk",
+        "PHONE": "12345678",
+        "CELLPHONE": "87654321",
+        # IT Users
+        "OBJECTGUID": "C2-2C-C1-C7-45-E8-83-49-85-4F-DA-EF-0B-32-B8-78",
+        "C_ADUSERNAME": "JP1911",
     }
 
 
 @pytest.fixture
-def manual_silkeborg_omada_user() -> dict:
-    """Manual Silkeborg Omada user, as returned by the API."""
+def manual_egedal_omada_user() -> dict:
+    """Manual Egedal Omada user, as returned by the API."""
     return {
-        "Id": 1041094,
-        "UId": "38e4a0f1-1290-40e3-ad83-896abd1d3e50",
-        "CreateTime": "2018-11-05T14:48:18.693+01:00",
-        "ChangeTime": "2022-05-10T09:35:55.35+02:00",
-        "DisplayName": "Ida Jensen [DRV1216]",
-        "IDENTITYID": None,
-        "FIRSTNAME": None,
-        "LASTNAME": "Hansen",
-        "EMAIL": "Mia.Hansen@silkeborg.dk",
-        "JOBTITLE": "Revisor",
-        "VALIDFROM": "2012-08-27T00:00:00+02:00",
-        "VALIDTO": "2022-12-01T01:00:00+01:00",
-        "INITIALPASSWORD": None,
-        "ODWBUSIKEY": None,
-        "RISKSCORE": None,
-        "STATE_REGION": None,
-        "BIRTHDAY": None,
-        "ADDRESS2": None,
-        "ADDRESS1": None,
-        "CITY": None,
-        "ZIPCODE": None,
-        "EMAIL2": None,
-        "IDENTSODXML": None,
-        "IDENTSODRECALCSURV": None,
-        "PWR_LOCKOUT": None,
-        "C_APPOINTCODE": None,
-        "C_JOBPOSTIDENT": None,
-        "C_DEP_DEACT_DATE": None,
-        "C_DEP_ACT_DATE": None,
-        "C_LOKALENAVN": None,
-        "C_DIREKTE_TLF": "",
-        "C_GOLOGIN": None,
-        "C_O365": None,
-        "C_INST_PHONE": "666666",
-        "C_PRIV_MOBILNR": None,
-        "C_PRIV_PHONE": None,
-        "C_PRIV_COUNTRY": None,
-        "C_PRIV_ZIP": None,
-        "C_PRIV_CITY": None,
-        "C_PRIV_ADDRESS": None,
-        "C_PRIV_EMAIL": None,
-        "C_INST_NAME": None,
-        "C_FAX": None,
-        "C_SEN_DATE": None,
-        "C_SALARY_SCALE": None,
-        "C_SALARY_CLASS": None,
-        "C_SALARY_AGREE": None,
-        "C_PENSIONCODE": None,
-        "C_SALARYRATE": None,
-        "C_OCCUP_RATE": None,
-        "C_EMP_DEACT_DATE": None,
-        "C_EMP_ACT_DATE": None,
-        "C_EMP_STAT_CODE": None,
-        "C_EAN": None,
-        "C_KOMMENTAR": None,
-        "C_FILSERVER": None,
-        "C_MIDDLENAME": None,
-        "C_TJENESTENR": "v1216",
-        "C_CPRNR": "1709933104",
-        "C_VALIDFROM_SD": None,
-        "C_VALIDTO_SD": None,
-        "CELLPHONE": "",
-        "C_SLETTET_SD": None,
-        "C_PHONE_WEB": None,
-        "C_SALARY_IND": None,
-        "C_DATA_WEB": None,
-        "C_FULLTIME": None,
-        "C_PREPAY": None,
-        "C_ITBRUGER_TID": None,
-        "C_ITBRUGER": None,
-        "C_FULLNAME": None,
-        "C_FIRMA": None,
-        "C_TITEL_SD": None,
-        "C_DESCRIPTION": None,
-        "C_SLETTEMAIL": None,
-        "C_ITBRUGER_SLET": None,
-        "C_LEDER_ANDR": None,
-        "OISID": None,
-        "C_EKSTRAFELT": None,
-        "C_FORNAVNE": "Mia",
-        "C_ANS_PROC_START": None,
-        "C_SIMS_USER_CODE": None,
-        "C_SIMS_CARD_CODE": None,
-        "C_SIMS_PIN_CODE": None,
-        "C_SIMS_INFO": None,
-        "C_OBJECTGUID_I_AD": "74dea272-d90b-47c7-8d99-c8efa372fa03",
-        "C_SIPADRESSE": None,
-        "C_LOGIN": "DRV1216",
-        "C_SYNLIG_I_OS2MO": False,
-        "C_OPRETTES_I_OS2MO": None,
-        "C_ORGANISATIONSKODE": "f06ee470-9f17-566f-acbe-e938112d46d9",
-        "C_INSTITUTIONSKODE": None,
-        "OUREF": None,
-        "IDENTITYSTATUS": None,
-        "IDENTITYCATEGORY": {"Id": 561, "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b"},
-        "IDENTITYTYPE": None,
-        "IDENTITYOWNER": None,
-        "PRIMARYCONTEXTTYPE": None,
-        "TIMEZONE": None,
-        "EXPLICITOWNER": [],
-        "MANAGER": [],
-        "GENDER": None,
-        "COUNTRY": None,
-        "CLT_TAGS": [],
-        "C_SEKTION": None,
-        "C_TEKLEJE": None,
-        "C_AFDELING": None,
-        "C_BRUGERTYPE": None,
-        "C_AFDELING_SIKO": None,
-        "C_LEDER": None,
-        "C_BEST_IDENT": None,
-        "C_SIKOREF": None,
-        "EMPLOYMENTS": [],
-        "RISKLEVEL": None,
-        "C_O365_SETP": None,
-        "C_SEKTION_I_SIKO": None,
-        "SUBAREA": None,
-        "BUILDING": None,
-        "JOBTITLE_REF": None,
-        "DIVISION": None,
-        "BUSINESSUNIT": None,
-        "COMPANY": None,
-        "COSTCENTER": None,
-        "LOCATION": None,
-        "C_AFDELING_TMP": None,
-        "C_OPRETPROC": None,
-        "C_OPRETTER": None,
+        # Omada
+        "Id": 1001307,
+        "UId": "93f93362-3cb4-450a-a48a-ef975675b232",
+        "VALIDFROM": "2010-02-09T00:00:00+02:00",
+        "VALIDTO": "2010-03-26T00:00:00+01:00",
+        "IDENTITYCATEGORY": {
+            "Id": 561,
+            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
+            "Value": "Contractor",
+        },
+        # Employee
+        "C_EMPLOYEEID": "0902104607",
+        "C_OIS_FIRSTNAME": "The Lich",
+        "C_OIS_LASTNAME": "King",
+        # Employee (manual)
+        "FIRSTNAME": "Arthas",
+        "LASTNAME": "Menethil",
+        # Engagements (manual)
+        "EMPLOYMENTS": [
+            {
+                "Id": 1251824,
+                "UId": "0e39ce2d-39a5-42b0-befb-f8380f9c789c",
+                "KeyValue": None,
+                "KeyProperty": None,
+                "DisplayName": "Prince (Lordaeron [LORDAERON]) ID:(00001337) ;",
+            },
+            {
+                "Id": 6849240,
+                "UId": "7884a4f1-948c-460a-9cc7-47bdc031d841",
+                "KeyValue": None,
+                "KeyProperty": None,
+                "DisplayName": "Sygeplejerske (Sygepleje (V) [SYGEPLEJE (V)]) ID:(00001234) ;",
+            },
+        ],
+        # Addresses
+        "EMAIL": "arthas@egepost.dk",
+        "PHONE": "22334455",
+        "CELLPHONE": "55443322",
+        # IT Users
+        "OBJECTGUID": "36-C9-80-88-A5-68-8A-47-BC-2C-2A-36-2C-AF-4E-7B",
+        "C_ADUSERNAME": "LK1337",
     }
 
 
-def test_parse_user(silkeborg_omada_user: dict) -> None:
+def test_parse_user(egedal_omada_user: dict) -> None:
     """Test parsing of a user."""
-    omada_user = SilkeborgOmadaUser.parse_obj(silkeborg_omada_user)
+    omada_user = EgedalOmadaUser.parse_obj(egedal_omada_user)
     assert omada_user.is_manual is False
+    assert omada_user.ad_guid == UUID("c22cc1c7-45e8-8349-854f-daef0b32b878")
 
 
-def test_parse_manual_user(manual_silkeborg_omada_user: dict) -> None:
+def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:
     """Test parsing of a manual user."""
-    omada_user = ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)
+    omada_user = ManualEgedalOmadaUser.parse_obj(manual_egedal_omada_user)
     assert omada_user.is_manual is True
+    assert omada_user.employments[0].job_title == "Prince"
+    assert omada_user.employments[0].org_unit == "Lordaeron"
+    assert omada_user.employments[0].employment_number == "1337"
+    assert omada_user.employments[1].job_title == "Sygeplejerske"
+    assert omada_user.employments[1].org_unit == "Sygepleje (V)"
+    assert omada_user.employments[1].employment_number == "1234"
+
+
+@pytest.mark.parametrize(
+    "display_name,expected",
+    [
+        (
+            "Administrativ medarbejder (Ølstykke Bibliotek [ØLSTYKKE BIBLIOTEK]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Administrativ medarbejder",
+                "org_unit": "Ølstykke Bibliotek",
+            },
+        ),
+        (
+            "Afdelingsleder (Boesagerskolen, 6+9 årgang [BOESAGERSKOLEN, 6+9 ÅRGANG]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Afdelingsleder",
+                "org_unit": "Boesagerskolen, 6+9 årgang",
+            },
+        ),
+        (
+            "Bibliotekar (Smørum Bibliotek [SMØRUM BIBLIOTEK]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Bibliotekar",
+                "org_unit": "Smørum Bibliotek",
+            },
+        ),
+        (
+            "CAS - Robot (Regnskab [REGNSKAB]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "CAS - Robot",
+                "org_unit": "Regnskab",
+            },
+        ),
+        (
+            "Centerchef (By, kultur og fritid [BY, KULTUR OG FRITID]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Centerchef",
+                "org_unit": "By, kultur og fritid",
+            },
+        ),
+        (
+            "Eftervederlag (Byråd [BYRÅD]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Eftervederlag",
+                "org_unit": "Byråd",
+            },
+        ),
+        (
+            "Ergoterapeut (Dambo (V) [DAMBO (V)]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Ergoterapeut",
+                "org_unit": "Dambo (V)",
+            },
+        ),
+        (
+            "Ergoterapeut (Team Handicap §85 [TEAM HANDICAP §85]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Ergoterapeut",
+                "org_unit": "Team Handicap §85",
+            },
+        ),
+        (
+            "Ergoterapeut (Træning- & Hjælpemiddel [TRÆNING- & HJÆLPEMIDDEL]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Ergoterapeut",
+                "org_unit": "Træning- & Hjælpemiddel",
+            },
+        ),
+        (
+            "Klubassistent u/udd (Byggelegeplads Stengården [BYGGELEGEPLADS STENGÅRDEN]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Klubassistent u/udd",
+                "org_unit": "Byggelegeplads Stengården",
+            },
+        ),
+        (
+            "Lærer m/særlige kval. (Balsmoseskolen, 3-5 årgang [BALSMOSESKOLEN, 3-5 ÅRGANG]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Lærer m/særlige kval.",
+                "org_unit": "Balsmoseskolen, 3-5 årgang",
+            },
+        ),
+        (
+            "Mangler JobRole (Afdeling Børn (V) [AFDELING BØRN (V)]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Mangler JobRole",
+                "org_unit": "Afdeling Børn (V)",
+            },
+        ),
+        (
+            "Social- og sundhedsassistent (Afløsere (V) [AFLØSERE (V)]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Social- og sundhedsassistent",
+                "org_unit": "Afløsere (V)",
+            },
+        ),
+        (
+            "Uuddannet medarbejder (Etage 1 (V) [ETAGE 1 (V)]) ID:(1234) ;",
+            {
+                "employment_number": "1234",
+                "job_title": "Uuddannet medarbejder",
+                "org_unit": "Etage 1 (V)",
+            },
+        ),
+    ],
+)
+def test_parse_employment(display_name: str, expected: dict) -> None:
+    obj = {
+        "DisplayName": display_name,
+    }
+    employment = EgedalOmadaEmployment.parse_obj(obj)
+    assert employment.dict() == expected
