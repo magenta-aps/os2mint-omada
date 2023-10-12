@@ -8,9 +8,9 @@ from typing import cast
 from uuid import UUID
 
 import structlog
+from more_itertools import only
 from pydantic import parse_obj_as
 from raclients.modelclient.mo import ModelClient
-from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
@@ -31,7 +31,6 @@ class ComparableITUser(ComparableMixin, ITUser):
         omada_user: EgedalOmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
-        engagement_uuid: UUID,
         it_system_uuid: UUID,
     ) -> ComparableITUser | None:
         """Construct (comparable) MO IT user for a specific attribute on an Omada user.
@@ -40,7 +39,6 @@ class ComparableITUser(ComparableMixin, ITUser):
             omada_user: Omada user.
             omada_attr: Attribute on the Omada user to use as the IT user account name.
             employee_uuid: MO employee UUID.
-            engagement_uuid: MO engagement UUID.
             it_system_uuid: IT system of the IT user.
 
         Returns: Comparable MO IT user if the Omada attribute is set, otherwise None.
@@ -52,7 +50,6 @@ class ComparableITUser(ComparableMixin, ITUser):
             user_key=str(omada_value),
             itsystem=ITSystemRef(uuid=it_system_uuid),
             person=PersonRef(uuid=employee_uuid),
-            engagement=EngagementRef(uuid=engagement_uuid),
             validity=omada_user.validity,
         )
 
@@ -73,10 +70,22 @@ async def sync_it_users(
     """
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = only({e.cpr_no for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronise employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
+
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_guid": "omada_ad_guid",
-        "login": "omada_login",
+        "ad_login": "omada_login",
     }
 
     # Get MO classes configuration
@@ -88,12 +97,10 @@ async def sync_it_users(
         uuid=employee_uuid,
         it_systems=omada_it_systems,
     )
-    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many IT users
-    engagements = {e.user_key: e for e in mo_engagements}
-    raw_omada_users = await omada_api.get_users_by("C_TJENESTENR", engagements.keys())
+    # Get current user data from Omada. Note that we are fetching ALL Omada users for
+    # the CPR-number to avoid deleting too many IT users
+    raw_omada_users = await omada_api.get_users_by("C_EMPLOYEEID", [cpr_number])
     omada_users = parse_obj_as(list[EgedalOmadaUser], raw_omada_users)
 
     # Existing IT users in MO
@@ -108,7 +115,6 @@ async def sync_it_users(
             omada_user=omada_user,
             omada_attr=omada_attr,
             employee_uuid=employee_uuid,
-            engagement_uuid=engagements[omada_user.service_number].uuid,
             it_system_uuid=it_systems[mo_it_system_user_key],
         )
         for omada_user in omada_users

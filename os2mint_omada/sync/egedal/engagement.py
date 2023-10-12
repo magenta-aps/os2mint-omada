@@ -19,6 +19,7 @@ from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
 from ramqp.depends import handle_exclusively_decorator
 
+from .models import EgedalOmadaEmployment
 from .models import EgedalOmadaUser
 from .models import ManualEgedalOmadaUser
 from os2mint_omada.mo import MO
@@ -34,44 +35,39 @@ class ComparableEngagement(ComparableMixin, Engagement):
     def from_omada(
         cls,
         omada_user: ManualEgedalOmadaUser,
+        omada_employment: EgedalOmadaEmployment,
         person_uuid: UUID,
         org_unit_uuid: UUID,
         org_unit_validity: Validity,
         job_functions: dict[str, UUID],
-        engagement_type_uuid_for_visibility: dict[bool, UUID],
+        engagement_type_uuid: UUID,
         primary_type_uuid: UUID,
     ) -> ComparableEngagement:
         """Construct (comparable) MO engagement from an omada user.
 
         Args:
             omada_user: Omada user.
+            omada_employment: Omada user's employment.
             person_uuid: Employee of the engagement.
             org_unit_uuid: Org unit of the engagement.
             org_unit_validity: Validity of the org unit of the engagement. This is
              needed because the Omada user's validity sometimes lies outside the
              interval of the org unit, which is not accepted by MO.
             job_functions: Map of all engagement job functions in MO.
-            engagement_type_uuid_for_visibility: Engagement type for visible/hidden
-             engagements.
+            engagement_type_uuid: Engagement type for the engagement.
             primary_type_uuid: Primary class of the engagement.
 
         Returns: Comparable MO engagement.
         """
         try:
-            job_function_uuid = job_functions[
-                omada_user.job_title  # type: ignore[index]
-            ]
+            job_function_uuid = job_functions[omada_employment.job_title]
         except KeyError:
             # Fallback job function for engagements if the job title from Omada does
             # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
 
-        engagement_type_uuid = engagement_type_uuid_for_visibility[
-            omada_user.is_visible
-        ]
-
         return cls(  # type: ignore[call-arg]
-            user_key=omada_user.service_number,
+            user_key=omada_employment.employment_number,
             person=PersonRef(uuid=person_uuid),
             org_unit=OrgUnitRef(uuid=org_unit_uuid),
             job_function=JobFunction(uuid=job_function_uuid),
@@ -112,7 +108,7 @@ async def sync_engagements(
     mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
     # Get current user data from Omada
-    raw_omada_users = await omada_api.get_users_by("C_CPRNR", [cpr_number])
+    raw_omada_users = await omada_api.get_users_by("C_EMPLOYEEID", [cpr_number])
     omada_users = parse_obj_as(
         list[ManualEgedalOmadaUser | EgedalOmadaUser], raw_omada_users
     )
@@ -127,20 +123,14 @@ async def sync_engagements(
     primary_types = await mo.get_classes("primary_type")
     primary_type_uuid = primary_types["primary"]
 
-    # Maps from Omada visibility (boolean) to engagement type (class) user key in MO
-    # for manual users. Only these engagements types are touched by the integration.
+    # Engagement type for engagements created for omada users
     engagement_types = await mo.get_classes("engagement_type")
-    omada_engagement_type_for_visibility = {
-        True: engagement_types["omada_manually_created"],
-        False: engagement_types["omada_manually_created_hidden"],
-    }
+    engagement_type_uuid = engagement_types["omada_manually_created"]
 
     # Only process engagements we know Omada is authoritative for (created by us)
     # to avoid deleting those that have nothing to do with Omada.
     mo_omada_engagements = [
-        e
-        for e in mo_engagements
-        if e.engagement_type.uuid in omada_engagement_type_for_visibility.values()
+        e for e in mo_engagements if e.engagement_type.uuid == engagement_type_uuid
     ]
 
     # Existing engagements in MO
@@ -152,35 +142,32 @@ async def sync_engagements(
     # Desired engagements from Omada
     async def build_comparable_engagement(
         omada_user: ManualEgedalOmadaUser,
+        omada_employment: EgedalOmadaEmployment,
     ) -> ComparableEngagement:
-        # By default, engagements for manual Omada users are linked to the org unit
-        # which has an IT system with user key equal to the 'org_unit' field on the
-        # user.
-        try:
-            org_unit_uuid = await mo.get_org_unit_with_it_system_user_key(
-                str(omada_user.org_unit)
-            )
-        except KeyError:
-            # Unfortunately, some org units are imported into MO with the UUID from the
-            # system we are integrating with, so as a fallback, we check for an org unit
-            # with the UUID directly. The KeyError of this lookup isn't caught.
-            org_unit_uuid = await mo.get_org_unit_with_uuid(omada_user.org_unit)
+        # Engagements for Omada users are linked to the org unit through the org unit's
+        # user_key.
+        org_unit_uuid = await mo.get_org_unit_with_user_key(omada_employment.org_unit)
 
         # The org unit's validity is needed to ensure the engagement's validity
         # does not lie outside this interval.
         org_unit_validity = await mo.get_org_unit_validity(org_unit_uuid)
         return ComparableEngagement.from_omada(
             omada_user=omada_user,
+            omada_employment=omada_employment,
             person_uuid=employee_uuid,
             org_unit_uuid=org_unit_uuid,
             org_unit_validity=org_unit_validity,
             job_functions=job_functions,
-            engagement_type_uuid_for_visibility=omada_engagement_type_for_visibility,
+            engagement_type_uuid=engagement_type_uuid,
             primary_type_uuid=primary_type_uuid,
         )
 
     desired_tuples = await asyncio.gather(
-        *(build_comparable_engagement(omada_user) for omada_user in manual_omada_users)
+        *(
+            build_comparable_engagement(omada_user, omada_employment)
+            for omada_user in manual_omada_users
+            for omada_employment in omada_user.employments
+        )
     )
     desired: set[ComparableEngagement] = set(desired_tuples)
 
