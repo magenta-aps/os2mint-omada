@@ -20,7 +20,7 @@ from tests.integration.util import retry
 
 @pytest.fixture(autouse=True)
 def set_customer(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setenv("CUSTOMER", "frederikshavn")
+    monkeypatch.setenv("CUSTOMER", "egedal")
 
 
 @pytest.fixture
@@ -41,13 +41,13 @@ async def org_unit(mo_graphql_session: AsyncClientSession) -> str:
     org_unit_type_uuid = one(result["classes"]["objects"])["uuid"]
 
     # Create org unit
-    user_key = "1012415"
+    user_key = "Egedal Kommune"
     query = gql(
         """
         mutation CreateOrgUnit($user_key: String!, $org_unit_type: UUID!) {
           org_unit_create(
             input: {
-              name: "Frederikshavn Kommune",
+              name: "Egedal Kommune",
               user_key: $user_key,
               org_unit_type: $org_unit_type,
               validity: {from: "2010-02-03"},
@@ -70,14 +70,14 @@ async def org_unit(mo_graphql_session: AsyncClientSession) -> str:
 
 
 @pytest.mark.integration_test
-async def test_frederikshavn(
+async def test_egedal_manual(
     omada_mock: Callable[[list], None],
     get_test_client: Callable[[], TestClient],
     mo_graphql_session: AsyncClientSession,
     org_unit: str,
 ) -> None:
     # Precondition: The person does not already exist
-    cpr_number = "0706994939"
+    cpr_number = "0902104607"
     result = await mo_graphql_session.execute(
         ASSERT_QUERY,
         variable_values=dict(cpr_number=cpr_number),
@@ -87,28 +87,37 @@ async def test_frederikshavn(
     # CREATE
     omada_user = {
         # Omada
-        "Id": "1277266",
-        "UId": "347a7d7a-49d6-4e90-93c8-88f3a0a40548",
-        "VALIDFROM": "2021-01-31T08:44:00+01:00",
-        "VALIDTO": "9999-12-31T00:00:00+01:00",
+        "Id": 1001307,
+        "UId": "93f93362-3cb4-450a-a48a-ef975675b232",
+        "VALIDFROM": "2010-02-09T00:00:00+01:00",
+        "VALIDTO": "2010-03-26T00:00:00+01:00",
         "IDENTITYCATEGORY": {
-            "Id": "1000245",
-            "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
+            "Id": 561,
+            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
+            "Value": "Contractor",
         },
         # Employee
-        "FIRSTNAME": "Villads",
-        "LASTNAME": "Vikar",
-        "C_CPRNUMBER": "070699-4939",
-        # Engagement
-        "C_MEDARBEJDERNR_ODATA": "1337007",
-        "C_JOBTITLE_ODATA": "Vikar",
-        "C_OUID_ODATA": "01012415",
-        # IT Users
-        "ADLOGON": "VIVI04",
+        "C_EMPLOYEEID": cpr_number,
+        "C_OIS_FIRSTNAME": "The Lich",
+        "C_OIS_LASTNAME": "King",
+        # Employee (manual)
+        "FIRSTNAME": "Arthas",
+        "LASTNAME": "Menethil",
+        # Engagements (manual)
+        "EMPLOYMENTS": [
+            {
+                "Id": 1251824,
+                "UId": "0e39ce2d-39a5-42b0-befb-f8380f9c789c",
+                "KeyValue": None,
+                "KeyProperty": None,
+                "DisplayName": f"Prince ({org_unit} [LORDAERON]) ID:(00001337) ;",
+            },
+        ],
         # Addresses
-        "EMAIL": "VIVI04@frederikshavn.dk",
-        "C_TELEPHONENUMBER": "+45 12 31 32 12",
-        "CELLPHONE": "12345678",
+        "EMAIL": "arthas@egepost.dk",
+        "PHONE": "22334455",
+        # IT Users
+        "OBJECTGUID": "36-C9-80-88-A5-68-8A-47-BC-2C-2A-36-2C-AF-4E-7B",
     }
     omada_mock([omada_user])
 
@@ -127,26 +136,28 @@ async def test_frederikshavn(
         employee_states = one(result["employees"]["objects"])
         employee = one(employee_states["objects"])
         assert employee["cpr_number"] == cpr_number
-        assert employee["given_name"] == "Villads"
-        assert employee["surname"] == "Vikar"
+        assert employee["given_name"] == "Arthas"
+        assert employee["surname"] == "Menethil"
+        assert employee["nickname_given_name"] == "The Lich"
+        assert employee["nickname_surname"] == "King"
         assert employee["validity"] == {
-            "from": "1999-06-07T00:00:00+02:00",
+            "from": "2010-02-09T00:00:00+01:00",
             "to": None,
         }
 
         # Engagement
         assert employee["engagements"] == [
             {
-                "user_key": "1337007",
-                "org_unit": [{"user_key": "1012415"}],
-                "job_function": {"user_key": "Vikar"},
+                "user_key": "1337",
+                "org_unit": [{"user_key": "Egedal Kommune"}],
+                "job_function": {"user_key": "not_applicable"},
                 "engagement_type": {"user_key": "omada_manually_created"},
                 "primary": {"user_key": "primary"},
                 "validity": {
-                    "from": "2021-01-31T00:00:00+01:00",
-                    "to": None,
+                    "from": "2010-02-09T00:00:00+01:00",
+                    "to": "2010-03-26T00:00:00+01:00",
                 },
-            }
+            },
         ]
 
         # Addresses
@@ -154,35 +165,23 @@ async def test_frederikshavn(
             employee["addresses"],
             [
                 {
-                    "value": "+4512313212",
-                    "address_type": {"user_key": "OmadaPhoneEmployee"},
-                    "engagement": [{"user_key": "1337007"}],
-                    "visibility": {"user_key": "Public"},
-                    "validity": {
-                        "from": "2021-01-31T00:00:00+01:00",
-                        "to": None,
-                    },
-                },
-                {
-                    "value": "12345678",
-                    "address_type": {"user_key": "OmadaMobilePhoneEmployee"},
-                    "engagement": [{"user_key": "1337007"}],
-                    "visibility": {"user_key": "Public"},
-                    "validity": {
-                        "from": "2021-01-31T00:00:00+01:00",
-                        "to": None,
-                    },
-                },
-                {
-                    "value": "VIVI04@frederikshavn.dk",
+                    "value": "arthas@egepost.dk",
                     "address_type": {"user_key": "OmadaEmailEmployee"},
-                    "engagement": [
-                        {"user_key": "1337007"},
-                    ],
+                    "engagement": None,
                     "visibility": {"user_key": "Public"},
                     "validity": {
-                        "from": "2021-01-31T00:00:00+01:00",
-                        "to": None,
+                        "from": "2010-02-09T00:00:00+01:00",
+                        "to": "2010-03-26T00:00:00+01:00",
+                    },
+                },
+                {
+                    "value": "22334455",
+                    "address_type": {"user_key": "OmadaPhoneEmployee"},
+                    "engagement": None,
+                    "visibility": {"user_key": "Public"},
+                    "validity": {
+                        "from": "2010-02-09T00:00:00+01:00",
+                        "to": "2010-03-26T00:00:00+01:00",
                     },
                 },
             ],
@@ -191,12 +190,12 @@ async def test_frederikshavn(
         # IT Users
         assert employee["itusers"] == [
             {
-                "user_key": "VIVI04",
-                "itsystem": {"user_key": "omada_ad_login"},
-                "engagement": [{"user_key": "1337007"}],
+                "user_key": "36c98088-a568-8a47-bc2c-2a362caf4e7b",
+                "itsystem": {"user_key": "omada_ad_guid"},
+                "engagement": None,
                 "validity": {
-                    "from": "2021-01-31T00:00:00+01:00",
-                    "to": None,
+                    "from": "2010-02-09T00:00:00+01:00",
+                    "to": "2010-03-26T00:00:00+01:00",
                 },
             }
         ]
@@ -207,12 +206,28 @@ async def test_frederikshavn(
     # EDIT
     updated_omada_user = {
         **omada_user,
-        "FIRSTNAME": "Leonardo",
-        "C_MEDARBEJDERNR_ODATA": "1337420",
-        "C_JOBTITLE_ODATA": "Something That Doesn't Exist in MO",
-        "ADLOGON": "LEO42",
-        "EMAIL": "LEO42@frederikshavn.dk",
-        "C_TELEPHONENUMBER": "",  # deleted
+        # Employee
+        "C_OIS_FIRSTNAME": "Mr M.",
+        # Employee (manual)
+        "FIRSTNAME": "The King",
+        # Engagements (manual)
+        "EMPLOYMENTS": omada_user["EMPLOYMENTS"]
+        + [  # type: ignore[operator]
+            {
+                "Id": 6849240,
+                "UId": "7884a4f1-948c-460a-9cc7-47bdc031d841",
+                "KeyValue": None,
+                "KeyProperty": None,
+                "DisplayName": f"Sygeplejerske ({org_unit} [SYGEPLEJE (V)]) ID:(00001234) ;",
+            },
+        ],
+        # Addresses
+        "EMAIL": "thelichking@egepost.dk",
+        "PHONE": None,  # deleted
+        "CELLPHONE": "55443322",
+        # IT Users
+        "OBJECTGUID": "11-22-33-44-55-66-77-88-99-00-AA-BB-CC-DD-EE-FF",
+        "C_ADUSERNAME": "LK1337",
     }
     omada_mock([updated_omada_user])
 
@@ -226,23 +241,48 @@ async def test_frederikshavn(
         # Employee
         employee_states = one(result["employees"]["objects"])
         employee = one(employee_states["objects"])
-        assert employee["given_name"] == "Leonardo"
+        assert employee["given_name"] == "The King"
+        assert employee["nickname_given_name"] == "Mr M."
 
         # Engagement
-        engagement = one(employee["engagements"])
-        assert engagement["user_key"] == "1337420"
-        assert engagement["job_function"]["user_key"] == "not_applicable"
-        assert engagement["engagement_type"]["user_key"] == "omada_manually_created"
+        test_case.assertCountEqual(
+            employee["engagements"],
+            [
+                {
+                    "user_key": "1337",
+                    "org_unit": [{"user_key": "Egedal Kommune"}],
+                    "job_function": {"user_key": "not_applicable"},
+                    "engagement_type": {"user_key": "omada_manually_created"},
+                    "primary": {"user_key": "primary"},
+                    "validity": {
+                        "from": "2010-02-09T00:00:00+01:00",
+                        "to": "2010-03-26T00:00:00+01:00",
+                    },
+                },
+                {
+                    "user_key": "1234",
+                    "org_unit": [{"user_key": "Egedal Kommune"}],
+                    "job_function": {"user_key": "Sygeplejerske"},
+                    "engagement_type": {"user_key": "omada_manually_created"},
+                    "primary": {"user_key": "primary"},
+                    "validity": {
+                        "from": "2010-02-09T00:00:00+01:00",
+                        "to": "2010-03-26T00:00:00+01:00",
+                    },
+                },
+            ],
+        )
 
         # Addresses
         assert {a["value"] for a in employee["addresses"]} == {
-            "LEO42@frederikshavn.dk",
-            "12345678",
+            "thelichking@egepost.dk",
+            "55443322",
         }
 
         # IT Users
         assert {u["user_key"] for u in employee["itusers"]} == {
-            "LEO42",
+            "11223344-5566-7788-9900-aabbccddeeff",
+            "LK1337",
         }
 
     with get_test_client():

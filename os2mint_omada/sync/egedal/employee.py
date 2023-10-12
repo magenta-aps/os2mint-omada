@@ -9,7 +9,7 @@ from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Employee
 from ramqp.depends import handle_exclusively_decorator
 
-from .models import ManualSilkeborgOmadaUser
+from .models import ManualEgedalOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
@@ -19,7 +19,7 @@ logger = structlog.get_logger(__name__)
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
     @classmethod
-    def from_omada(cls, omada_user: ManualSilkeborgOmadaUser) -> ComparableEmployee:
+    def from_omada(cls, omada_user: ManualEgedalOmadaUser) -> ComparableEmployee:
         """Construct (comparable) MO employee from a omada user.
 
         Args:
@@ -31,12 +31,14 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
             givenname=omada_user.first_name,
             surname=omada_user.last_name,
             cpr_no=omada_user.cpr_number,
+            nickname_givenname=omada_user.nickname_first_name,
+            nickname_surname=omada_user.nickname_last_name,
         )
 
 
 @handle_exclusively_decorator(key=lambda omada_user, *_, **__: omada_user.cpr_number)
-async def sync_manual_employee(
-    omada_user: ManualSilkeborgOmadaUser,
+async def sync_employee(
+    omada_user: ManualEgedalOmadaUser,
     mo: MO,
     model_client: ModelClient,
 ) -> None:
@@ -51,10 +53,6 @@ async def sync_manual_employee(
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
-
-    if employee_uuid is not None:
-        logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
-        return
 
     employee_states: set[Employee] = set()
     if employee_uuid is not None:

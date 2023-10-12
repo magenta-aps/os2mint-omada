@@ -157,6 +157,10 @@ async def test_silkeborg_manual(
     }
     omada_mock([omada_user])
 
+    # TODO: Hard to work with dicts and sets. Will probably get better with codegen
+    test_case = unittest.TestCase()
+    test_case.maxDiff = None
+
     @retry()
     async def verify() -> None:
         result = await mo_graphql_session.execute(
@@ -191,9 +195,6 @@ async def test_silkeborg_manual(
         ]
 
         # Addresses
-        # TODO: Hard to work with dicts and sets. Will probably get better with codegen
-        test_case = unittest.TestCase()
-        test_case.maxDiff = None
         test_case.assertCountEqual(
             employee["addresses"],
             [

@@ -31,7 +31,7 @@ async def sync_omada_employee(
     model_client: depends.ModelClient,
     _: RateLimit,
 ) -> None:
-    """Synchronise a Omada user to a MO employee.
+    """Synchronise an Omada user to a MO employee.
 
     Args:
         body: AMQP message body.
@@ -64,7 +64,7 @@ async def sync_omada_engagements(
     model_client: depends.ModelClient,
     _: RateLimit,
 ) -> None:
-    """Synchronise a Omada user to a MO engagements.
+    """Synchronise an Omada user to a MO engagements.
 
     Args:
         body: AMQP message body.

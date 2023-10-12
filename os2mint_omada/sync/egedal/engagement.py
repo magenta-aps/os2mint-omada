@@ -19,7 +19,9 @@ from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
 from ramqp.depends import handle_exclusively_decorator
 
-from .models import FrederikshavnOmadaUser
+from .models import EgedalOmadaEmployment
+from .models import EgedalOmadaUser
+from .models import ManualEgedalOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
@@ -32,7 +34,8 @@ class ComparableEngagement(ComparableMixin, Engagement):
     @classmethod
     def from_omada(
         cls,
-        omada_user: FrederikshavnOmadaUser,
+        omada_user: ManualEgedalOmadaUser,
+        omada_employment: EgedalOmadaEmployment,
         person_uuid: UUID,
         org_unit_uuid: UUID,
         org_unit_validity: Validity,
@@ -44,6 +47,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
 
         Args:
             omada_user: Omada user.
+            omada_employment: Omada user's employment.
             person_uuid: Employee of the engagement.
             org_unit_uuid: Org unit of the engagement.
             org_unit_validity: Validity of the org unit of the engagement. This is
@@ -56,14 +60,14 @@ class ComparableEngagement(ComparableMixin, Engagement):
         Returns: Comparable MO engagement.
         """
         try:
-            job_function_uuid = job_functions[omada_user.job_title]
+            job_function_uuid = job_functions[omada_employment.job_title]
         except KeyError:
             # Fallback job function for engagements if the job title from Omada does
             # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
 
         return cls(  # type: ignore[call-arg]
-            user_key=omada_user.employee_number,
+            user_key=omada_employment.employment_number,
             person=PersonRef(uuid=person_uuid),
             org_unit=OrgUnitRef(uuid=org_unit_uuid),
             job_function=JobFunction(uuid=job_function_uuid),
@@ -104,14 +108,13 @@ async def sync_engagements(
     mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
     # Get current user data from Omada
-    # Frederikshavn stores CPR numbers in Omada using the 'xxxxxx-xxxx' format, whereas
-    # MO stores it as 'xxxxxxxxxx'. We search both variations to be sure.
-    assert len(cpr_number) == 10
-    cpr_number_with_dash = f"{cpr_number[:6]}-{cpr_number[6:]}"
-    raw_omada_users = await omada_api.get_users_by(
-        "C_CPRNUMBER", [cpr_number, cpr_number_with_dash]
+    raw_omada_users = await omada_api.get_users_by("C_EMPLOYEEID", [cpr_number])
+    omada_users = parse_obj_as(
+        list[ManualEgedalOmadaUser | EgedalOmadaUser], raw_omada_users
     )
-    omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
+    manual_omada_users = [
+        u for u in omada_users if isinstance(u, ManualEgedalOmadaUser)
+    ]
 
     # Get MO classes configuration
     job_functions = await mo.get_classes("engagement_job_function")
@@ -138,17 +141,19 @@ async def sync_engagements(
 
     # Desired engagements from Omada
     async def build_comparable_engagement(
-        omada_user: FrederikshavnOmadaUser,
+        omada_user: ManualEgedalOmadaUser,
+        omada_employment: EgedalOmadaEmployment,
     ) -> ComparableEngagement:
         # Engagements for Omada users are linked to the org unit through the org unit's
         # user_key.
-        org_unit_uuid = await mo.get_org_unit_with_user_key(omada_user.org_unit)
+        org_unit_uuid = await mo.get_org_unit_with_user_key(omada_employment.org_unit)
 
         # The org unit's validity is needed to ensure the engagement's validity
         # does not lie outside this interval.
         org_unit_validity = await mo.get_org_unit_validity(org_unit_uuid)
         return ComparableEngagement.from_omada(
             omada_user=omada_user,
+            omada_employment=omada_employment,
             person_uuid=employee_uuid,
             org_unit_uuid=org_unit_uuid,
             org_unit_validity=org_unit_validity,
@@ -158,7 +163,11 @@ async def sync_engagements(
         )
 
     desired_tuples = await asyncio.gather(
-        *(build_comparable_engagement(omada_user) for omada_user in omada_users)
+        *(
+            build_comparable_engagement(omada_user, omada_employment)
+            for omada_user in manual_omada_users
+            for omada_employment in omada_user.employments
+        )
     )
     desired: set[ComparableEngagement] = set(desired_tuples)
 
