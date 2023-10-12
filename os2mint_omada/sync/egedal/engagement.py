@@ -41,10 +41,10 @@ class ComparableEngagement(ComparableMixin, Engagement):
         engagement_type_uuid_for_visibility: dict[bool, UUID],
         primary_type_uuid: UUID,
     ) -> ComparableEngagement:
-        """Construct (comparable) MO engagement from a manual omada user.
+        """Construct (comparable) MO engagement from an omada user.
 
         Args:
-            omada_user: Manual omada user.
+            omada_user: Omada user.
             person_uuid: Employee of the engagement.
             org_unit_uuid: Org unit of the engagement.
             org_unit_validity: Validity of the org unit of the engagement. This is
@@ -62,8 +62,8 @@ class ComparableEngagement(ComparableMixin, Engagement):
                 omada_user.job_title  # type: ignore[index]
             ]
         except KeyError:
-            # Fallback job function for engagements created for manual users if the
-            # job title from Omada does not exist in MO.
+            # Fallback job function for engagements if the job title from Omada does
+            # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
 
         engagement_type_uuid = engagement_type_uuid_for_visibility[
@@ -95,7 +95,7 @@ async def sync_engagements(
 
     Returns: None.
     """
-    logger.info("Synchronising manual engagements", employee_uuid=employee_uuid)
+    logger.info("Synchronising engagements", employee_uuid=employee_uuid)
 
     # Get current user data from MO
     employee_states = await mo.get_employee_states(employee_uuid)
@@ -123,13 +123,13 @@ async def sync_engagements(
     # Get MO classes configuration
     job_functions = await mo.get_classes("engagement_job_function")
 
-    # Primary class for engagements created for manual users
+    # Primary class for engagements created for omada users
     primary_types = await mo.get_classes("primary_type")
     primary_type_uuid = primary_types["primary"]
 
-    engagement_types = await mo.get_classes("engagement_type")
     # Maps from Omada visibility (boolean) to engagement type (class) user key in MO
     # for manual users. Only these engagements types are touched by the integration.
+    engagement_types = await mo.get_classes("engagement_type")
     omada_engagement_type_for_visibility = {
         True: engagement_types["omada_manually_created"],
         False: engagement_types["omada_manually_created_hidden"],

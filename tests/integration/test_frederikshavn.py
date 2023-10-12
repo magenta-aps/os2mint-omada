@@ -112,6 +112,10 @@ async def test_frederikshavn(
     }
     omada_mock([omada_user])
 
+    # TODO: Hard to work with dicts and sets. Will probably get better with codegen
+    test_case = unittest.TestCase()
+    test_case.maxDiff = None
+
     @retry()
     async def verify() -> None:
         result = await mo_graphql_session.execute(
@@ -146,9 +150,6 @@ async def test_frederikshavn(
         ]
 
         # Addresses
-        # TODO: Hard to work with dicts and sets. Will probably get better with codegen
-        test_case = unittest.TestCase()
-        test_case.maxDiff = None
         test_case.assertCountEqual(
             employee["addresses"],
             [
@@ -231,6 +232,7 @@ async def test_frederikshavn(
         engagement = one(employee["engagements"])
         assert engagement["user_key"] == "1337420"
         assert engagement["job_function"]["user_key"] == "not_applicable"
+        assert engagement["engagement_type"]["user_key"] == "omada_manually_created"
 
         # Addresses
         assert {a["value"] for a in employee["addresses"]} == {
@@ -239,8 +241,9 @@ async def test_frederikshavn(
         }
 
         # IT Users
-        it_user = one(employee["itusers"])
-        assert it_user["user_key"] == "LEO42"
+        assert {u["user_key"] for u in employee["itusers"]} == {
+            "LEO42",
+        }
 
     with get_test_client():
         await verify()

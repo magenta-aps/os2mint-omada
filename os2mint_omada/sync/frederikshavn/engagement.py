@@ -40,7 +40,7 @@ class ComparableEngagement(ComparableMixin, Engagement):
         engagement_type_uuid: UUID,
         primary_type_uuid: UUID,
     ) -> ComparableEngagement:
-        """Construct (comparable) MO engagement from a omada user.
+        """Construct (comparable) MO engagement from an omada user.
 
         Args:
             omada_user: Omada user.
@@ -58,8 +58,8 @@ class ComparableEngagement(ComparableMixin, Engagement):
         try:
             job_function_uuid = job_functions[omada_user.job_title]
         except KeyError:
-            # Fallback job function for engagements created for omada users if the
-            # job title from Omada does not exist in MO.
+            # Fallback job function for engagements if the job title from Omada does
+            # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
 
         return cls(  # type: ignore[call-arg]

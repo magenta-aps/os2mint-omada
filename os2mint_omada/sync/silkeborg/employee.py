@@ -20,10 +20,10 @@ logger = structlog.get_logger(__name__)
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
     @classmethod
     def from_omada(cls, omada_user: ManualSilkeborgOmadaUser) -> ComparableEmployee:
-        """Construct (comparable) MO employee from a manual omada user.
+        """Construct (comparable) MO employee from a omada user.
 
         Args:
-            omada_user: Manual omada user.
+            omada_user: Omada user.
 
         Returns: Comparable MO employee.
         """
@@ -43,11 +43,11 @@ async def sync_manual_employee(
     """Synchronise an Omada user to MO.
 
     Args:
-        omada_user: (Manual) Omada user to synchronise.
+        omada_user: Omada user to synchronise.
 
     Returns: None.
     """
-    logger.info("Synchronising manual employee", omada_user=omada_user)
+    logger.info("Synchronising employee", omada_user=omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
