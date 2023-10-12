@@ -156,6 +156,8 @@ ASSERT_QUERY = gql(
       cpr_number
       given_name
       surname
+      nickname_given_name
+      nickname_surname
       validity {
         from
         to

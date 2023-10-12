@@ -20,10 +20,10 @@ logger = structlog.get_logger(__name__)
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
     @classmethod
     def from_omada(cls, omada_user: ManualEgedalOmadaUser) -> ComparableEmployee:
-        """Construct (comparable) MO employee from a manual omada user.
+        """Construct (comparable) MO employee from a omada user.
 
         Args:
-            omada_user: Manual omada user.
+            omada_user: Omada user.
 
         Returns: Comparable MO employee.
         """
@@ -31,11 +31,13 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
             givenname=omada_user.first_name,
             surname=omada_user.last_name,
             cpr_no=omada_user.cpr_number,
+            nickname_givenname=omada_user.nickname_first_name,
+            nickname_surname=omada_user.nickname_last_name,
         )
 
 
 @handle_exclusively_decorator(key=lambda omada_user, *_, **__: omada_user.cpr_number)
-async def sync_manual_employee(
+async def sync_employee(
     omada_user: ManualEgedalOmadaUser,
     mo: MO,
     model_client: ModelClient,
@@ -43,18 +45,14 @@ async def sync_manual_employee(
     """Synchronise an Omada user to MO.
 
     Args:
-        omada_user: (Manual) Omada user to synchronise.
+        omada_user: Omada user to synchronise.
 
     Returns: None.
     """
-    logger.info("Synchronising manual employee", omada_user=omada_user)
+    logger.info("Synchronising employee", omada_user=omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
-
-    if employee_uuid is not None:
-        logger.info("Not modifying existing employee", employee_uuid=employee_uuid)
-        return
 
     employee_states: set[Employee] = set()
     if employee_uuid is not None:

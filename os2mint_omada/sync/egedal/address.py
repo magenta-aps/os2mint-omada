@@ -8,10 +8,10 @@ from typing import cast
 from uuid import UUID
 
 import structlog
+from more_itertools import only
 from pydantic import parse_obj_as
 from raclients.modelclient.mo import ModelClient
 from ramodels.mo._shared import AddressType
-from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
@@ -33,7 +33,6 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
         omada_user: EgedalOmadaUser,
         omada_attr: str,
         employee_uuid: UUID,
-        engagement_uuid: UUID,
         address_type_uuid: UUID,
         visibility_uuid: UUID,
     ) -> ComparableAddress | None:
@@ -43,7 +42,6 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
             omada_user: Omada user.
             omada_attr: Attribute on the Omada user to use for the address value.
             employee_uuid: MO employee UUID.
-            engagement_uuid: MO engagement UUID.
             address_type_uuid: Type class of the address.
             visibility_uuid: Visibility class of the address.
 
@@ -56,7 +54,6 @@ class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
             value=omada_value,
             address_type=AddressType(uuid=address_type_uuid),
             person=PersonRef(uuid=employee_uuid),
-            engagement=EngagementRef(uuid=engagement_uuid),
             visibility=Visibility(uuid=visibility_uuid),
             validity=omada_user.validity,
         )
@@ -78,12 +75,23 @@ async def sync_addresses(
     """
     logger.info("Synchronising addresses", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = only({e.cpr_no for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronise employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
+
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
-        "email": "EmailEmployee",
-        "phone_direct": "PhoneEmployee",
-        "phone_cell": "MobilePhoneEmployee",
-        "phone_institution": "InstitutionPhoneEmployee",
+        "email": "OmadaEmailEmployee",
+        "phone": "OmadaPhoneEmployee",
+        "cellphone": "OmadaMobilePhoneEmployee",
     }
 
     # Get MO classes configuration
@@ -95,16 +103,14 @@ async def sync_addresses(
     visibility_uuid = visibility_classes["Public"]
 
     # Get current user data from MO
-    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
     mo_addresses = await mo.get_employee_addresses(
         uuid=employee_uuid,
         address_types=omada_address_types,
     )
 
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many addresses
-    engagements = {e.user_key: e for e in mo_engagements}
-    raw_omada_users = await omada_api.get_users_by("C_TJENESTENR", engagements.keys())
+    # Get current user data from Omada. Note that we are fetching ALL Omada users for
+    # the CPR-number to avoid deleting too many addresses
+    raw_omada_users = await omada_api.get_users_by("C_EMPLOYEEID", [cpr_number])
     omada_users = parse_obj_as(list[EgedalOmadaUser], raw_omada_users)
 
     # Existing addresses in MO
@@ -119,7 +125,6 @@ async def sync_addresses(
             omada_user=omada_user,
             omada_attr=omada_attr,
             employee_uuid=employee_uuid,
-            engagement_uuid=engagements[omada_user.service_number].uuid,
             address_type_uuid=address_types[mo_address_user_key],
             visibility_uuid=visibility_uuid,
         )
