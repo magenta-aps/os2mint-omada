@@ -437,14 +437,14 @@ all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)"
 
 [[package]]
 name = "fastramqpi"
-version = "1.5.5"
+version = "2.0.0"
 description = "Rammearkitektur AMQP framework (FastAPI + RAMQP)"
 category = "main"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "fastramqpi-1.5.5-py3-none-any.whl", hash = "sha256:6c5a69555c9c25894dd07cafcdcc06b2ba5cedbae1de8419710b925c2484e2ba"},
-    {file = "fastramqpi-1.5.5.tar.gz", hash = "sha256:1987568e0c754683f8ed7d19d08e5b94f338b9dfd2d686b5a3a250a408317dfa"},
+    {file = "fastramqpi-2.0.0-py3-none-any.whl", hash = "sha256:dfdcf62d19eff6ef4fc1c9655c6b34dd9521715a78a03bd50fba7166cb540971"},
+    {file = "fastramqpi-2.0.0.tar.gz", hash = "sha256:0477d039b53a514a3e9c98ae3c255a9f50f015a4f34cc5cf7cb63d356804aa29"},
 ]
 
 [package.dependencies]
@@ -1985,4 +1985,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "b1c3a660fce6e970b95c589ba6f5cb830ff34e896008e62f0560732eccda46e1"
+content-hash = "f5467022a4edc35d5dd53754c05960ea4386d035fa609482c1e8ebcf1b55acc5"

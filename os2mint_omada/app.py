@@ -66,7 +66,7 @@ def create_app(**kwargs: Any) -> FastAPI:
     # MO API
     @asynccontextmanager
     async def mo_api() -> AsyncGenerator[None, None]:
-        mo = MO(graphql_session=context["graphql_session"])
+        mo = MO(graphql_session=context["legacy_graphql_session"])
         fastramqpi.add_context(mo=mo)
         yield
 
