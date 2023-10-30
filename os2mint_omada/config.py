@@ -3,10 +3,11 @@
 from pathlib import Path
 from typing import Literal
 
-from fastramqpi.config import Settings as FastRAMQPISettings
+from fastramqpi.config import Settings as _FastRAMQPISettings
 from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import BaseSettings
+from pydantic import PositiveInt
 from pydantic import validator
 from ramqp.config import AMQPConnectionSettings
 
@@ -44,6 +45,10 @@ class OmadaSettings(BaseModel):
         if not persistence_file.parent.is_dir():
             raise ValueError("Persistence file's parent directory doesn't exist")
         return persistence_file
+
+
+class FastRAMQPISettings(_FastRAMQPISettings):
+    mo_graphql_version: PositiveInt = 19
 
 
 class Settings(BaseSettings):

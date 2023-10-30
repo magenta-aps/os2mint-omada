@@ -18,6 +18,8 @@ from more_itertools import only
 from ramodels.mo import Employee
 from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementRef
+from ramodels.mo._shared import ITSystemRef
+from ramodels.mo._shared import OrgUnitRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import UUIDBase
 from ramodels.mo.details import Address
@@ -52,9 +54,13 @@ class MO:
         query = gql(
             """
             query ITSystemsQuery($user_keys: [String!]) {
-              itsystems(user_keys: $user_keys) {
-                uuid
-                user_key
+              itsystems(filter: {user_keys: $user_keys}) {
+                objects {
+                  current {
+                    uuid
+                    user_key
+                  }
+                }
               }
             }
             """
@@ -62,8 +68,10 @@ class MO:
         dict().values()
         variables = {"user_keys": list(user_keys)}
         result = await self.graphql_session.execute(query, variable_values=variables)
-        it_systems = result["itsystems"]
-        return ITSystems({s["user_key"]: UUID(s["uuid"]) for s in it_systems})
+        it_systems = result["itsystems"]["objects"]
+        return ITSystems(
+            {s["current"]["user_key"]: UUID(s["current"]["uuid"]) for s in it_systems}
+        )
 
     async def get_classes(self, facet_user_key: str) -> dict[str, UUID]:
         """Get classes for the given facet user key.
@@ -77,10 +85,14 @@ class MO:
         query = gql(
             """
             query ClassesQuery($user_keys: [String!]) {
-              facets(user_keys: $user_keys) {
-                classes {
-                  uuid
-                  user_key
+              facets(filter: {user_keys: $user_keys}) {
+                objects {
+                  current {
+                    classes {
+                      uuid
+                      user_key
+                    }
+                  }
                 }
               }
             }
@@ -92,7 +104,7 @@ class MO:
                 "user_keys": [facet_user_key],
             },
         )
-        classes = one(result["facets"])["classes"]
+        classes = one(result["facets"]["objects"])["current"]["classes"]
         return {c["user_key"]: UUID(c["uuid"]) for c in classes}
 
     async def get_employee_uuid_from_user_key(self, user_key: str) -> UUID | None:
@@ -110,10 +122,12 @@ class MO:
         query = gql(
             """
             query EmployeeServiceNumberQuery($user_keys: [String!]) {
-              engagements(user_keys: $user_keys, from_date: null, to_date: null) {
+              engagements(filter: {user_keys: $user_keys, from_date: null, to_date: null}) {
                 objects {
-                  employee {
-                    uuid
+                  objects {
+                    person {
+                      uuid
+                    }
                   }
                 }
               }
@@ -126,11 +140,11 @@ class MO:
                 "user_keys": [user_key],
             },
         )
-        engagements = result["engagements"]
+        engagements = result["engagements"]["objects"]
         if not engagements:
             return None
         objects = chain.from_iterable(e["objects"] for e in engagements)
-        employees = chain.from_iterable(o["employee"] for o in objects)
+        employees = chain.from_iterable(o["person"] for o in objects)
         uuids = {e["uuid"] for e in employees}
         uuid = one(uuids)  # it's an error if different UUIDs are returned
         return UUID(uuid)
@@ -147,8 +161,10 @@ class MO:
         query = gql(
             """
             query EmployeeCPRQuery($cpr_numbers: [CPR!]) {
-              employees(cpr_numbers: $cpr_numbers, from_date: null, to_date: null) {
-                uuid
+              employees(filter: {cpr_numbers: $cpr_numbers, from_date: null, to_date: null}) {
+                objects {
+                  uuid
+                }
               }
             }
             """
@@ -159,7 +175,7 @@ class MO:
                 "cpr_numbers": [cpr],
             },
         )
-        employees = result["employees"]
+        employees = result["employees"]["objects"]
         if not employees:
             return None
         uuids = {e["uuid"] for e in employees}
@@ -181,12 +197,14 @@ class MO:
         query = gql(
             """
             query EmployeeQuery($uuids: [UUID!]) {
-              employees(uuids: $uuids, from_date: null, to_date: null) {
+              employees(filter: {uuids: $uuids, from_date: null, to_date: null}) {
                 objects {
-                  uuid
-                  givenname
-                  surname
-                  cpr_no
+                  objects {
+                    uuid
+                    givenname
+                    surname
+                    cpr_no
+                  }
                 }
               }
             }
@@ -200,7 +218,7 @@ class MO:
                 }
             ),
         )
-        employee = only(result["employees"])
+        employee = only(result["employees"]["objects"])
         if employee is None:
             return set()
         return {Employee.parse_obj(o) for o in employee["objects"]}
@@ -221,26 +239,28 @@ class MO:
         query = gql(
             """
             query AddressesQuery($employee_uuids: [UUID!], $address_types: [UUID!]) {
-              employees(uuids: $employee_uuids, from_date: null, to_date: null) {
+              employees(filter: {uuids: $employee_uuids, from_date: null, to_date: null}) {
                 objects {
-                  addresses(address_types: $address_types) {
-                    uuid
-                    value
-                    address_type {
+                  objects {
+                    addresses(filter: {address_types: $address_types}) {
                       uuid
-                    }
-                    person: employee {
-                      uuid
-                    }
-                    engagement {
-                      uuid
-                    }
-                    visibility {
-                      uuid
-                    }
-                    validity {
-                      from
-                      to
+                      value
+                      address_type {
+                        uuid
+                      }
+                      person {
+                        uuid
+                      }
+                      engagement {
+                        uuid
+                      }
+                      visibility {
+                        uuid
+                      }
+                      validity {
+                        from
+                        to
+                      }
                     }
                   }
                 }
@@ -257,7 +277,7 @@ class MO:
                 }
             ),
         )
-        employee = only(result["employees"])
+        employee = only(result["employees"]["objects"])
         if employee is None:
             return set()
         addresses = chain.from_iterable(o["addresses"] for o in employee["objects"])
@@ -285,27 +305,31 @@ class MO:
         query = gql(
             """
             query EngagementsQuery($employee_uuids: [UUID!]) {
-              employees(uuids: $employee_uuids, from_date: null, to_date: null) {
+              employees(filter: {uuids: $employee_uuids, from_date: null, to_date: null}) {
                 objects {
-                  engagements {
-                    uuid
-                    user_key
-                    org_unit_uuid
-                    person: employee {
+                  objects {
+                    engagements {
                       uuid
-                    }
-                    job_function {
-                      uuid
-                    }
-                    engagement_type {
-                      uuid
-                    }
-                    primary {
-                      uuid
-                    }
-                    validity {
-                      from
-                      to
+                      user_key
+                      org_unit {
+                        uuid
+                      }
+                      person {
+                        uuid
+                      }
+                      job_function {
+                        uuid
+                      }
+                      engagement_type {
+                        uuid
+                      }
+                      primary {
+                        uuid
+                      }
+                      validity {
+                        from
+                        to
+                      }
                     }
                   }
                 }
@@ -321,7 +345,7 @@ class MO:
                 }
             ),
         )
-        employee = only(result["employees"])
+        employee = only(result["employees"]["objects"])
         if employee is None:
             return set()
         engagements = chain.from_iterable(o["engagements"] for o in employee["objects"])
@@ -329,7 +353,9 @@ class MO:
         def convert(engagement: dict) -> Engagement:
             """Convert GraphQL engagement to be RA-Models compatible."""
             engagement["person"] = one({PersonRef(**p) for p in engagement["person"]})
-            engagement["org_unit"] = {"uuid": engagement.pop("org_unit_uuid")}
+            engagement["org_unit"] = one(
+                {OrgUnitRef(**p) for p in engagement["org_unit"]}
+            )
             return Engagement.parse_obj(engagement)
 
         return {convert(engagement) for engagement in engagements}
@@ -350,21 +376,25 @@ class MO:
         query = gql(
             """
             query ITUsersQuery($employee_uuids: [UUID!]) {
-              employees(uuids: $employee_uuids, from_date: null, to_date: null) {
+              employees(filter: {uuids: $employee_uuids, from_date: null, to_date: null}) {
                 objects {
-                  itusers {
-                    uuid
-                    user_key
-                    itsystem_uuid
-                    person: employee {
+                  objects {
+                    itusers {
                       uuid
-                    }
-                    engagement {
-                      uuid
-                    }
-                    validity {
-                      from
-                      to
+                      user_key
+                      itsystem {
+                        uuid
+                      }
+                      person {
+                        uuid
+                      }
+                      engagement {
+                        uuid
+                      }
+                      validity {
+                        from
+                        to
+                      }
                     }
                   }
                 }
@@ -380,7 +410,7 @@ class MO:
                 }
             ),
         )
-        employee = only(result["employees"])
+        employee = only(result["employees"]["objects"])
         if employee is None:
             return set()
         it_users = chain.from_iterable(o["itusers"] for o in employee["objects"])
@@ -388,7 +418,7 @@ class MO:
         def convert(it_user: dict) -> ITUser:
             """Convert GraphQL IT user to be RA-Models compatible."""
             it_user["person"] = one({PersonRef(**p) for p in it_user["person"]})
-            it_user["itsystem"] = {"uuid": it_user.pop("itsystem_uuid")}
+            it_user["itsystem"] = ITSystemRef(**it_user["itsystem"])
             it_user["engagement"] = only(
                 {EngagementRef(**p) for p in (it_user.pop("engagement") or {})}
             )
@@ -411,9 +441,13 @@ class MO:
         query = gql(
             """
             query OrgUnitITUserQuery($user_keys: [String!]) {
-              itusers(user_keys: $user_keys, from_date: null, to_date: null) {
+              itusers(filter: {user_keys: $user_keys, from_date: null, to_date: null}) {
                 objects {
-                  org_unit_uuid
+                  objects {
+                    org_unit {
+                      uuid
+                    }
+                  }
                 }
               }
             }
@@ -425,11 +459,11 @@ class MO:
                 "user_keys": [user_key],
             },
         )
-        it_users = result["itusers"]
+        it_users = result["itusers"]["objects"]
         if not it_users:
             raise KeyError(f"No organisation unit with {user_key=} found")
         objects = chain.from_iterable(u["objects"] for u in it_users)
-        uuids = {o["org_unit_uuid"] for o in objects}
+        uuids = {ou["uuid"] for o in objects for ou in o["org_unit"]}
         uuid = one(uuids)  # it's an error if different UUIDs are returned
         return UUID(uuid)
 
@@ -445,8 +479,10 @@ class MO:
         query = gql(
             """
             query OrgUnitQuery($uuids: [UUID!]) {
-              org_units(uuids: $uuids, from_date: null, to_date: null) {
-                uuid
+              org_units(filter: {uuids: $uuids, from_date: null, to_date: null}) {
+                objects {
+                  uuid
+                }
               }
             }
             """
@@ -460,7 +496,7 @@ class MO:
             ),
         )
         try:
-            org_unit = one(result["org_units"])
+            org_unit = one(result["org_units"]["objects"])
         except ValueError as e:
             raise KeyError(f"No organisation unit with {uuid=} found") from e
         return UUID(org_unit["uuid"])
@@ -477,8 +513,10 @@ class MO:
         query = gql(
             """
             query OrgUnitQuery($user_keys: [String!]) {
-              org_units(user_keys: $user_keys, from_date: null, to_date: null) {
-                uuid
+              org_units(filter: {user_keys: $user_keys, from_date: null, to_date: null}) {
+                objects {
+                  uuid
+                }
               }
             }
             """
@@ -490,7 +528,7 @@ class MO:
             },
         )
         try:
-            org_unit = one(result["org_units"])
+            org_unit = one(result["org_units"]["objects"])
         except ValueError as e:
             raise KeyError(f"No organisation unit with {user_key=} found") from e
         return UUID(org_unit["uuid"])
@@ -507,11 +545,13 @@ class MO:
         query = gql(
             """
             query OrgUnitValidityQuery($uuids: [UUID!]) {
-              org_units(uuids: $uuids, from_date: null, to_date: null) {
+              org_units(filter: {uuids: $uuids, from_date: null, to_date: null}) {
                 objects {
-                  validity {
-                    from_date: from
-                    to_date: to
+                  objects {
+                    validity {
+                      from_date: from
+                      to_date: to
+                    }
                   }
                 }
               }
@@ -526,7 +566,7 @@ class MO:
                 }
             ),
         )
-        org_unit = one(result["org_units"])
+        org_unit = one(result["org_units"]["objects"])
         objs = org_unit["objects"]
         # Consolidate validities from all past/present/future versions of the org unit
         validities = (Validity(**obj["validity"]) for obj in objs)
