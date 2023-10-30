@@ -81,7 +81,7 @@ async def org_unit(mo_graphql_session: AsyncClientSession) -> str:
     it_system_uuid = one(result["itsystems"]["objects"])["uuid"]
 
     # Create IT-user with FK-org UUID for the org unit
-    it_user_user_key = "f06ee470-9f17-566f-acbe-e938112d46d9"
+    it_user_user_key = "77d2c378-92d2-462d-876d-58bb7f4e98a1"
     query = gql(
         """
         mutation CreateOrgUnitITUser(
