@@ -1,3 +1,115 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 
+query _Testing_EmployeeQuery($cpr_number: CPR!) {
+  employees(filter: {cpr_numbers: [$cpr_number], from_date: null, to_date: null}) {
+    objects {
+      objects {
+        cpr_number
+        given_name
+        surname
+        nickname_given_name
+        nickname_surname
+        validity {
+          from
+          to
+        }
+        engagements(filter: {from_date: null, to_date: null}) {
+          user_key
+          org_unit {
+            user_key
+          }
+          job_function {
+            user_key
+          }
+          engagement_type {
+            user_key
+          }
+          primary {
+            user_key
+          }
+          validity {
+            from
+            to
+          }
+        }
+        addresses(filter: {from_date: null, to_date: null}) {
+          value
+          address_type {
+            user_key
+          }
+          engagement {
+            user_key
+          }
+          visibility {
+            user_key
+          }
+          validity {
+            from
+            to
+          }
+        }
+        itusers(filter: {from_date: null, to_date: null}) {
+          user_key
+          itsystem {
+            user_key
+          }
+          engagement {
+            user_key
+          }
+          validity {
+            from
+            to
+          }
+        }
+      }
+    }
+  }
+}
+
+query _Testing_GetOrgUnitType {
+  classes(filter: {facet_user_keys: "org_unit_type", user_keys: "Afdeling"}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+mutation _Testing_CreateOrgUnit($user_key: String!, $org_unit_type: UUID!) {
+  org_unit_create(
+    input: {
+      name: "Test Org Unit",
+      user_key: $user_key,
+      org_unit_type: $org_unit_type,
+      validity: {from: "2010-02-03"},
+    },
+  ) {
+    uuid
+  }
+}
+
+
+query _Testing_GetItSystem($user_key: String!) {
+  itsystems(filter: {user_keys: [$user_key]}) {
+    objects {
+      uuid
+    }
+  }
+}
+
+mutation _Testing_CreateOrgUnitItUser(
+  $user_key: String!,
+  $it_system: UUID!,
+  $org_unit: UUID!
+) {
+  ituser_create(
+    input: {
+      user_key: $user_key,
+      itsystem: $it_system,
+      org_unit: $org_unit,
+      validity: {from: "2010-02-03"},
+    }
+  ) {
+    uuid
+  }
+}

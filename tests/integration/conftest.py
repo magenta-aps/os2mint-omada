@@ -12,13 +12,9 @@ from pathlib import Path
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from gql import gql
 from gql.client import AsyncClientSession
 from httpx import AsyncClient
-from pydantic import AnyHttpUrl
-from pydantic import parse_obj_as
 from pytest import MonkeyPatch
-from raclients.graph.client import GraphQLClient
 from respx import ASGIHandler
 from respx import MockRouter
 
@@ -121,101 +117,6 @@ def test_client(monkeypatch: MonkeyPatch, tmp_path: Path) -> Iterator[TestClient
 
 
 @pytest.fixture
-async def mo_graphql_session() -> AsyncIterator[AsyncClientSession]:
-    """Authenticated GraphQL session for OS2mo."""
-    client = GraphQLClient(
-        url="http://mo:5000/graphql/v14",
-        client_id="dipex",
-        client_secret="603f1c82-d012-4d04-9382-dbe659c533fb",
-        auth_realm="mo",
-        auth_server=parse_obj_as(AnyHttpUrl, "http://keycloak:8080/auth"),
-    )
-    async with client as session:
-        yield session
-
-
-ASSERT_QUERY = gql(
-    """
-    query AssertQuery($cpr_number: CPR!) {
-      employees(filter: {cpr_numbers: [$cpr_number], from_date: null, to_date: null}) {
-        objects {
-          objects {
-            ...employeeFields
-            engagements(filter: {from_date: null, to_date: null}) {
-              ...engagementFields
-            }
-            addresses(filter: {from_date: null, to_date: null}) {
-              ...addressFields
-            }
-            itusers(filter: {from_date: null, to_date: null}) {
-              ...ituserFields
-            }
-          }
-        }
-      }
-    }
-
-    fragment employeeFields on Employee {
-      cpr_number
-      given_name
-      surname
-      nickname_given_name
-      nickname_surname
-      validity {
-        from
-        to
-      }
-    }
-
-    fragment engagementFields on Engagement {
-      user_key
-      org_unit {
-        user_key
-      }
-      job_function {
-        user_key
-      }
-      engagement_type {
-        user_key
-      }
-      primary {
-        user_key
-      }
-      validity {
-        from
-        to
-      }
-    }
-
-    fragment addressFields on Address {
-      value
-      address_type {
-        user_key
-      }
-      engagement {
-        user_key
-      }
-      visibility {
-        user_key
-      }
-      validity {
-        from
-        to
-      }
-    }
-
-    fragment ituserFields on ITUser {
-      user_key
-      itsystem {
-        user_key
-      }
-      engagement {
-        user_key
-      }
-      validity {
-        from
-        to
-      }
-    }
-    """
-)
+async def graphql_client(test_client: TestClient) -> AsyncIterator[AsyncClientSession]:
+    """Authenticated GraphQL client for OS2mo."""
+    yield test_client.app_state["context"]["graphql_client"]
