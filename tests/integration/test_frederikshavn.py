@@ -49,7 +49,7 @@ async def test_frederikshavn(
 ) -> None:
     # Precondition: The person does not already exist
     cpr_number = "0706994939"
-    employee = await graphql_client._testing__employee_query(cpr_number)
+    employee = await graphql_client._testing__get_employee(cpr_number)
     assert employee.objects == []
 
     # CREATE
@@ -85,7 +85,7 @@ async def test_frederikshavn(
 
     @retry()
     async def verify() -> None:
-        employees = await graphql_client._testing__employee_query(cpr_number)
+        employees = await graphql_client._testing__get_employee(cpr_number)
 
         # Employee
         employee_states = one(employees.objects)
@@ -197,7 +197,7 @@ async def test_frederikshavn(
 
     @retry()
     async def verify() -> None:
-        employees = await graphql_client._testing__employee_query(cpr_number)
+        employees = await graphql_client._testing__get_employee(cpr_number)
 
         # Employee
         employee_states = one(employees.objects)
@@ -242,7 +242,7 @@ async def test_frederikshavn(
 
     @retry()
     async def verify() -> None:
-        employees = await graphql_client._testing__employee_query(cpr_number)
+        employees = await graphql_client._testing__get_employee(cpr_number)
         employee_states = one(employees.objects)
         employee = one(employee_states.objects)
         assert employee.engagements == []

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 
-query _Testing_EmployeeQuery($cpr_number: CPR!) {
+query _Testing_GetEmployee($cpr_number: CPR!) {
   employees(filter: {cpr_numbers: [$cpr_number], from_date: null, to_date: null}) {
     objects {
       objects {
