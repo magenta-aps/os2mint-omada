@@ -78,7 +78,7 @@ async def test_egedal_manual(
                 "UId": "0e39ce2d-39a5-42b0-befb-f8380f9c789c",
                 "KeyValue": None,
                 "KeyProperty": None,
-                "DisplayName": f"Prince ({org_unit} [LORDAERON]) ID:(00001337) ;",
+                "DisplayName": f"Prince||{org_unit}||00001337;",
             },
         ],
         # Addresses
@@ -203,7 +203,7 @@ async def test_egedal_manual(
                 "UId": "7884a4f1-948c-460a-9cc7-47bdc031d841",
                 "KeyValue": None,
                 "KeyProperty": None,
-                "DisplayName": f"Sygeplejerske ({org_unit} [SYGEPLEJE (V)]) ID:(00001234) ;",
+                "DisplayName": f"Sygeplejerske||{org_unit}||00001234;",
             },
         ],
         # Addresses

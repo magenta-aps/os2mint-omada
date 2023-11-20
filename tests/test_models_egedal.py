@@ -65,14 +65,14 @@ def manual_egedal_omada_user() -> dict:
                 "UId": "0e39ce2d-39a5-42b0-befb-f8380f9c789c",
                 "KeyValue": None,
                 "KeyProperty": None,
-                "DisplayName": "Prince (Lordaeron [LORDAERON]) ID:(00001337) ;",
+                "DisplayName": f"Prince||LORDAERON||00001337;",
             },
             {
                 "Id": 6849240,
                 "UId": "7884a4f1-948c-460a-9cc7-47bdc031d841",
                 "KeyValue": None,
                 "KeyProperty": None,
-                "DisplayName": "Sygeplejerske (Sygepleje (V) [SYGEPLEJE (V)]) ID:(00001234) ;",
+                "DisplayName": "Sygeplejerske||SYGEPLEJE||00001234;",
             },
         ],
         # Addresses
@@ -97,10 +97,10 @@ def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:
     omada_user = ManualEgedalOmadaUser.parse_obj(manual_egedal_omada_user)
     assert omada_user.is_manual is True
     assert omada_user.employments[0].job_title == "Prince"
-    assert omada_user.employments[0].org_unit == "Lordaeron"
+    assert omada_user.employments[0].org_unit == "LORDAERON"
     assert omada_user.employments[0].employment_number == "1337"
     assert omada_user.employments[1].job_title == "Sygeplejerske"
-    assert omada_user.employments[1].org_unit == "Sygepleje (V)"
+    assert omada_user.employments[1].org_unit == "SYGEPLEJE"
     assert omada_user.employments[1].employment_number == "1234"
 
 
@@ -108,115 +108,35 @@ def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:
     "display_name,expected",
     [
         (
-            "Administrativ medarbejder (Ølstykke Bibliotek [ØLSTYKKE BIBLIOTEK]) ID:(1234) ;",
+            "Administrativ medarbejder||GANLØSE||00001234;",
             {
                 "employment_number": "1234",
                 "job_title": "Administrativ medarbejder",
-                "org_unit": "Ølstykke Bibliotek",
+                "org_unit": "GANLØSE",
             },
         ),
         (
-            "Afdelingsleder (Boesagerskolen, 6+9 årgang [BOESAGERSKOLEN, 6+9 ÅRGANG]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Afdelingsleder",
-                "org_unit": "Boesagerskolen, 6+9 årgang",
-            },
-        ),
-        (
-            "Bibliotekar (Smørum Bibliotek [SMØRUM BIBLIOTEK]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Bibliotekar",
-                "org_unit": "Smørum Bibliotek",
-            },
-        ),
-        (
-            "CAS - Robot (Regnskab [REGNSKAB]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "CAS - Robot",
-                "org_unit": "Regnskab",
-            },
-        ),
-        (
-            "Centerchef (By, kultur og fritid [BY, KULTUR OG FRITID]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Centerchef",
-                "org_unit": "By, kultur og fritid",
-            },
-        ),
-        (
-            "Eftervederlag (Byråd [BYRÅD]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Eftervederlag",
-                "org_unit": "Byråd",
-            },
-        ),
-        (
-            "Ergoterapeut (Dambo (V) [DAMBO (V)]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Ergoterapeut",
-                "org_unit": "Dambo (V)",
-            },
-        ),
-        (
-            "Ergoterapeut (Team Handicap §85 [TEAM HANDICAP §85]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Ergoterapeut",
-                "org_unit": "Team Handicap §85",
-            },
-        ),
-        (
-            "Ergoterapeut (Træning- & Hjælpemiddel [TRÆNING- & HJÆLPEMIDDEL]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Ergoterapeut",
-                "org_unit": "Træning- & Hjælpemiddel",
-            },
-        ),
-        (
-            "Klubassistent u/udd (Byggelegeplads Stengården [BYGGELEGEPLADS STENGÅRDEN]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
-                "job_title": "Klubassistent u/udd",
-                "org_unit": "Byggelegeplads Stengården",
-            },
-        ),
-        (
-            "Lærer m/særlige kval. (Balsmoseskolen, 3-5 årgang [BALSMOSESKOLEN, 3-5 ÅRGANG]) ID:(1234) ;",
+            "Lærer m/særlige kval.||TOFTE-SK||00001234;",
             {
                 "employment_number": "1234",
                 "job_title": "Lærer m/særlige kval.",
-                "org_unit": "Balsmoseskolen, 3-5 årgang",
+                "org_unit": "TOFTE-SK",
             },
         ),
         (
-            "Mangler JobRole (Afdeling Børn (V) [AFDELING BØRN (V)]) ID:(1234) ;",
+            "Social- og sundhedsassistent||SKEL.AFL.||00012345;",
             {
-                "employment_number": "1234",
-                "job_title": "Mangler JobRole",
-                "org_unit": "Afdeling Børn (V)",
-            },
-        ),
-        (
-            "Social- og sundhedsassistent (Afløsere (V) [AFLØSERE (V)]) ID:(1234) ;",
-            {
-                "employment_number": "1234",
+                "employment_number": "12345",
                 "job_title": "Social- og sundhedsassistent",
-                "org_unit": "Afløsere (V)",
+                "org_unit": "SKEL.AFL.",
             },
         ),
         (
-            "Uuddannet medarbejder (Etage 1 (V) [ETAGE 1 (V)]) ID:(1234) ;",
+            "Timelønnede vikarer||STENSK-ADM||00001234;",
             {
                 "employment_number": "1234",
-                "job_title": "Uuddannet medarbejder",
-                "org_unit": "Etage 1 (V)",
+                "job_title": "Timelønnede vikarer",
+                "org_unit": "STENSK-ADM",
             },
         ),
     ],

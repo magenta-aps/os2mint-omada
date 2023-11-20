@@ -23,13 +23,12 @@ class EgedalOmadaEmployment(BaseModel):
         """Extract fields embedded in the DisplayName.
 
         All the required data is present in the 'DisplayName' field, which is a string
-        of the format:
-          Social- og sundhedsassistent (Sygepleje (V) [SYGEPLEJE (V)]) ID:(00009093) ;
-        where 'Social- og sundhedsassistent' is the job title, 'Sygepleje (V)' the
-        organisation unit's name, and '00009093' the employment number.
+        of the format: 'Timelønnet Lærer||UNG-SKOLE||00012345;' where
+        'Timelønnet Lærer' is the job title, 'UNG-SKOLE' the organisation unit's user
+        key, and '00012345' the employment number.
         """
         display_name = values["DisplayName"]
-        match = re.match(r"(.+?) \((.+) \[.*?]\) ID:\((\d+)\) ;", display_name)
+        match = re.match(r"(.+)\|\|(.+)\|\|(\d+);", display_name)
         if not match:
             raise ValueError(f"Unable to parse {display_name=}")
         job_title, org_unit, employment_number = match.groups()
