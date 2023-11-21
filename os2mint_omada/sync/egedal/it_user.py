@@ -85,7 +85,7 @@ async def sync_it_users(
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_guid": "omada_ad_guid",
-        "ad_login": "omada_login",
+        "ad_login": "omada_ad_login",
     }
 
     # Get MO classes configuration
