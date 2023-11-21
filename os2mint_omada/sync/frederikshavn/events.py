@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import structlog
+from fastramqpi.depends import LegacyModelClient
 from pydantic import ValidationError
 from ramqp import Router
 from ramqp.depends import PayloadBytes
@@ -28,7 +29,7 @@ omada_router = Router()
 async def sync_omada_employee(
     body: PayloadBytes,
     mo: depends.MO,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise an Omada user to a MO employee.
@@ -61,7 +62,7 @@ async def sync_omada_engagements(
     body: PayloadBytes,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise an Omada user to a MO engagements.
@@ -102,7 +103,7 @@ async def sync_omada_addresses(
     body: PayloadBytes,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise an Omada user's addresses to MO.
@@ -143,7 +144,7 @@ async def sync_omada_it_users(
     body: PayloadBytes,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise an Omada user to MO IT users.
@@ -192,7 +193,7 @@ async def sync_mo_engagements(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise a MO user's engagements with Omada.
@@ -219,7 +220,7 @@ async def sync_mo_addresses(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise a MO user's addresses with Omada.
@@ -246,7 +247,7 @@ async def sync_mo_it_users(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: depends.ModelClient,
+    model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
     """Synchronise a MO user's IT users with Omada.
