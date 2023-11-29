@@ -96,18 +96,7 @@ def omada_mock(respx_mock: MockRouter) -> Callable[[list], None]:
 @pytest.fixture
 def test_client(monkeypatch: MonkeyPatch, tmp_path: Path) -> Iterator[TestClient]:
     """Create ASGI test client."""
-    # These connection strings should correspond to the CI job, NOT docker compose
-    monkeypatch.setenv("FASTRAMQPI__MO_URL", "http://mo:5000")
-    monkeypatch.setenv("FASTRAMQPI__CLIENT_ID", "dipex")
-    monkeypatch.setenv(
-        "FASTRAMQPI__CLIENT_SECRET", "603f1c82-d012-4d04-9382-dbe659c533fb"
-    )
-    monkeypatch.setenv("FASTRAMQPI__AUTH_SERVER", "http://keycloak:8080/auth")
-    monkeypatch.setenv("FASTRAMQPI__AUTH_REALM", "mo")
-    monkeypatch.setenv("FASTRAMQPI__AMQP__URL", "amqp://guest:guest@msg-broker:5672/")
-
     monkeypatch.setenv("OMADA__URL", "http://fake-omada-api/")
-    monkeypatch.setenv("OMADA__AMQP__URL", "amqp://guest:guest@msg-broker:5672/")
     monkeypatch.setenv("OMADA__INTERVAL", "2")
     monkeypatch.setenv("OMADA__PERSISTENCE_FILE", str(tmp_path / "omada.json"))
 
