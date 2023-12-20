@@ -32,7 +32,7 @@ def egedal_omada_user() -> dict:
         "PHONE": "12345678",
         "CELLPHONE": "87654321",
         # IT Users
-        "OBJECTGUID": "C2-2C-C1-C7-45-E8-83-49-85-4F-DA-EF-0B-32-B8-78",
+        "OBJECTGUID": "90-77-D2-D6-3D-3A-69-47-87-BC-96-14-84-B3-BA-39",
         "C_ADUSERNAME": "JP1911",
     }
 
@@ -89,7 +89,7 @@ def test_parse_user(egedal_omada_user: dict) -> None:
     """Test parsing of a user."""
     omada_user = EgedalOmadaUser.parse_obj(egedal_omada_user)
     assert omada_user.is_manual is False
-    assert omada_user.ad_guid == UUID("c22cc1c7-45e8-8349-854f-daef0b32b878")
+    assert omada_user.ad_guid == UUID("d6d27790-3a3d-4769-87bc-961484b3ba39")
 
 
 def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:
