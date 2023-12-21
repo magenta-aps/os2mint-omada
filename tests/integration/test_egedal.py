@@ -85,7 +85,7 @@ async def test_egedal_manual(
         "EMAIL": "arthas@egepost.dk",
         "PHONE": "22334455",
         # IT Users
-        "OBJECTGUID": "36-C9-80-88-A5-68-8A-47-BC-2C-2A-36-2C-AF-4E-7B",
+        "OBJECTGUID": "B8-84-0B-DA-31-8E-6B-42-96-5D-0A-C0-AB-A1-D6-9F",
     }
     omada_mock([omada_user])
 
@@ -171,7 +171,7 @@ async def test_egedal_manual(
             [u.dict() for u in employee.itusers],
             [
                 {
-                    "user_key": "36c98088-a568-8a47-bc2c-2a362caf4e7b",
+                    "user_key": "da0b84b8-8e31-426b-965d-0ac0aba1d69f",
                     "itsystem": {"user_key": "omada_ad_guid"},
                     "engagement": None,
                     "validity": {
@@ -271,7 +271,7 @@ async def test_egedal_manual(
 
         # IT Users
         assert {u.user_key for u in employee.itusers} == {
-            "11223344-5566-7788-9900-aabbccddeeff",
+            "44332211-6655-8877-9900-aabbccddeeff",
             "LK1337",
         }
 

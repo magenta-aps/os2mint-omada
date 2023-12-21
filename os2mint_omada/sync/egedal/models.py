@@ -74,6 +74,17 @@ class EgedalOmadaUser(OmadaUser):
         """Manually created users have IdentityCategory ID 561 in Egedal"""
         return self.identity_category.id == "561"
 
+    @validator("ad_guid")
+    def convert_le_uuid(cls, v: UUID | None) -> UUID | None:
+        """Convert from little-endian UUID.
+
+        Input: 90-77-D2-D6-3D-3A-69-47-87-BC-96-14-84-B3-BA-39.
+        Output: d6d27790-3a3d-4769-87bc-961484b3ba39.
+        """
+        if v is None:
+            return None
+        return UUID(bytes_le=v.bytes)
+
 
 class ManualEgedalOmadaUser(EgedalOmadaUser):
     """Egedal-specific Omada user with additional fields for 'manual' users.
