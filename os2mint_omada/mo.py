@@ -203,6 +203,8 @@ class MO:
                     uuid
                     givenname
                     surname
+                    nickname_givenname
+                    nickname_surname
                     cpr_no
                   }
                 }
