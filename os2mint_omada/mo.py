@@ -193,7 +193,7 @@ class MO:
 
         Returns: Set of employee objects; one for each state.
         """
-        logger.debug("Getting MO employee", uuid=uuid)
+        logger.debug("Getting MO employee states", uuid=uuid)
         query = gql(
             """
             query EmployeeQuery($uuids: [UUID!]) {
@@ -224,6 +224,47 @@ class MO:
         if employee is None:
             return set()
         return {Employee.parse_obj(o) for o in employee["objects"]}
+
+    async def get_current_employee_state(self, uuid: UUID) -> Employee | None:
+        """Retrieve current employee state.
+
+        Args:
+            uuid: Employee UUID.
+
+        Returns: Employee objects.
+        """
+        logger.debug("Getting MO employee state", uuid=uuid)
+        query = gql(
+            """
+            query EmployeeQuery($uuids: [UUID!]) {
+              employees(filter: {uuids: $uuids}) {
+                objects {
+                  current {
+                    uuid
+                    givenname
+                    surname
+                    nickname_givenname
+                    nickname_surname
+                    cpr_no
+                    seniority
+                  }
+                }
+              }
+            }
+            """
+        )
+        result = await self.graphql_session.execute(
+            query,
+            variable_values=jsonable_encoder(
+                {
+                    "uuids": [uuid],
+                }
+            ),
+        )
+        employee = only(result["employees"]["objects"])
+        if employee is None:
+            return None
+        return Employee.parse_obj(employee["current"])
 
     async def get_employee_addresses(
         self, uuid: UUID, address_types: Iterable[UUID] | None = None
