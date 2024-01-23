@@ -6,12 +6,14 @@ from pydantic import ValidationError
 from ramqp import Router
 from ramqp.depends import PayloadBytes
 from ramqp.depends import RateLimit
+from ramqp.depends import RoutingKey
 from ramqp.mo import MORouter
 from ramqp.mo import PayloadType
 
 from ... import depends
 from .address import sync_addresses
 from .employee import sync_employee
+from .employee import sync_employee_nickname
 from .engagement import sync_engagements
 from .it_user import sync_it_users
 from .models import EgedalOmadaUser
@@ -55,6 +57,42 @@ async def sync_omada_employee(
         return
     await sync_employee(
         omada_user=manual_omada_user,
+        mo=mo,
+        model_client=model_client,
+    )
+
+
+@omada_router.register(Event.WILDCARD)
+async def sync_omada_employee_nicknames(
+    routing_key: RoutingKey,
+    body: PayloadBytes,
+    mo: depends.MO,
+    model_client: LegacyModelClient,
+    _: RateLimit,
+) -> None:
+    """Synchronise Omada nicknames to pre-existing MO employees.
+
+    Args:
+        routing_key: AMQP message routing key.
+        body: AMQP message body.
+        mo: MO API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
+    try:
+        omada_user = EgedalOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
+    if omada_user.is_manual:
+        return
+    await sync_employee_nickname(
+        event=Event(routing_key),
+        omada_user=omada_user,
         mo=mo,
         model_client=model_client,
     )

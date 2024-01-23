@@ -290,3 +290,69 @@ async def test_egedal_manual(
         assert employee.itusers == []
 
     await verify()
+
+
+@pytest.mark.integration_test
+async def test_egedal_nickname(
+    omada_mock: Callable[[list], None],
+    test_client: TestClient,
+    graphql_client: GraphQLClient,
+    org_unit: str,
+) -> None:
+    # Create existing employee
+    cpr_number = "1601099620"
+    await graphql_client._testing__create_employee(
+        cpr_number=cpr_number,
+        given_name="Alice",
+        surname="Bobsen",
+        nickname_given_name=None,
+        nickname_surname=None,
+    )
+
+    @retry()
+    async def verify_nickname(given_name: str | None, surname: str | None) -> None:
+        # MO returns empty strings for missing nicknames
+        given_name = given_name or ""
+        surname = surname or ""
+
+        employees = await graphql_client._testing__get_employee(cpr_number)
+        employee_states = one(employees.objects)
+        employee = one(employee_states.objects)
+        assert employee.nickname_given_name == given_name
+        assert employee.nickname_surname == surname
+
+    await verify_nickname(None, None)
+
+    # CREATE
+    omada_user = {
+        # Omada
+        "Id": 1234,
+        "UId": "110fc257-daa8-4d04-996b-2081f96778bd",
+        "VALIDFROM": "2001-01-01T00:00:00+01:00",
+        "VALIDTO": "2003-03-03T00:00:00+01:00",
+        "IDENTITYCATEGORY": {
+            "Id": 560,
+            "UId": "ac0c67fc-5f47-4112-94e6-446bfb68326a",
+            "Value": "Employee",
+        },
+        # Employee
+        "C_EMPLOYEEID": cpr_number,
+        "C_OIS_FIRSTNAME": "Bob",
+        "C_OIS_LASTNAME": "Alisen",
+    }
+    omada_mock([omada_user])
+    await verify_nickname("Bob", "Alisen")
+
+    # EDIT
+    updated_omada_user = {
+        **omada_user,
+        # Employee
+        "C_OIS_FIRSTNAME": "",
+        "C_OIS_LASTNAME": "Bobsen",
+    }
+    omada_mock([updated_omada_user])
+    await verify_nickname(None, "Bobsen")
+
+    # DELETE
+    omada_mock([])
+    await verify_nickname(None, None)

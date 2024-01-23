@@ -9,8 +9,10 @@ from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Employee
 from ramqp.depends import handle_exclusively_decorator
 
-from .models import ManualEgedalOmadaUser
 from os2mint_omada.mo import MO
+from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.sync.egedal.models import EgedalOmadaUser
+from os2mint_omada.sync.egedal.models import ManualEgedalOmadaUser
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
 
@@ -79,3 +81,52 @@ async def sync_employee(
     if missing_mo:
         logger.info("Creating missing Employeee states", employees=missing_mo)
         await model_client.upload(missing_mo)
+
+
+@handle_exclusively_decorator(key=lambda omada_user, *_, **__: omada_user.cpr_number)
+async def sync_employee_nickname(
+    event: Event,
+    omada_user: EgedalOmadaUser,
+    mo: MO,
+    model_client: ModelClient,
+) -> None:
+    """Synchronise Omada nicknames to pre-existing MO employees.
+
+    Args:
+        event: Omada event.
+        omada_user: Omada user to synchronise.
+
+    Returns: None.
+    """
+    logger.info("Synchronising employee nicknames", omada_user=omada_user)
+
+    # Find employee in MO
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
+    if employee_uuid is None:
+        return
+
+    # Existing employee states in MO
+    mo_employee_state = await mo.get_current_employee_state(uuid=employee_uuid)
+    if mo_employee_state is None:
+        return
+
+    # Desired employee state with nickname from Omada
+    if event == Event.DELETE:
+        desired_nickname_givenname = None
+        desired_nickname_surname = None
+    else:
+        desired_nickname_givenname = omada_user.nickname_first_name
+        desired_nickname_surname = omada_user.nickname_last_name
+
+    desired = mo_employee_state.copy(
+        update=dict(
+            nickname_givenname=desired_nickname_givenname,
+            nickname_surname=desired_nickname_surname,
+        )
+    )
+
+    # Create missing desired
+    if mo_employee_state == desired:
+        return
+    logger.info("Creating Employeee state with missing nickname", employees=desired)
+    await model_client.upload([desired])

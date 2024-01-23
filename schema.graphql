@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 #
-# OS2mo GraphQL API schema definition (v19).
-# https://os2mo.eksempel.dk/graphql/v19/schema.graphql
+# OS2mo GraphQL API schema definition (v21).
+# https://os2mo.eksempel.dk/graphql/v21/schema.graphql
 
 "Address information for either an employee or organisational unit\n"
 type Address {
@@ -109,6 +109,9 @@ type Address {
   "Optional second machine processable value of the address.\n\nThis value is `null` for most address types, but may be utilized by some address-types for extra information.\n\nExamples:\n* `null`\n* `\"Office 12\"`\n* `\"+45\"`\n"
   value2: String
 
+  "Same as address_type, but with HACKs to enable validities.\n"
+  address_type_validity: Class @deprecated(reason: "Should only be used to query address_type when validity dates have been specified, \"\n\"ex from_date & to_date.\"\n\"Will be removed when sub-query date handling is implemented.\n")
+
   """Validity of the address object."""
   validity: Validity!
 }
@@ -159,20 +162,47 @@ input AddressFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
-  "Address type UUID filter limiting which entries are returned.\n\n| `address_types`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  address_types: [UUID!] = null
-
-  "Address type user-key filter limiting which entries are returned.\n\n| `address_type_user_keys`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  address_type_user_keys: [String!] = null
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
 
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
 
-  "Engagement UUID filter limiting which entries are returned.\n\n| `engagements`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  engagements: [UUID!] = null
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: AddressRegistrationFilter = null
+
+  "Address type filter limiting which entries are returned.\n"
+  address_type: ClassFilter = null
+
+  "Address type UUID filter limiting which entries are returned.\n\n| `address_types`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  address_types: [UUID!] = null @deprecated(reason: "Replaced by the 'address_type' filter")
+
+  "Address type user-key filter limiting which entries are returned.\n\n| `address_type_user_keys`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  address_type_user_keys: [String!] = null @deprecated(reason: "Replaced by the 'address_type' filter")
+
+  "Engagement filter limiting which entries are returned.\n"
+  engagement: EngagementFilter = null
+
+  "Engagement UUID filter limiting which entries are returned.\n\n| `engagements`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  engagements: [UUID!] = null @deprecated(reason: "Replaced by the 'engagement' filter")
+}
+
+"""Address registration filter."""
+input AddressRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -384,6 +414,9 @@ type Association {
   """UUID of an 'ITUser' model, only defined for 'IT associations."""
   it_user_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `it_user {uuid}` instead.\n")
 
+  "Same as association_type, but with HACKs to enable validities.\n"
+  association_type_validity: Class @deprecated(reason: "Should only be used to query association_types when validity dates have been specified, \"\n\"ex from_date & to_date.\"\n\"Will be removed when sub-query date handling is implemented.\n")
+
   """Validity of the association object."""
   validity: Validity!
 }
@@ -428,20 +461,44 @@ input AssociationFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: AssociationRegistrationFilter = null
+
+  "Address type filter limiting which entries are returned.\n"
+  association_type: ClassFilter = null
 
   "Association type UUID filter limiting which entries are returned.\n\n| `association_types`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  association_types: [UUID!] = null
+  association_types: [UUID!] = null @deprecated(reason: "Replaced by the 'association_type' filter")
 
   "Association type user-key filter limiting which entries are returned.\n\n| `association_type_user_keys`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  association_type_user_keys: [String!] = null
+  association_type_user_keys: [String!] = null @deprecated(reason: "Replaced by the 'association_type' filter")
 
   "Query for either IT-Associations or \"normal\" Associations. `None` returns all.\n\nThis field is needed to replicate the functionality in the service API:\n`?it=1`\n"
   it_association: Boolean = null
+}
+
+"""Association registration filter."""
+input AssociationRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -610,6 +667,17 @@ type Class {
     cursor: Cursor = null
   ): Facet!
 
+  "The IT-System associated with the class.\n\nThis is intended to be used for (IT) roles.\n"
+  it_system(
+    filter: UuidsBoundITSystemFilter
+
+    "\nLimit the maximum number of elements to fetch.\n\n| `limit`      | \\# elements fetched |\n|--------------|---------------------|\n| not provided | All                 |\n| `null`       | All                 |\n| `0`          | `0` (`*`)           |\n| `x`          | Between `0` and `x` |\n\n`*`: This behavior is equivalent to SQL's `LIMIT 0` behavior.\n\nNote:\n\nSometimes the caller may receieve a shorter list (or even an empty list) of results compared to the expected per the limit argument.\n\nThis may seem confusing, but it is the expected behavior given the way that limiting is implemented in the bitemporal database layer, combined with how filtering and object change consolidation is handled.\n\nNot to worry; all the expected elements will eventually be returned, as long as the iteration is continued until the `next_cursor` is `null`.\n"
+    limit: int = null
+
+    "Cursor defining the next elements to fetch.\n\n| `cursor`       | Next element is    |\n|----------------|--------------------|\n| not provided   | First              |\n| `null`         | First              |\n| `\"MA==\"` (`*`) | First after Cursor |\n\n`*`: Placeholder for the cursor returned by the previous iteration.\n"
+    cursor: Cursor = null
+  ): ITSystem
+
   "Facet of this class's upmost parent.\n\nThe result of following `parent` until `parent` becomes `null`, then calling `facet`.\n\nAlmost always the same as `facet` as class hierarchies are rare.\nCurrently mostly used to describe (trade) union hierachies.\n"
   top_level_facet: Facet! @deprecated(reason: "Will be removed in a future version of GraphQL.\nWill either be replaced by client-side recursion, an ancestor field or a recursive schema directive.\nFor now client-side recursion is the preferred replacement.\n")
 
@@ -645,6 +713,9 @@ type Class {
 
   """UUID of the employee related to the address."""
   parent_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `parent {uuid}` instead.\n")
+
+  """The IT-System associated with the class."""
+  it_system_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `it_system {uuid}` instead.\n")
 
   """Owner of class"""
   owner: UUID
@@ -683,6 +754,9 @@ input ClassCreateInput {
 
   """Validity range for the class."""
   validity: ValidityInput!
+
+  """UUID of the associated IT-system."""
+  it_system_uuid: UUID = null
 }
 
 """Class filter."""
@@ -699,17 +773,44 @@ input ClassFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Registration filter limiting which entries are returned.\n"
+  registration: ClassRegistrationFilter = null
+
+  "Facet filter limiting which entries are returned.\n"
+  facet: FacetFilter = null
+
   "Facet UUID filter limiting which entries are returned.\n\n| `facets`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  facets: [UUID!] = null
+  facets: [UUID!] = null @deprecated(reason: "Replaced by the 'facet' filter")
 
   "Facet user-key filter limiting which entries are returned.\n\n| `facet_user_keys`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  facet_user_keys: [String!] = null
+  facet_user_keys: [String!] = null @deprecated(reason: "Replaced by the 'facet' filter")
+
+  "Parent filter limiting which entries are returned.\n"
+  parent: ClassFilter = null
 
   "Parent UUID filter limiting which entries are returned.\n\n| `parents`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  parents: [UUID!] = null
+  parents: [UUID!] = null @deprecated(reason: "Replaced by the 'parent' filter")
 
   "Parent user-key filter limiting which entries are returned.\n\n| `parent_user_keys`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  parent_user_keys: [String!] = null
+  parent_user_keys: [String!] = null @deprecated(reason: "Replaced by the 'parent' filter")
+
+  "IT-System filter limiting which entries are returned.\n"
+  it_system: ITSystemFilter = null
+
+  "Scope filter limiting which entries are returned.\n\n| `scope`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  scope: [String!] = null
+}
+
+"""Class registration filter."""
+input ClassRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -785,6 +886,9 @@ input ClassUpdateInput {
 
   """Validity range for the class."""
   validity: ValidityInput!
+
+  """UUID of the associated IT-system."""
+  it_system_uuid: UUID = null
 }
 
 """A configuration setting."""
@@ -1024,8 +1128,26 @@ input EmployeeFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Registration filter limiting which entries are returned.\n"
+  registration: EmployeeRegistrationFilter = null
+
+  "Free text search.\n\nDoes best effort lookup to find entities matching the query string.\nNo quarantees are given w.r.t. the entries returned.\n"
+  query: String
+
   "CPR number filter limiting which entries are returned.\n\n| `cpr_numbers`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
   cpr_numbers: [CPR!] = null
+}
+
+"""Employee registration filter."""
+input EmployeeRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -1069,6 +1191,9 @@ input EmployeeTerminateInput {
 
   """UUID for the employee we want to terminate."""
   uuid: UUID!
+
+  """Mark related manager functions as vacated"""
+  vacate: Boolean! = false
 }
 
 input EmployeeUpdateInput {
@@ -1103,66 +1228,93 @@ input EmployeeUpdateInput {
 }
 
 input EmployeesBoundAddressFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: AddressRegistrationFilter = null
+  address_type: ClassFilter = null
   address_types: [UUID!] = null
   address_type_user_keys: [String!] = null
+  engagement: EngagementFilter = null
   engagements: [UUID!] = null
-  org_units: [UUID!] = null
 }
 
 input EmployeesBoundAssociationFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  org_units: [UUID!] = null
+  registration: AssociationRegistrationFilter = null
+  association_type: ClassFilter = null
   association_types: [UUID!] = null
   association_type_user_keys: [String!] = null
   it_association: Boolean = null
 }
 
 input EmployeesBoundEngagementFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  org_units: [UUID!] = null
+  registration: EngagementRegistrationFilter = null
+  job_function: ClassFilter = null
 }
 
 input EmployeesBoundITUserFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  org_units: [UUID!] = null
+  registration: ITUserRegistrationFilter = null
+  itsystem: ITSystemFilter = null
   itsystem_uuids: [UUID!] = null
 }
 
 input EmployeesBoundLeaveFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  org_units: [UUID!] = null
+  registration: LeaveRegistrationFilter = null
 }
 
 input EmployeesBoundManagerFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  org_units: [UUID!] = null
+  registration: ManagerRegistrationFilter = null
+  responsibility: ClassFilter = null
 }
 
 input EmployeesBoundRoleFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  org_units: [UUID!] = null
+  registration: RoleRegistrationFilter = null
 }
 
 """Employee engagement in an organisation unit"""
@@ -1274,6 +1426,9 @@ type Engagement {
   """UUID of the primary klasse of the engagement."""
   primary_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `primary {uuid}` instead.\n")
 
+  "Same as engagement_type, but with HACKs to enable validities.\n"
+  engagement_type_validity: Class @deprecated(reason: "Should only be used to query engagement_type when validity dates have been specified, \"\n\"ex from_date & to_date.\"\n\"Will be removed when sub-query date handling is implemented.\n")
+
   """Validity of the engagement object."""
   validity: Validity!
 
@@ -1382,11 +1537,35 @@ input EngagementFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: EngagementRegistrationFilter = null
+
+  "Job function filter limiting which entries are returned.\n"
+  job_function: ClassFilter = null
+}
+
+"""Engagement registration filter."""
+input EngagementRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -1576,11 +1755,29 @@ input FacetFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Registration filter limiting which entries are returned.\n"
+  registration: FacetRegistrationFilter = null
+
+  "Parent filter limiting which entries are returned.\n"
+  parent: FacetFilter = null
+
   "Parent UUID filter limiting which entries are returned.\n\n| `parents`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  parents: [UUID!] = null
+  parents: [UUID!] = null @deprecated(reason: "Replaced by the 'parent' filter")
 
   "Parent user-key filter limiting which entries are returned.\n\n| `parent_user_keys`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  parent_user_keys: [String!] = null
+  parent_user_keys: [String!] = null @deprecated(reason: "Replaced by the 'parent' filter")
+}
+
+"""Facet registration filter."""
+input FacetRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -1645,9 +1842,14 @@ input FacetsBoundClassFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: ClassRegistrationFilter = null
+  facet: FacetFilter = null
   facet_user_keys: [String!] = null
+  parent: ClassFilter = null
   parents: [UUID!] = null
   parent_user_keys: [String!] = null
+  it_system: ITSystemFilter = null
+  scope: [String!] = null
 }
 
 """A stored file available for download."""
@@ -1820,6 +2022,21 @@ input ITSystemFilter {
 
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: ITSystemRegistrationFilter = null
+}
+
+"""ITSystem registration filter."""
+input ITSystemRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -1967,6 +2184,9 @@ type ITUser {
   """UUID of the primary klasse of the user."""
   primary_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `primary {uuid}` instead.\n")
 
+  "Same as itsystem, but with HACKs to enable validities.\n"
+  itsystem_validity: ITSystem! @deprecated(reason: "Should only be used to query itsystem when validity dates have been specified, \"\n\"ex from_date & to_date.\"\n\"Will be removed when sub-query date handling is implemented.\n")
+
   """Validity of the IT user object."""
   validity: Validity!
 }
@@ -2011,14 +2231,38 @@ input ITUserFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: ITUserRegistrationFilter = null
+
+  "ITSystem filter limiting which entries are returned.\n"
+  itsystem: ITSystemFilter = null
 
   "Only return IT users of ITSystem with these UUIDs filter limiting which entries are returned.\n\n| `itsystem_uuids`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  itsystem_uuids: [UUID!] = null
+  itsystem_uuids: [UUID!] = null @deprecated(reason: "Replaced by the 'itsystem' filter")
+}
+
+"""ITUser registration filter."""
+input ITUserRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -2181,8 +2425,26 @@ input KLEFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
+
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: KLERegistrationFilter = null
+}
+
+"""KLE registration filter."""
+input KLERegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -2320,6 +2582,9 @@ input LeaveCreateInput {
   """UUID to be created. Will be autogenerated if not specified."""
   uuid: UUID = null
 
+  """Extra info or uuid."""
+  user_key: String = null
+
   """UUID of the person."""
   person: UUID!
 
@@ -2347,11 +2612,32 @@ input LeaveFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: LeaveRegistrationFilter = null
+}
+
+"""Leave registration filter."""
+input LeaveRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -2400,6 +2686,9 @@ input LeaveTerminateInput {
 input LeaveUpdateInput {
   """UUID of the leave."""
   uuid: UUID!
+
+  """Extra info or uuid."""
+  user_key: String = null
 
   """UUID of the person."""
   person: UUID = null
@@ -2550,11 +2839,35 @@ input ManagerFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: ManagerRegistrationFilter = null
+
+  "Responsibility filter limiting which entries are returned.\n"
+  responsibility: ClassFilter = null
+}
+
+"""Manager registration filter."""
+input ManagerRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -2922,6 +3235,15 @@ type Mutation {
     queue: String = null
   ): UUIDPaged!
 
+  """Creates an owner."""
+  owner_create(input: OwnerCreateInput!): OwnerResponse!
+
+  """Updates an owner."""
+  owner_update(input: OwnerUpdateInput!): OwnerResponse!
+
+  """Terminates an owner."""
+  owner_terminate(input: OwnerTerminateInput!): OwnerResponse!
+
   """Refresh owners."""
   owner_refresh(
     filter: OwnerFilter = null
@@ -2993,68 +3315,94 @@ type OpenValidity {
 }
 
 input OrgUnitsboundaddressfilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: AddressRegistrationFilter = null
+  address_type: ClassFilter = null
   address_types: [UUID!] = null
   address_type_user_keys: [String!] = null
-  employees: [UUID!] = null
+  engagement: EngagementFilter = null
   engagements: [UUID!] = null
 }
 
 input OrgUnitsboundassociationfilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
+  registration: AssociationRegistrationFilter = null
+  association_type: ClassFilter = null
   association_types: [UUID!] = null
   association_type_user_keys: [String!] = null
   it_association: Boolean = null
 }
 
 input OrgUnitsboundengagementfilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
+  registration: EngagementRegistrationFilter = null
+  job_function: ClassFilter = null
 }
 
 input OrgUnitsboundituserfilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
+  registration: ITUserRegistrationFilter = null
+  itsystem: ITSystemFilter = null
   itsystem_uuids: [UUID!] = null
 }
 
 input OrgUnitsboundklefilter {
+  org_unit: OrganisationUnitFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: KLERegistrationFilter = null
 }
 
 input OrgUnitsboundleavefilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
+  registration: LeaveRegistrationFilter = null
 }
 
 input OrgUnitsboundownerfilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
+  owner: EmployeeFilter = null
 }
 
 input OrgUnitsboundrelatedunitfilter {
+  org_unit: OrganisationUnitFilter = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
@@ -3062,11 +3410,14 @@ input OrgUnitsboundrelatedunitfilter {
 }
 
 input OrgUnitsboundrolefilter {
+  org_unit: OrganisationUnitFilter = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   uuids: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
+  registration: RoleRegistrationFilter = null
 }
 
 """Root organisation - one and only one of these can exist"""
@@ -3287,6 +3638,8 @@ type OrganisationUnit {
 
   "Managerial roles for the organisation unit.\n\nMay be empty in which case managers are usually inherited from parents.\nSee the `inherit`-flag for details.\n"
   managers(
+    filter: ManagerFilter = null
+
     "Whether to inherit managerial roles or not.\n\nIf managerial roles exist directly on this organisation unit, the flag does nothing and these managerial roles are returned.\nHowever if no managerial roles exist directly, and this flag is:\n* Not set: An empty list is returned.\n* Is set: The result from calling `managers` with `inherit=True` on the parent of this organistion unit is returned.\n\nCalling with `inherit=True` can help ensure that a manager is always found.\n"
     inherit: Boolean! = false
   ): [Manager!]!
@@ -3365,11 +3718,35 @@ input OrganisationUnitFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Registration filter limiting which entries are returned.\n"
+  registration: OrganisationUnitRegistrationFilter = null
+
+  "Free text search.\n\nDoes best effort lookup to find entities matching the query string.\nNo quarantees are given w.r.t. the entries returned.\n"
+  query: String
+
+  "Parent filter limiting which entries are returned.\n\nSet to `None` to find root units.\n"
+  parent: OrganisationUnitFilter
+
   "Parent UUID filter limiting which entries are returned.\n\n| `parents`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  parents: [UUID!]
+  parents: [UUID!] @deprecated(reason: "Replaced by the 'parent' filter")
+
+  "Hierarchy filter limiting which entries are returned.\n\nFilter organisation units by their organisational hierarchy labels.\n\nCan be used to extract a subset of the organisational structure.\n\nExamples of user-keys:\n* `\"Line-management\"`\n* `\"Self-owned institution\"`\n* `\"Outside organisation\"`\n* `\"Hidden\"`\n\nNote:\nThe organisation-gatekeeper integration is one option to keep hierarchy labels up-to-date.\n"
+  hierarchy: ClassFilter = null
 
   "Filter organisation units by their organisational hierarchy labels.\n\nCan be used to extract a subset of the organisational structure.\n\nExamples of user-keys:\n* `\"Line-management\"`\n* `\"Self-owned institution\"`\n* `\"Outside organisation\"`\n* `\"Hidden\"`\n\nNote:\nThe organisation-gatekeeper integration is one option to keep hierarchy labels up-to-date.\n\n| `hierarchies`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  hierarchies: [UUID!] = null
+  hierarchies: [UUID!] = null @deprecated(reason: "Replaced by the 'hierarchy' filter")
+}
+
+"""OrganisationUnit registration filter."""
+input OrganisationUnitRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -3444,8 +3821,41 @@ input OrganisationUnitUpdateInput {
   time_planning: UUID = null
 }
 
-"\nOwner of organisation units and their connected identities.\n"
+"\nOwner of organisation units/employees and their connected identities.\n"
 type Owner {
+  "The owned organisation unit.\n\nNote:\nThis field is mutually exclusive with the `employee` field.\n\n**Warning**:\nThis field will probably become an optional entity instead of a list in the future.\n"
+  org_unit(
+    filter: UuidsBoundOrganisationUnitFilter
+
+    "\nLimit the maximum number of elements to fetch.\n\n| `limit`      | \\# elements fetched |\n|--------------|---------------------|\n| not provided | All                 |\n| `null`       | All                 |\n| `0`          | `0` (`*`)           |\n| `x`          | Between `0` and `x` |\n\n`*`: This behavior is equivalent to SQL's `LIMIT 0` behavior.\n\nNote:\n\nSometimes the caller may receieve a shorter list (or even an empty list) of results compared to the expected per the limit argument.\n\nThis may seem confusing, but it is the expected behavior given the way that limiting is implemented in the bitemporal database layer, combined with how filtering and object change consolidation is handled.\n\nNot to worry; all the expected elements will eventually be returned, as long as the iteration is continued until the `next_cursor` is `null`.\n"
+    limit: int = null
+
+    "Cursor defining the next elements to fetch.\n\n| `cursor`       | Next element is    |\n|----------------|--------------------|\n| not provided   | First              |\n| `null`         | First              |\n| `\"MA==\"` (`*`) | First after Cursor |\n\n`*`: Placeholder for the cursor returned by the previous iteration.\n"
+    cursor: Cursor = null
+  ): [OrganisationUnit!]
+
+  "The owned person.\n\nNote:\nThis field is mutually exclusive with the `org_unit` field.\n\n**Warning**:\nThis field will probably become an optional entity instead of a list in the future.\n"
+  person(
+    filter: UuidsBoundEmployeeFilter
+
+    "\nLimit the maximum number of elements to fetch.\n\n| `limit`      | \\# elements fetched |\n|--------------|---------------------|\n| not provided | All                 |\n| `null`       | All                 |\n| `0`          | `0` (`*`)           |\n| `x`          | Between `0` and `x` |\n\n`*`: This behavior is equivalent to SQL's `LIMIT 0` behavior.\n\nNote:\n\nSometimes the caller may receieve a shorter list (or even an empty list) of results compared to the expected per the limit argument.\n\nThis may seem confusing, but it is the expected behavior given the way that limiting is implemented in the bitemporal database layer, combined with how filtering and object change consolidation is handled.\n\nNot to worry; all the expected elements will eventually be returned, as long as the iteration is continued until the `next_cursor` is `null`.\n"
+    limit: int = null
+
+    "Cursor defining the next elements to fetch.\n\n| `cursor`       | Next element is    |\n|----------------|--------------------|\n| not provided   | First              |\n| `null`         | First              |\n| `\"MA==\"` (`*`) | First after Cursor |\n\n`*`: Placeholder for the cursor returned by the previous iteration.\n"
+    cursor: Cursor = null
+  ): [Employee!]
+
+  "Owner of the connected person or organisation unit.\n\n**Warning**:\nThis field will probably become an optional entity instead of a list in the future.\n"
+  owner(
+    filter: UuidsBoundEmployeeFilter
+
+    "\nLimit the maximum number of elements to fetch.\n\n| `limit`      | \\# elements fetched |\n|--------------|---------------------|\n| not provided | All                 |\n| `null`       | All                 |\n| `0`          | `0` (`*`)           |\n| `x`          | Between `0` and `x` |\n\n`*`: This behavior is equivalent to SQL's `LIMIT 0` behavior.\n\nNote:\n\nSometimes the caller may receieve a shorter list (or even an empty list) of results compared to the expected per the limit argument.\n\nThis may seem confusing, but it is the expected behavior given the way that limiting is implemented in the bitemporal database layer, combined with how filtering and object change consolidation is handled.\n\nNot to worry; all the expected elements will eventually be returned, as long as the iteration is continued until the `next_cursor` is `null`.\n"
+    limit: int = null
+
+    "Cursor defining the next elements to fetch.\n\n| `cursor`       | Next element is    |\n|----------------|--------------------|\n| not provided   | First              |\n| `null`         | First              |\n| `\"MA==\"` (`*`) | First after Cursor |\n\n`*`: Placeholder for the cursor returned by the previous iteration.\n"
+    cursor: Cursor = null
+  ): [Employee!]
+
   "\nThe object type.\n\nAlways contains the string `owner`.\n"
   type: String! @deprecated(reason: "\nUnintentionally exposed implementation detail.\nProvides no value whatsoever.\n")
 
@@ -3458,11 +3868,44 @@ type Owner {
   """UUID of the employee related to the owner."""
   employee_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `employee {uuid}` instead.\n")
 
+  """UUID of the owner."""
+  owner_uuid: UUID @deprecated(reason: "Will be removed in a future version of GraphQL.\nUse `owner {uuid}` instead.\n")
+
   """Short, unique key. Defaults to object UUID."""
   user_key: String!
 
   """Validity of the owner object."""
   validity: Validity!
+
+  """
+  Inference priority, if set: `engagement_priority` or `association_priority`
+  """
+  owner_inference_priority: OwnerInferencePriority
+}
+
+input OwnerCreateInput {
+  """UUID to be created. Will be autogenerated if not specified."""
+  uuid: UUID = null
+
+  """Extra info or uuid."""
+  user_key: String = null
+
+  """UUID of the org unit"""
+  org_unit: UUID = null
+
+  """UUID of the person"""
+  person: UUID = null
+
+  """UUID of the owner"""
+  owner: UUID = null
+
+  """
+  Inference priority, if set: `engagement_priority` or `association_priority`
+  """
+  inference_priority: OwnerInferencePriority = null
+
+  """Validity range for the owner."""
+  validity: RAValidityInput!
 }
 
 """Owner filter."""
@@ -3479,11 +3922,29 @@ input OwnerFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Owner filter limiting which entries are returned.\n"
+  owner: EmployeeFilter = null
+}
+
+"Enum for the supported inference priorities.\n"
+enum OwnerInferencePriority {
+  "The engagement priority.\n"
+  ENGAGEMENT
+
+  "The association priority.\n"
+  ASSOCIATION
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -3518,6 +3979,42 @@ type OwnerResponsePaged {
   page_info: PageInfo!
 }
 
+input OwnerTerminateInput {
+  """Start date of the validity."""
+  from: DateTime = null
+
+  """When the validity should end - required when terminating"""
+  to: DateTime!
+
+  """UUID of the owner we want to terminate."""
+  uuid: UUID!
+}
+
+input OwnerUpdateInput {
+  """UUID of the owner to be updated."""
+  uuid: UUID!
+
+  """Extra info or uuid."""
+  user_key: String = null
+
+  """UUID of the org unit"""
+  org_unit: UUID = null
+
+  """UUID of the person"""
+  person: UUID = null
+
+  """UUID of the owner"""
+  owner: UUID = null
+
+  """
+  Inference priority, if set: `engagement_priority` or `association_priority`
+  """
+  inference_priority: OwnerInferencePriority = null
+
+  """Validity range for the owner."""
+  validity: RAValidityInput!
+}
+
 "Container for page information.\n\nContains the cursors necessary to fetch other pages.\nContains information on when to stop iteration.\n"
 type PageInfo {
   "Cursor for the next page of results.\n\nShould be provided to the `cursor` argument to iterate forwards.\n"
@@ -3529,9 +4026,14 @@ input ParentsBoundClassFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: ClassRegistrationFilter = null
+  facet: FacetFilter = null
   facets: [UUID!] = null
   facet_user_keys: [String!] = null
+  parent: ClassFilter = null
   parent_user_keys: [String!] = null
+  it_system: ITSystemFilter = null
+  scope: [String!] = null
 }
 
 input ParentsBoundFacetFilter {
@@ -3539,6 +4041,8 @@ input ParentsBoundFacetFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: FacetRegistrationFilter = null
+  parent: FacetFilter = null
   parent_user_keys: [String!] = null
 }
 
@@ -3547,6 +4051,10 @@ input ParentsBoundOrganisationUnitFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: OrganisationUnitRegistrationFilter = null
+  query: String
+  parent: OrganisationUnitFilter
+  hierarchy: ClassFilter = null
   hierarchies: [UUID!] = null
 }
 
@@ -3886,8 +4394,11 @@ input RelatedUnitFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
+
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -4042,11 +4553,32 @@ input RoleFilter {
   """Limit the elements returned by their ending validity."""
   to_date: DateTime
 
+  "Employee filter limiting which entries are returned.\n"
+  employee: EmployeeFilter = null
+
   "Employee UUID filter limiting which entries are returned.\n\n| `employees`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  employees: [UUID!] = null
+  employees: [UUID!] = null @deprecated(reason: "Replaced by the 'employee' filter")
+
+  "Organisation Unit filter limiting which entries are returned.\n"
+  org_unit: OrganisationUnitFilter = null
 
   "Organisational Unit UUID filter limiting which entries are returned.\n\n| `org_units`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
-  org_units: [UUID!] = null
+  org_units: [UUID!] = null @deprecated(reason: "Replaced by the 'org_unit' filter")
+
+  "Registration filter limiting which entries are returned.\n"
+  registration: RoleRegistrationFilter = null
+}
+
+"""Role registration filter."""
+input RoleRegistrationFilter {
+  "Filter registrations by their changing actor.\n\nCan be used to select all changes made by a particular user or integration.\n\n| `actors`      | Elements returned                            |\n|--------------|----------------------------------------------|\n| not provided | All                                          |\n| `null`       | All                                          |\n| `[]`         | None                                         |\n| `\"x\"`        | `[\"x\"]` or `[]` (`*`)                        |\n| `[\"x\", \"y\"]` | `[\"x\", \"y\"]`, `[\"x\"]`, `[\"y\"]` or `[]` (`*`) |\n\n`*`: Elements returned depends on which elements were found.\n"
+  actors: [UUID!] = null
+
+  """Limit the elements returned by their starting validity."""
+  start: DateTime = null
+
+  """Limit the elements returned by their ending validity."""
+  end: DateTime = null
 }
 
 "Top-level container for (bi)-temporal and actual state data access.\n\nContains a UUID uniquely denoting the bitemporal object.\n\nContains three different object temporality axis:\n\n| entrypoint      | temporal axis | validity time | assertion time |\n|-----------------|---------------|---------------|----------------|\n| `current`       | actual state  | current       | current        |\n| `objects`       | temporal      | varying       | current        |\n| `registrations` | bitemporal    | varying       | varying        |\n\nThe argument for having three different entrypoints into the data is limiting complexity according to use-case.\n\nThat is, if a certain integration or UI only needs, say, actual state data, the complexities of the bitemporal data modelling is unwanted complexity, and as such, better left out.\n"
@@ -4126,31 +4658,44 @@ input UuidsBoundClassFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: ClassRegistrationFilter = null
+  facet: FacetFilter = null
   facets: [UUID!] = null
   facet_user_keys: [String!] = null
+  parent: ClassFilter = null
   parents: [UUID!] = null
   parent_user_keys: [String!] = null
+  it_system: ITSystemFilter = null
+  scope: [String!] = null
 }
 
 input UuidsBoundEmployeeFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: EmployeeRegistrationFilter = null
+  query: String
   cpr_numbers: [CPR!] = null
 }
 
 input UuidsBoundEngagementFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
-  org_units: [UUID!] = null
+  registration: EngagementRegistrationFilter = null
+  job_function: ClassFilter = null
 }
 
 input UuidsBoundFacetFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: FacetRegistrationFilter = null
+  parent: FacetFilter = null
   parents: [UUID!] = null
   parent_user_keys: [String!] = null
 }
@@ -4159,30 +4704,42 @@ input UuidsBoundITSystemFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: ITSystemRegistrationFilter = null
 }
 
 input UuidsBoundITUserFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
-  org_units: [UUID!] = null
+  registration: ITUserRegistrationFilter = null
+  itsystem: ITSystemFilter = null
   itsystem_uuids: [UUID!] = null
 }
 
 input UuidsBoundLeaveFilter {
+  org_unit: OrganisationUnitFilter = null
+  org_units: [UUID!] = null
+  employee: EmployeeFilter = null
+  employees: [UUID!] = null
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
-  employees: [UUID!] = null
-  org_units: [UUID!] = null
+  registration: LeaveRegistrationFilter = null
 }
 
 input UuidsBoundOrganisationUnitFilter {
   user_keys: [String!] = null
   from_date: DateTime
   to_date: DateTime
+  registration: OrganisationUnitRegistrationFilter = null
+  query: String
+  parent: OrganisationUnitFilter
   parents: [UUID!]
+  hierarchy: ClassFilter = null
   hierarchies: [UUID!] = null
 }
 
