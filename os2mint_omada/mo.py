@@ -125,7 +125,7 @@ class MO:
               engagements(filter: {user_keys: $user_keys, from_date: null, to_date: null}) {
                 objects {
                   objects {
-                    person {
+                    person(filter: {from_date: null, to_date: null}) {
                       uuid
                     }
                   }
@@ -285,19 +285,25 @@ class MO:
               employees(filter: {uuids: $employee_uuids, from_date: null, to_date: null}) {
                 objects {
                   objects {
-                    addresses(filter: {address_types: $address_types}) {
+                    addresses(
+                      filter: {
+                        address_types: $address_types,
+                        from_date: null,
+                        to_date: null
+                      }
+                    ) {
                       uuid
                       value
-                      address_type {
+                      address_type(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      person {
+                      person(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      engagement {
+                      engagement(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      visibility {
+                      visibility(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
                       validity {
@@ -351,22 +357,22 @@ class MO:
               employees(filter: {uuids: $employee_uuids, from_date: null, to_date: null}) {
                 objects {
                   objects {
-                    engagements {
+                    engagements(filter: {from_date: null, to_date: null}) {
                       uuid
                       user_key
-                      org_unit {
+                      org_unit(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      person {
+                      person(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      job_function {
+                      job_function(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      engagement_type {
+                      engagement_type(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      primary {
+                      primary(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
                       validity {
@@ -422,16 +428,16 @@ class MO:
               employees(filter: {uuids: $employee_uuids, from_date: null, to_date: null}) {
                 objects {
                   objects {
-                    itusers {
+                    itusers(filter: {from_date: null, to_date: null}) {
                       uuid
                       user_key
-                      itsystem {
+                      itsystem(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      person {
+                      person(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
-                      engagement {
+                      engagement(filter: {from_date: null, to_date: null}) {
                         uuid
                       }
                       validity {
@@ -487,7 +493,7 @@ class MO:
               itusers(filter: {user_keys: $user_keys, from_date: null, to_date: null}) {
                 objects {
                   objects {
-                    org_unit {
+                    org_unit(filter: {from_date: null, to_date: null}) {
                       uuid
                     }
                   }

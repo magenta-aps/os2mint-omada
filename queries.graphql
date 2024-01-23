@@ -16,16 +16,16 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
         }
         engagements(filter: {from_date: null, to_date: null}) {
           user_key
-          org_unit {
+          org_unit(filter: {from_date: null, to_date: null}) {
             user_key
           }
-          job_function {
+          job_function(filter: {from_date: null, to_date: null}) {
             user_key
           }
-          engagement_type {
+          engagement_type(filter: {from_date: null, to_date: null}) {
             user_key
           }
-          primary {
+          primary(filter: {from_date: null, to_date: null}) {
             user_key
           }
           validity {
@@ -35,13 +35,13 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
         }
         addresses(filter: {from_date: null, to_date: null}) {
           value
-          address_type {
+          address_type(filter: {from_date: null, to_date: null}) {
             user_key
           }
-          engagement {
+          engagement(filter: {from_date: null, to_date: null}) {
             user_key
           }
-          visibility {
+          visibility(filter: {from_date: null, to_date: null}) {
             user_key
           }
           validity {
@@ -51,10 +51,10 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
         }
         itusers(filter: {from_date: null, to_date: null}) {
           user_key
-          itsystem {
+          itsystem(filter: {from_date: null, to_date: null}) {
             user_key
           }
-          engagement {
+          engagement(filter: {from_date: null, to_date: null}) {
             user_key
           }
           validity {

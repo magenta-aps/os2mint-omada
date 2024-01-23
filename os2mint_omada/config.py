@@ -48,7 +48,7 @@ class OmadaSettings(BaseModel):
 
 
 class FastRAMQPISettings(_FastRAMQPISettings):
-    mo_graphql_version: PositiveInt = 19
+    mo_graphql_version: PositiveInt = 21
 
 
 class Settings(BaseSettings):
