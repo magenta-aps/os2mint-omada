@@ -24,7 +24,7 @@ RUN python -m venv $VIRTUAL_ENV
 COPY pyproject.toml poetry.lock* ./
 RUN poetry install --no-root
 
-COPY . ./
+COPY os2mint_omada ./os2mint_omada
 
 VOLUME ["/data/"]
 

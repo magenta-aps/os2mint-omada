@@ -113,7 +113,7 @@ async def sync_engagements(
         list[ManualEgedalOmadaUser | EgedalOmadaUser], raw_omada_users
     )
     manual_omada_users = [
-        u for u in omada_users if isinstance(u, ManualEgedalOmadaUser)
+        u for u in omada_users if isinstance(u, ManualEgedalOmadaUser) and u.is_manual
     ]
 
     # Get MO classes configuration
