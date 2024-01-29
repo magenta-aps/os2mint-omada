@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import pytest
+from pydantic import ValidationError
 
 from os2mint_omada.sync.frederikshavn.models import FrederikshavnOmadaUser
 
@@ -100,6 +101,13 @@ def frederikshavn_omada_user() -> dict:
 def test_parse_user(frederikshavn_omada_user: dict) -> None:
     """Test parsing of a user."""
     assert FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
+
+
+def test_cpr_number_validation(frederikshavn_omada_user: dict) -> None:
+    """Test CPR-number validation."""
+    frederikshavn_omada_user["C_CPRNUMBER"] = "1234567890"
+    with pytest.raises(ValidationError):
+        FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
 
 
 def test_strip_cpr_dash(frederikshavn_omada_user: dict) -> None:

@@ -39,7 +39,12 @@ class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     # Employee
     first_name: str = Field(alias="C_FORNAVNE")
     last_name: str = Field(alias="LASTNAME")
-    cpr_number: str = Field(alias="C_CPRNR", min_length=10, max_length=10)
+    cpr_number: str = Field(
+        alias="C_CPRNR",
+        min_length=10,
+        max_length=10,
+        regex=r"(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[0-2])(\d{2})(\d{4})",
+    )
 
     # Engagement
     job_title: str | None = Field(alias="JOBTITLE")

@@ -1,5 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from typing import Any
+
 from pydantic import Field
 from pydantic import validator
 
@@ -12,8 +14,12 @@ class FrederikshavnOmadaUser(OmadaUser):
     # Employee
     first_name: str = Field(alias="FIRSTNAME")
     last_name: str = Field(alias="LASTNAME")
-    # We allow CPR-numbers of length 10 or 11 to support both with and without dash
-    cpr_number: str = Field(alias="C_CPRNUMBER", min_length=10, max_length=11)
+    cpr_number: str = Field(
+        alias="C_CPRNUMBER",
+        min_length=10,
+        max_length=10,
+        regex=r"(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[0-2])(\d{2})(\d{4})",
+    )
 
     # Engagement
     employee_number: str = Field(alias="C_MEDARBEJDERNR_ODATA")
@@ -28,9 +34,11 @@ class FrederikshavnOmadaUser(OmadaUser):
     phone: str | None = Field(alias="C_TELEPHONENUMBER")
     cellphone: str | None = Field(alias="CELLPHONE")
 
-    @validator("cpr_number")
-    def strip_cpr_dash(cls, cpr_number: str) -> str:
+    @validator("cpr_number", pre=True)
+    def strip_cpr_dash(cls, cpr_number: Any) -> str:
         """Strip dashes from CPR, e.g. "xxxxxx-xxxx", to be MO-compatible."""
+        if not isinstance(cpr_number, str):
+            raise ValueError("CPR number not a string")
         return cpr_number.replace("-", "")
 
     @validator("org_unit")
