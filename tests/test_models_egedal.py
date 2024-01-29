@@ -3,6 +3,7 @@
 from uuid import UUID
 
 import pytest
+from pydantic import ValidationError
 
 from os2mint_omada.sync.egedal.models import EgedalOmadaEmployment
 from os2mint_omada.sync.egedal.models import EgedalOmadaUser
@@ -90,6 +91,13 @@ def test_parse_user(egedal_omada_user: dict) -> None:
     omada_user = EgedalOmadaUser.parse_obj(egedal_omada_user)
     assert omada_user.is_manual is False
     assert omada_user.ad_guid == UUID("d6d27790-3a3d-4769-87bc-961484b3ba39")
+
+
+def test_cpr_number_validation(egedal_omada_user: dict) -> None:
+    """Test CPR-number validation."""
+    egedal_omada_user["C_EMPLOYEEID"] = "1234567890"
+    with pytest.raises(ValidationError):
+        EgedalOmadaUser.parse_obj(egedal_omada_user)
 
 
 def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:

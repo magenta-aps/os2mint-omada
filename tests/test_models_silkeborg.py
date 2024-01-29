@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import pytest
+from pydantic import ValidationError
 
 from os2mint_omada.sync.silkeborg.models import ManualSilkeborgOmadaUser
 from os2mint_omada.sync.silkeborg.models import SilkeborgOmadaUser
@@ -284,3 +285,10 @@ def test_parse_manual_user(manual_silkeborg_omada_user: dict) -> None:
     """Test parsing of a manual user."""
     omada_user = ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)
     assert omada_user.is_manual is True
+
+
+def test_cpr_number_validation(manual_silkeborg_omada_user: dict) -> None:
+    """Test CPR-number validation."""
+    manual_silkeborg_omada_user["C_CPRNR"] = "1234567890"
+    with pytest.raises(ValidationError):
+        ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)
