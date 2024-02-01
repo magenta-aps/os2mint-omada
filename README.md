@@ -54,6 +54,11 @@ or a subset of users:
 curl -X POST --get 'http://localhost:9000/sync/omada' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
 ```
 
+The following can be used to retrieve a list of users from the Omada API:
+```
+curl --get 'http://localhost:9000/get-users' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
+```
+
 ## Versioning
 This project uses [Semantic Versioning](https://semver.org/) with the following
 strategy:
