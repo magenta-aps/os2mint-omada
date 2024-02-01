@@ -28,13 +28,9 @@ Configuration is done through environment variables. Available options can be
 seen in [os2mint_omada/config.py]. Complex variables such as dict or lists can
 be given as JSON strings, as specified by Pydantic's settings parser.
 
-The API can be viewed from the host through http://localhost:9000/.
-
 After the initial import of Omada users, it can be useful to force-synchronise
-information for already-existing MO users. This _could_ be handled by code in
-this integration (and was originally), but should probably be handled by a
-generic management script. The reader is highly encouraged to develop and link
-such program here.
+information for already-existing MO users. This can be done through OS2mo's
+`refresh` GraphQL mutators.
 
 **NOTE** that MO organisation units are not watched for changes, so manual Omada
 users, which should be inserted into a non-existent organisation unit will not
@@ -47,16 +43,16 @@ the `/sync/omada` endpoint can be used.
 The following command is useful to force-synchronise all users from the fake
 Omada API:
 ```
-curl -X POST 'http://localhost:9000/sync/omada'
+curl -X POST 'http://localhost:8000/sync/omada'
 ```
 or a subset of users:
 ```
-curl -X POST --get 'http://localhost:9000/sync/omada' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
+curl -X POST --get 'http://localhost:8000/sync/omada' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
 ```
 
 The following can be used to retrieve a list of users from the Omada API:
 ```
-curl --get 'http://localhost:9000/get-users' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
+curl --get 'http://localhost:8000/get-users' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
 ```
 
 ## Versioning
