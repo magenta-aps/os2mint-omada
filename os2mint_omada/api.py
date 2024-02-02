@@ -6,6 +6,7 @@ from starlette import status
 
 from os2mint_omada import depends
 from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.omada.models import RawOmadaUser
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
@@ -26,3 +27,12 @@ async def sync_omada(
             routing_key=Event.REFRESH,
             payload=raw_omada_user,
         )
+
+
+@router.get("/get-users")
+async def get_users(
+    omada_api: depends.OmadaAPI, omada_filter: str | None = None
+) -> list[RawOmadaUser]:
+    """Get Omada user(s) matching the given Omada filter."""
+    raw_omada_users = await omada_api.get_users(omada_filter)
+    return raw_omada_users
