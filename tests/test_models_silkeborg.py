@@ -292,3 +292,6 @@ def test_cpr_number_validation(manual_silkeborg_omada_user: dict) -> None:
     manual_silkeborg_omada_user["C_CPRNR"] = "1234567890"
     with pytest.raises(ValidationError):
         ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)
+    # Silkeborg also have users with fictive CPR numbers
+    manual_silkeborg_omada_user["C_CPRNR"] = "7606014214"
+    ManualSilkeborgOmadaUser.parse_obj(manual_silkeborg_omada_user)

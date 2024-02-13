@@ -9,6 +9,7 @@ from pydantic import root_validator
 from pydantic import validator
 
 from os2mint_omada.omada.models import OmadaUser
+from os2mint_omada.sync.models import CPR_ONLY_NORMAL_REGEX
 
 
 class EgedalOmadaEmployment(BaseModel):
@@ -60,7 +61,7 @@ class EgedalOmadaUser(OmadaUser):
         alias="C_EMPLOYEEID",
         min_length=10,
         max_length=10,
-        regex=r"(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[0-2])(\d{2})(\d{4})",
+        regex=CPR_ONLY_NORMAL_REGEX,
     )
     nickname_first_name: str | None = Field(alias="C_OIS_FIRSTNAME")
     nickname_last_name: str | None = Field(alias="C_OIS_LASTNAME")
