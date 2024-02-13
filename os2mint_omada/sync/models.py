@@ -50,3 +50,10 @@ class StripUserKeyMixin(BaseModel):
         if absent).
         """
         return None
+
+
+CPR_ONLY_NORMAL_REGEX = r"(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[0-2])(\d{2})(\d{4})"
+# https://statens-adm.dk/support/loensupport/brugervejledninger/fiktive-cpr-numre/
+CPR_INCL_FICTIVE_REGEX = (
+    r"([06][1-9]|[1278][0-9]|[39][01])(0[1-9]|1[0-2])(\d{2})(\d{4})"
+)
