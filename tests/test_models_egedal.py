@@ -73,7 +73,7 @@ def manual_egedal_omada_user() -> dict:
                 "UId": "7884a4f1-948c-460a-9cc7-47bdc031d841",
                 "KeyValue": None,
                 "KeyProperty": None,
-                "DisplayName": "Sygeplejerske||SYGEPLEJE||00001234;",
+                "DisplayName": "Sygeplejerske||SYGEPLEJE||48b3232a-f9ea-456c-9985-948b81935161;",
             },
         ],
         # Addresses
@@ -109,7 +109,10 @@ def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:
     assert omada_user.employments[0].employment_number == "1337"
     assert omada_user.employments[1].job_title == "Sygeplejerske"
     assert omada_user.employments[1].org_unit == "SYGEPLEJE"
-    assert omada_user.employments[1].employment_number == "1234"
+    assert (
+        omada_user.employments[1].employment_number
+        == "48b3232a-f9ea-456c-9985-948b81935161"
+    )
 
 
 @pytest.mark.parametrize(
@@ -140,9 +143,9 @@ def test_parse_manual_user(manual_egedal_omada_user: dict) -> None:
             },
         ),
         (
-            "Timelønnede vikarer||STENSK-ADM||00001234;",
+            "Timelønnede vikarer||STENSK-ADM||22280744-c1f5-400e-af42-5dfd20ea653e;",
             {
-                "employment_number": "1234",
+                "employment_number": "22280744-c1f5-400e-af42-5dfd20ea653e",
                 "job_title": "Timelønnede vikarer",
                 "org_unit": "STENSK-ADM",
             },

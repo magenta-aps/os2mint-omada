@@ -29,7 +29,7 @@ class EgedalOmadaEmployment(BaseModel):
         key, and '00012345' the employment number.
         """
         display_name = values["DisplayName"]
-        match = re.match(r"(.+)\|\|(.+)\|\|(\d+);", display_name)
+        match = re.match(r"(.+)\|\|(.+)\|\|(.+);", display_name)
         if not match:
             raise ValueError(f"Unable to parse {display_name=}")
         job_title, org_unit, employment_number = match.groups()
