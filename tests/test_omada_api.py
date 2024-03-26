@@ -3,11 +3,11 @@
 from typing import AsyncGenerator
 
 import pytest
+from fastramqpi.raclients.auth import AuthenticatedAsyncHTTPXClient
 from httpx import AsyncClient
 from httpx import Request
 from pydantic import AnyHttpUrl
 from pydantic import parse_obj_as
-from raclients.auth import AuthenticatedAsyncHTTPXClient
 from respx import MockRouter
 
 from os2mint_omada.config import OmadaBasicAuthSettings
