@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 
 import structlog
-from raclients.modelclient.mo import ModelClient
+from fastramqpi.raclients.modelclient.mo import ModelClient
+from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from ramodels.mo import Employee
-from ramqp.depends import handle_exclusively_decorator
 
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.event_generator import Event

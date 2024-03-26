@@ -8,14 +8,14 @@ from typing import cast
 from uuid import UUID
 
 import structlog
+from fastramqpi.raclients.modelclient.mo import ModelClient
+from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from pydantic import parse_obj_as
-from raclients.modelclient.mo import ModelClient
 from ramodels.mo._shared import AddressType
 from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
-from ramqp.depends import handle_exclusively_decorator
 
 from .models import FrederikshavnOmadaUser
 from os2mint_omada.mo import MO

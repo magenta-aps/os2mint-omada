@@ -8,11 +8,11 @@ from typing import Iterable
 from typing import Type
 
 import structlog
+from fastramqpi.raclients.auth import AuthenticatedAsyncHTTPXClient
 from httpx import AsyncClient
 from httpx import BasicAuth
 from more_itertools import flatten
 from pydantic import AnyHttpUrl
-from raclients.auth import AuthenticatedAsyncHTTPXClient
 
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.models import RawOmadaUser

@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: MPL-2.0
 import structlog
 from fastramqpi.depends import LegacyModelClient
+from fastramqpi.ramqp import Router
+from fastramqpi.ramqp.depends import PayloadBytes
+from fastramqpi.ramqp.depends import RateLimit
+from fastramqpi.ramqp.depends import RoutingKey
+from fastramqpi.ramqp.mo import MORouter
+from fastramqpi.ramqp.mo import PayloadType
 from pydantic import ValidationError
-from ramqp import Router
-from ramqp.depends import PayloadBytes
-from ramqp.depends import RateLimit
-from ramqp.depends import RoutingKey
-from ramqp.mo import MORouter
-from ramqp.mo import PayloadType
 
 from ... import depends
 from .address import sync_addresses
