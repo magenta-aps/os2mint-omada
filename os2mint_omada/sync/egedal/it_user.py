@@ -72,7 +72,9 @@ async def sync_it_users(
 
     # Get current user data from MO
     employee_states = await mo.get_employee_states(employee_uuid)
-    assert employee_states
+    if not employee_states:
+        logger.info("No employee states: nothing to do", employee_uuid=employee_uuid)
+        return
     cpr_number = only({e.cpr_no for e in employee_states})
 
     if cpr_number is None:
