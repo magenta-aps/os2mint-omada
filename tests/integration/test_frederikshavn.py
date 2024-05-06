@@ -254,7 +254,7 @@ async def test_frederikshavn(
 
 
 @pytest.mark.integration_test
-async def test_egedal_user_refresh(
+async def test_frederikshavn_user_refresh(
     omada_mock: Callable[[list], None],
     test_client: TestClient,
     graphql_client: GraphQLClient,
@@ -274,23 +274,21 @@ async def test_egedal_user_refresh(
     omada_user = {
         # Omada
         "Id": 666,
-        "UId": "df99d822-53eb-427d-b582-1bddb40e989b",
+        "UId": "ceed2021-44f4-43e6-a8b7-fac9f4569443",
         "VALIDFROM": "2006-06-06T00:00:00+01:00",
         "VALIDTO": "2012-12-12T00:00:00+01:00",
         "IDENTITYCATEGORY": {
-            "Id": 561,
-            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
-            "Value": "Contractor",
+            "Id": "1000245",
+            "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
         },
         # Employee
-        "C_EMPLOYEEID": invalid_cpr,
-        "C_OIS_FIRSTNAME": None,
-        "C_OIS_LASTNAME": None,
-        # Employee (manual)
         "FIRSTNAME": "Kashigi",
         "LASTNAME": "Yabushige",
-        # Engagements (manual)
-        "EMPLOYMENTS": [],
+        "C_CPRNUMBER": invalid_cpr,
+        # Engagement
+        "C_MEDARBEJDERNR_ODATA": "666",
+        "C_JOBTITLE_ODATA": "Vikar",
+        "C_OUID_ODATA": "01012415",
     }
     omada_mock([omada_user])
 
@@ -304,7 +302,7 @@ async def test_egedal_user_refresh(
     # Serve corrected Omada user
     corrected_omada_user = {
         **omada_user,
-        "C_EMPLOYEEID": valid_cpr,
+        "C_CPRNUMBER": valid_cpr,
     }
     omada_mock([corrected_omada_user])
 
