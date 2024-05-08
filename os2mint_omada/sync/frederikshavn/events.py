@@ -31,6 +31,7 @@ async def sync_omada_employee(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
 
     await sync_employee(
@@ -48,6 +49,7 @@ async def sync_omada_engagements(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
@@ -72,6 +74,7 @@ async def sync_omada_addresses(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
@@ -96,6 +99,7 @@ async def sync_omada_it_users(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
