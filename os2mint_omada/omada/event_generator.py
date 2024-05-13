@@ -15,9 +15,9 @@ from uuid import UUID
 
 import structlog
 from fastapi.encoders import jsonable_encoder
+from fastramqpi.ramqp import AMQPSystem
 from prometheus_client import Gauge
 from pydantic import parse_obj_as
-from ramqp import AMQPSystem
 
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.api import OmadaAPI

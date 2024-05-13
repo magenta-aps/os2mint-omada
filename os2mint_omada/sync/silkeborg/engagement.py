@@ -7,9 +7,10 @@ from collections import defaultdict
 from uuid import UUID
 
 import structlog
+from fastramqpi.raclients.modelclient.mo import ModelClient
+from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from more_itertools import only
 from pydantic import parse_obj_as
-from raclients.modelclient.mo import ModelClient
 from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementType
 from ramodels.mo._shared import JobFunction
@@ -17,7 +18,6 @@ from ramodels.mo._shared import OrgUnitRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
-from ramqp.depends import handle_exclusively_decorator
 
 from .models import ManualSilkeborgOmadaUser
 from .models import SilkeborgOmadaUser
