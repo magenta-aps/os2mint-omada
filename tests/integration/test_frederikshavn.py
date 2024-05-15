@@ -6,7 +6,6 @@ from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
-from typing import Awaitable
 
 import pytest
 from fastapi.testclient import TestClient
@@ -249,71 +248,5 @@ async def test_frederikshavn(
         assert employee.engagements == []
         assert employee.addresses == []
         assert employee.itusers == []
-
-    await verify()
-
-
-@pytest.mark.integration_test
-async def test_egedal_user_refresh(
-    omada_mock: Callable[[list], None],
-    test_client: TestClient,
-    graphql_client: GraphQLClient,
-    org_unit: str,
-    get_num_queued_messages: Callable[[], Awaitable[int]],
-) -> None:
-    invalid_cpr = "0000000000"
-    valid_cpr = "1604650441"
-
-    # Precondition: The person does not already exist
-    employee = await graphql_client._testing__get_employee(valid_cpr)
-    assert employee.objects == []
-    # Precondition: There are no messages in the AMQP queues
-    assert await get_num_queued_messages() == 0
-
-    # Serve invalid Omada user
-    omada_user = {
-        # Omada
-        "Id": 666,
-        "UId": "df99d822-53eb-427d-b582-1bddb40e989b",
-        "VALIDFROM": "2006-06-06T00:00:00+01:00",
-        "VALIDTO": "2012-12-12T00:00:00+01:00",
-        "IDENTITYCATEGORY": {
-            "Id": 561,
-            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
-            "Value": "Contractor",
-        },
-        # Employee
-        "C_EMPLOYEEID": invalid_cpr,
-        "C_OIS_FIRSTNAME": None,
-        "C_OIS_LASTNAME": None,
-        # Employee (manual)
-        "FIRSTNAME": "Kashigi",
-        "LASTNAME": "Yabushige",
-        # Engagements (manual)
-        "EMPLOYMENTS": [],
-    }
-    omada_mock([omada_user])
-
-    @retry()
-    async def verify() -> None:
-        # Ensure the user was picked up by the event generator
-        assert await get_num_queued_messages() >= 1
-
-    await verify()
-
-    # Serve corrected Omada user
-    corrected_omada_user = {
-        **omada_user,
-        "C_EMPLOYEEID": valid_cpr,
-    }
-    omada_mock([corrected_omada_user])
-
-    @retry()
-    async def verify() -> None:
-        # The invalid user from the queue should be disregarded in favour of updated
-        # data (with valid CPR) directly from Omada.
-        employees = await graphql_client._testing__get_employee(valid_cpr)
-        assert employees.objects
-        assert await get_num_queued_messages() == 0
 
     await verify()
