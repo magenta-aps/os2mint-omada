@@ -364,6 +364,7 @@ async def test_egedal_user_refresh(
     omada_mock: Callable[[list], None],
     test_client: TestClient,
     graphql_client: GraphQLClient,
+    org_unit: str,
     get_num_queued_messages: Callable[[], Awaitable[int]],
 ) -> None:
     invalid_cpr = "0000000000"
