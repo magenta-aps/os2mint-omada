@@ -10,7 +10,6 @@ from fastramqpi.ramqp.mo import PayloadType
 from pydantic import ValidationError
 
 from ... import depends
-from ...depends import CurrentOmadaUser
 from .address import sync_addresses
 from .employee import sync_manual_employee
 from .engagement import sync_engagements
@@ -29,16 +28,31 @@ omada_router = Router()
 #######################################################################################
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_employee(
-    current_omada_user: CurrentOmadaUser,
+    body: PayloadBytes,
     mo: depends.MO,
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    omada_user = SilkeborgOmadaUser.parse_obj(current_omada_user)
-    if not omada_user.is_manual:
-        return
-    manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
+    """Synchronise an Omada user to a MO employee.
 
+    Args:
+        body: AMQP message body.
+        mo: MO API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
+    try:
+        omada_user = SilkeborgOmadaUser.parse_raw(body)
+        if not omada_user.is_manual:
+            return
+        manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
     await sync_manual_employee(
         omada_user=manual_omada_user,
         mo=mo,
@@ -48,16 +62,33 @@ async def sync_omada_employee(
 
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_engagements(
-    current_omada_user: CurrentOmadaUser,
+    body: PayloadBytes,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    omada_user = SilkeborgOmadaUser.parse_obj(current_omada_user)
-    if not omada_user.is_manual:
+    """Synchronise an Omada user to a MO engagements.
+
+    Args:
+        body: AMQP message body.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
+    try:
+        omada_user = SilkeborgOmadaUser.parse_raw(body)
+        if not omada_user.is_manual:
+            return
+        manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
         return
-    manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(manual_omada_user.cpr_number)
@@ -75,13 +106,30 @@ async def sync_omada_engagements(
 
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_addresses(
-    current_omada_user: CurrentOmadaUser,
+    body: PayloadBytes,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_obj(current_omada_user)
+    """Synchronise an Omada user's addresses to MO.
+
+    Args:
+        body: AMQP message body.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
+    try:
+        omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
@@ -99,13 +147,30 @@ async def sync_omada_addresses(
 
 @omada_router.register(Event.WILDCARD)
 async def sync_omada_it_users(
-    current_omada_user: CurrentOmadaUser,
+    body: PayloadBytes,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_obj(current_omada_user)
+    """Synchronise an Omada user to MO IT users.
+
+    Args:
+        body: AMQP message body.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
+    try:
+        omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_raw(body)
+    except ValidationError:
+        # TODO (#51925): this message should be sent to the ghostoffice for manual
+        # processing. For now, we simply drop the message, as we will never be able to
+        # parse it without modifying the model.
+        logger.exception("Failed to parse user", raw=body)
+        return
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
@@ -145,6 +210,16 @@ async def sync_mo_engagements(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    """Synchronise a MO user's engagements with Omada.
+
+    Args:
+        payload: MOAMQP message payload containing the affected objects.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
     employee_uuid = payload.uuid
     await sync_engagements(
         employee_uuid=employee_uuid,
@@ -162,6 +237,16 @@ async def sync_mo_addresses(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    """Synchronise a MO user's addresses with Omada.
+
+    Args:
+        payload: MOAMQP message payload containing the affected objects.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
     employee_uuid = payload.uuid
     await sync_addresses(
         employee_uuid=employee_uuid,
@@ -179,6 +264,16 @@ async def sync_mo_it_users(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
+    """Synchronise a MO user's IT users with Omada.
+
+    Args:
+        payload: MOAMQP message payload containing the affected objects.
+        mo: MO API.
+        omada_api: Omada API.
+        model_client: MO model client.
+
+    Returns: None.
+    """
     employee_uuid = payload.uuid
     await sync_it_users(
         employee_uuid=employee_uuid,
