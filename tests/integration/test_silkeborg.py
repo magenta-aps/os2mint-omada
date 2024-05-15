@@ -73,10 +73,7 @@ async def test_silkeborg_manual(
         "UId": "38e4a0f1-1290-40e3-ad83-896abd1d3e50",
         "VALIDFROM": "2012-08-27T00:00:00+02:00",
         "VALIDTO": "2022-12-01T01:00:00+01:00",
-        "IDENTITYCATEGORY": {
-            "Id": 561,
-            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
-        },
+        "IDENTITYCATEGORY": {"Id": 561, "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b"},
         # Engagement
         "C_TJENESTENR": "v1216",
         # IT Users
@@ -274,7 +271,7 @@ async def test_silkeborg_manual(
 
 
 @pytest.mark.integration_test
-async def test_silkeborg_user_refresh(
+async def test_egedal_user_refresh(
     omada_mock: Callable[[list], None],
     test_client: TestClient,
     graphql_client: GraphQLClient,
@@ -294,23 +291,23 @@ async def test_silkeborg_user_refresh(
     omada_user = {
         # Omada
         "Id": 666,
-        "UId": "73a04b28-9c4a-4b1c-82fa-76705a656341",
+        "UId": "df99d822-53eb-427d-b582-1bddb40e989b",
         "VALIDFROM": "2006-06-06T00:00:00+01:00",
         "VALIDTO": "2012-12-12T00:00:00+01:00",
         "IDENTITYCATEGORY": {
             "Id": 561,
             "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
+            "Value": "Contractor",
         },
-        # Engagement
-        "C_TJENESTENR": "v666",
+        # Employee
+        "C_EMPLOYEEID": invalid_cpr,
+        "C_OIS_FIRSTNAME": None,
+        "C_OIS_LASTNAME": None,
         # Employee (manual)
-        "C_FORNAVNE": "Kashigi",
+        "FIRSTNAME": "Kashigi",
         "LASTNAME": "Yabushige",
-        "C_CPRNR": invalid_cpr,
-        # Engagement (manual)
-        "JOBTITLE": "Medarbejder",
-        "C_ORGANISATIONSKODE": org_unit,
-        "C_SYNLIG_I_OS2MO": False,
+        # Engagements (manual)
+        "EMPLOYMENTS": [],
     }
     omada_mock([omada_user])
 
@@ -324,7 +321,7 @@ async def test_silkeborg_user_refresh(
     # Serve corrected Omada user
     corrected_omada_user = {
         **omada_user,
-        "C_CPRNR": valid_cpr,
+        "C_EMPLOYEEID": valid_cpr,
     }
     omada_mock([corrected_omada_user])
 
