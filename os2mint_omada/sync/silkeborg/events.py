@@ -34,7 +34,6 @@ async def sync_omada_employee(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = SilkeborgOmadaUser.parse_obj(current_omada_user)
     if not omada_user.is_manual:
         return
@@ -55,7 +54,6 @@ async def sync_omada_engagements(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = SilkeborgOmadaUser.parse_obj(current_omada_user)
     if not omada_user.is_manual:
         return

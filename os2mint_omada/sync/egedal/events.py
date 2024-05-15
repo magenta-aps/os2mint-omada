@@ -34,7 +34,6 @@ async def sync_omada_employee(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
     if not omada_user.is_manual:
         return
@@ -55,7 +54,6 @@ async def sync_omada_employee_nicknames(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
     if omada_user.is_manual:
         return
@@ -76,7 +74,6 @@ async def sync_omada_engagements(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
     if not omada_user.is_manual:
         return
@@ -104,7 +101,6 @@ async def sync_omada_addresses(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
@@ -129,7 +125,6 @@ async def sync_omada_it_users(
     model_client: LegacyModelClient,
     _: RateLimit,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
