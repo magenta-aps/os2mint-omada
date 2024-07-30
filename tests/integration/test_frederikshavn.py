@@ -56,12 +56,12 @@ async def test_frederikshavn(
     # CREATE
     omada_user = {
         # Omada
-        "Id": "1277266",
+        "Id": 1277266,
         "UId": "347a7d7a-49d6-4e90-93c8-88f3a0a40548",
         "VALIDFROM": "2021-01-31T08:44:00+01:00",
         "VALIDTO": "9999-12-31T00:00:00+01:00",
         "IDENTITYCATEGORY": {
-            "Id": "1000245",
+            "Id": 1000245,
             "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
         },
         # Employee
@@ -253,7 +253,6 @@ async def test_frederikshavn(
     await verify()
 
 
-@pytest.mark.xfail(reason="TODO(#59294): refresh logic is short-circuited")
 @pytest.mark.integration_test
 async def test_frederikshavn_user_refresh(
     omada_mock: Callable[[list], None],
@@ -279,7 +278,7 @@ async def test_frederikshavn_user_refresh(
         "VALIDFROM": "2006-06-06T00:00:00+01:00",
         "VALIDTO": "2012-12-12T00:00:00+01:00",
         "IDENTITYCATEGORY": {
-            "Id": "1000245",
+            "Id": 1000245,
             "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
         },
         # Employee

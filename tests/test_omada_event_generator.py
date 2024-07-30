@@ -16,7 +16,7 @@ from os2mint_omada.omada.models import IdentityCategory
 from os2mint_omada.omada.models import OmadaUser
 
 
-def get_test_user(id: str) -> OmadaUser:
+def get_test_user(id: int) -> OmadaUser:
     return OmadaUser(
         id=id,
         uid=uuid4(),
@@ -32,14 +32,14 @@ async def test_generate(omada_settings: OmadaSettings):
     """Test that create/update/delete events are detected correctly."""
     # Setup fake users
 
-    old_a = get_test_user("a")
-    old_b = get_test_user("b")
-    old_c = get_test_user("c")
+    old_a = get_test_user(1)
+    old_b = get_test_user(2)
+    old_c = get_test_user(3)
     old_users = [old_a, old_b, old_c]
 
     new_a = old_a  # A is unchanged
     new_b = old_b.copy(update=dict(id=99))  # B is changed
-    new_d = get_test_user("d")  # D is added
+    new_d = get_test_user(4)  # D is added
     new_users = [new_a, new_b, new_d]  # C is deleted
 
     # The "API" returns the new users

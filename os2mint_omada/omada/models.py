@@ -29,7 +29,7 @@ class IdentityCategory(BaseModel):
 class OmadaUser(BaseModel):
     """General Omada user model with base fields."""
 
-    id: str = Field(alias="Id")
+    id: int = Field(alias="Id")
     uid: UUID = Field(alias="UId")
 
     valid_from: datetime = Field(alias="VALIDFROM")
