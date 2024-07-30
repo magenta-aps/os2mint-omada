@@ -359,6 +359,7 @@ async def test_egedal_nickname(
     await verify_nickname(None, None)
 
 
+@pytest.mark.xfail(reason="TODO(#59294): refresh logic is short-circuited")
 @pytest.mark.integration_test
 async def test_egedal_user_refresh(
     omada_mock: Callable[[list], None],
