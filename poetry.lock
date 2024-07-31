@@ -589,13 +589,13 @@ uvicorn = {version = ">=0.15.0", extras = ["standard"]}
 
 [[package]]
 name = "fastramqpi"
-version = "8.3.0"
+version = "9.0.1"
 description = "Rammearkitektur integrations framework"
 optional = false
 python-versions = "<4.0,>=3.11"
 files = [
-    {file = "fastramqpi-8.3.0-py3-none-any.whl", hash = "sha256:f7c8830f374e082472ed90d6fb352c66def3c6d50155c8e74deda4f826e4442e"},
-    {file = "fastramqpi-8.3.0.tar.gz", hash = "sha256:bf1bdc479abf71301c8e732e79e367fc2da1e355699983f79427fa0193c76f1c"},
+    {file = "fastramqpi-9.0.1-py3-none-any.whl", hash = "sha256:c78808368cc8fe6d75aa01bb058725399f6b458d1593e4e5c0240da31ac4df63"},
+    {file = "fastramqpi-9.0.1.tar.gz", hash = "sha256:98f3367b170600e56a7e68361f7e99174a409bacae6f8488692ed79c03d7fdd3"},
 ]
 
 [package.dependencies]
@@ -2778,4 +2778,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "341a4945cc987249ee2a910f45a7d4c2b3635746bc3425e88da29c68ba157e35"
+content-hash = "2014c4a7f40d26f4f815b4f976cf001c1a4de6ed5ac3ce1a8cd65ab3b89ba861"
