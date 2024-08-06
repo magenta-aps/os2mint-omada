@@ -24,14 +24,21 @@ def create_app(values: list | None = None) -> FastAPI:
         """Incredibly basic Omada OData implementation.
 
         All our queries to the Omada API are either filter-less, or contain exactly one
-        filter of the format `<field> eq '<value>'`.
+        filter of the format `<field> eq '<value>'` or `Id eq <value>`.
         """
         omada_filter = request.query_params.get("$filter")
         if not omada_filter:
             return {"value": values}
-        match = re.match(r"(.+) eq '(.+)'", omada_filter)
+        match = re.match(r"(.+) eq (?:(\d+)|'(.+)')", omada_filter)
         assert match is not None
-        key, value = match.groups()
+        key, int_value, str_value = match.groups()
+        value: int | str
+        if int_value is not None:
+            value = int(int_value)
+        elif str_value is not None:
+            value = str_value
+        else:
+            raise ValueError(f"Unknown filter: {omada_filter}")
         return {"value": [v for v in values if v[key] == value]}
 
     return app

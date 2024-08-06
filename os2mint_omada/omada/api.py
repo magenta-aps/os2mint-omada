@@ -53,7 +53,9 @@ class OmadaAPI:
         # logger.debug("Retrieved Omada IT users", users=users)
         return users
 
-    async def get_users_by(self, key: str, values: Iterable[str]) -> list[RawOmadaUser]:
+    async def get_users_by(
+        self, key: str, values: Iterable[int | str]
+    ) -> list[RawOmadaUser]:
         """Convenience wrapper for filtering on multiple values simultaneously.
 
         Args:
@@ -62,8 +64,15 @@ class OmadaAPI:
 
         Returns: List of raw omada users matching the filter.
         """
+
+        def format(value: int | str) -> str:
+            # Strings must be quoted
+            if isinstance(value, str):
+                return f"'{value}'"
+            return str(value)
+
         # Omada does not support OR or IN operators, so we have to do it like this
-        get_users = (self.get_users(f"{key} eq '{value}'") for value in values)
+        get_users = (self.get_users(f"{key} eq {format(value)}") for value in values)
         users = await asyncio.gather(*get_users)
         return list(flatten(users))
 

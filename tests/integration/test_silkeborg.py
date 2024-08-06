@@ -69,7 +69,7 @@ async def test_silkeborg_manual(
     # CREATE
     omada_user = {
         # Omada
-        "Id": "1041094",
+        "Id": 1041094,
         "UId": "38e4a0f1-1290-40e3-ad83-896abd1d3e50",
         "VALIDFROM": "2012-08-27T00:00:00+02:00",
         "VALIDTO": "2022-12-01T01:00:00+01:00",
@@ -273,7 +273,6 @@ async def test_silkeborg_manual(
     await verify()
 
 
-@pytest.mark.xfail(reason="TODO(#59294): refresh logic is short-circuited")
 @pytest.mark.integration_test
 async def test_silkeborg_user_refresh(
     omada_mock: Callable[[list], None],
