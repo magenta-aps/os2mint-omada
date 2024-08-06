@@ -72,7 +72,7 @@ def create_app(**kwargs: Any) -> FastAPI:
         yield
 
     # priority ensures we start mo api after the graphql_session has been started
-    fastramqpi.add_lifespan_manager(mo_api(), priority=1100)
+    fastramqpi.add_lifespan_manager(mo_api(), priority=500)
 
     # Omada AMQP
     omada_amqp_system = AMQPSystem(
@@ -81,12 +81,12 @@ def create_app(**kwargs: Any) -> FastAPI:
         context=context,
     )
     fastramqpi.add_context(omada_amqp_system=omada_amqp_system)
-    fastramqpi.add_lifespan_manager(omada_amqp_system, priority=1200)
+    fastramqpi.add_lifespan_manager(omada_amqp_system, priority=1000)
 
     # Omada API
     omada_client = create_client(settings.omada)
     # priority ensures the client is started before the event generator tries to use it
-    fastramqpi.add_lifespan_manager(omada_client, priority=1300)
+    fastramqpi.add_lifespan_manager(omada_client, priority=1100)
     omada_api = OmadaAPI(url=settings.omada.url, client=omada_client)
     fastramqpi.add_context(omada_api=omada_api)
 
@@ -96,6 +96,6 @@ def create_app(**kwargs: Any) -> FastAPI:
         api=omada_api,
         amqp_system=omada_amqp_system,
     )
-    fastramqpi.add_lifespan_manager(omada_event_generator, priority=1400)
+    fastramqpi.add_lifespan_manager(omada_event_generator, priority=1101)
 
     return app
