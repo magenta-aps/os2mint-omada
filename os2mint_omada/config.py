@@ -37,7 +37,7 @@ class OmadaSettings(BaseModel):
     basic_auth: OmadaBasicAuthSettings | None = None
 
     amqp: OmadaAMQPConnectionSettings
-    interval: int = 1800
+    interval: int = 600
     persistence_file: Path = Path("/data/omada.json")
 
     @validator("persistence_file", always=True)
