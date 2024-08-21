@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import structlog
 from fastapi import APIRouter
-from starlette import status
+from fastapi import status
 
 from os2mint_omada import depends
 from os2mint_omada.omada.event_generator import Event
