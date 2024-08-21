@@ -21,7 +21,7 @@ from .it_user import sync_it_users
 from .models import EgedalOmadaUser
 from .models import ManualEgedalOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 mo_router = MORouter()
 omada_router = Router()
 

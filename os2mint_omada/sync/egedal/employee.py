@@ -16,7 +16,7 @@ from os2mint_omada.sync.egedal.models import ManualEgedalOmadaUser
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):

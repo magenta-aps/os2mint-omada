@@ -22,7 +22,7 @@ from os2mint_omada.sync.models import ComparableMixin
 
 from .models import EgedalOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableITUser(ComparableMixin, ITUser):

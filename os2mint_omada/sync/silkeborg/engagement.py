@@ -27,7 +27,7 @@ from os2mint_omada.util import validity_intersection
 from .models import ManualSilkeborgOmadaUser
 from .models import SilkeborgOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableEngagement(ComparableMixin, Engagement):

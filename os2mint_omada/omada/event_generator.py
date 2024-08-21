@@ -24,7 +24,7 @@ from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.omada.models import OmadaUser
 from os2mint_omada.omada.models import RawOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class Event(StrEnum):

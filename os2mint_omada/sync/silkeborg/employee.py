@@ -15,7 +15,7 @@ from os2mint_omada.sync.models import StripUserKeyMixin
 
 from .models import ManualSilkeborgOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):

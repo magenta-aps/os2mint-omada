@@ -9,7 +9,7 @@ from os2mint_omada.omada.event_generator import Event
 from os2mint_omada.omada.models import RawOmadaUser
 
 router = APIRouter()
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 @router.post("/sync/omada", status_code=status.HTTP_204_NO_CONTENT)

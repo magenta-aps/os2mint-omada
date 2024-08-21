@@ -28,7 +28,7 @@ from .models import EgedalOmadaEmployment
 from .models import EgedalOmadaUser
 from .models import ManualEgedalOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableEngagement(ComparableMixin, Engagement):
