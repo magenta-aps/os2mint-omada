@@ -21,7 +21,6 @@ more-itertools = "^9"
 
 # TODO(#59335): remove these
 ramodels = "^18"
-gql = "^3"
 
 [tool.poetry.group.pre-commit.dependencies]
 mypy = "^1"

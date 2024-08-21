@@ -66,11 +66,11 @@ def create_app() -> FastAPI:
     # MO API
     @asynccontextmanager
     async def mo_api() -> AsyncGenerator[None, None]:
-        mo = MO(graphql_session=context["legacy_graphql_session"])
+        mo = MO(graphql_client=context["graphql_client"])
         fastramqpi.add_context(mo=mo)
         yield
 
-    # priority ensures we start mo api after the graphql_session has been started
+    # priority ensures we start mo api after the graphql_client has been started
     fastramqpi.add_lifespan_manager(mo_api(), priority=500)
 
     # Omada API

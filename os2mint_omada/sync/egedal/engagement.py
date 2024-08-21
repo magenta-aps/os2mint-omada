@@ -181,7 +181,7 @@ async def sync_engagements(
             excess.add(first)
     if excess:
         logger.info("Deleting excess engagements", engagements=excess)
-        await asyncio.gather(*(mo.delete(a) for a in excess))
+        await asyncio.gather(*(mo.delete_engagement(a) for a in excess))
 
     # Create missing desired
     missing_comparable = desired - existing.keys()

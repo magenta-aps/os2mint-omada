@@ -145,7 +145,7 @@ async def sync_addresses(
             excess.add(first)
     if excess:
         logger.info("Deleting excess addresses", addresses=excess)
-        await asyncio.gather(*(mo.delete(a) for a in excess))
+        await asyncio.gather(*(mo.delete_address(a) for a in excess))
 
     # Create missing desired
     missing_comparable = desired - existing.keys()

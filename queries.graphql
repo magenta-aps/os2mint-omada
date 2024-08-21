@@ -1,8 +1,252 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 
+query get_it_systems($user_keys: [String!]) {
+  itsystems(filter: { user_keys: $user_keys }) {
+    objects {
+      current {
+        uuid
+        user_key
+      }
+    }
+  }
+}
+
+query get_classes($user_keys: [String!]) {
+  facets(filter: { user_keys: $user_keys }) {
+    objects {
+      current {
+        classes {
+          uuid
+          user_key
+        }
+      }
+    }
+  }
+}
+
+query get_employee_uuid_from_user_key($user_keys: [String!]) {
+  engagements(
+    filter: { user_keys: $user_keys, from_date: null, to_date: null }
+  ) {
+    objects {
+      objects {
+        person(filter: { from_date: null, to_date: null }) {
+          uuid
+        }
+      }
+    }
+  }
+}
+
+query get_employee_uuid_from_cpr($cpr_numbers: [CPR!]) {
+  employees(
+    filter: { cpr_numbers: $cpr_numbers, from_date: null, to_date: null }
+  ) {
+    objects {
+      uuid
+    }
+  }
+}
+
+query get_employee_states($uuids: [UUID!]) {
+  employees(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+    objects {
+      objects {
+        uuid
+        givenname
+        surname
+        nickname_givenname
+        nickname_surname
+        cpr_no
+      }
+    }
+  }
+}
+
+query get_current_employee_state($uuids: [UUID!]) {
+  employees(filter: { uuids: $uuids }) {
+    objects {
+      current {
+        uuid
+        givenname
+        surname
+        nickname_givenname
+        nickname_surname
+        cpr_no
+        seniority
+      }
+    }
+  }
+}
+
+query get_employee_addresses(
+  $employee_uuids: [UUID!]
+  $address_types: [UUID!]
+) {
+  employees(
+    filter: { uuids: $employee_uuids, from_date: null, to_date: null }
+  ) {
+    objects {
+      objects {
+        addresses(
+          filter: {
+            address_types: $address_types
+            from_date: null
+            to_date: null
+          }
+        ) {
+          uuid
+          value
+          address_type(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          person(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          engagement(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          visibility(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          validity {
+            from
+            to
+          }
+        }
+      }
+    }
+  }
+}
+
+query get_employee_engagements($employee_uuids: [UUID!]) {
+  employees(
+    filter: { uuids: $employee_uuids, from_date: null, to_date: null }
+  ) {
+    objects {
+      objects {
+        engagements(filter: { from_date: null, to_date: null }) {
+          uuid
+          user_key
+          org_unit(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          person(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          job_function(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          engagement_type(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          primary(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          validity {
+            from
+            to
+          }
+        }
+      }
+    }
+  }
+}
+
+query get_employee_it_users($employee_uuids: [UUID!]) {
+  employees(
+    filter: { uuids: $employee_uuids, from_date: null, to_date: null }
+  ) {
+    objects {
+      objects {
+        itusers(filter: { from_date: null, to_date: null }) {
+          uuid
+          user_key
+          itsystem(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          person(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          engagement(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
+          validity {
+            from
+            to
+          }
+        }
+      }
+    }
+  }
+}
+
+query get_org_unit_with_it_system_user_key($user_keys: [String!]) {
+  itusers(filter: { user_keys: $user_keys, from_date: null, to_date: null }) {
+    objects {
+      objects {
+        org_unit(filter: { from_date: null, to_date: null }) {
+          uuid
+        }
+      }
+    }
+  }
+}
+
+query get_org_unit_with_uuid($uuids: [UUID!]) {
+  org_units(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+    objects {
+      uuid
+    }
+  }
+}
+
+query get_org_unit_with_user_key($user_keys: [String!]) {
+  org_units(filter: { user_keys: $user_keys, from_date: null, to_date: null }) {
+    objects {
+      uuid
+    }
+  }
+}
+
+query get_org_unit_validity($uuids: [UUID!]) {
+  org_units(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+    objects {
+      objects {
+        validity {
+          from_date: from
+          to_date: to
+        }
+      }
+    }
+  }
+}
+
+mutation delete_address($uuid: UUID!) {
+  address_delete(uuid: $uuid) {
+    uuid
+  }
+}
+
+mutation delete_engagement($uuid: UUID!) {
+  engagement_delete(uuid: $uuid) {
+    uuid
+  }
+}
+
+mutation delete_it_user($uuid: UUID!) {
+  ituser_delete(uuid: $uuid) {
+    uuid
+  }
+}
+
+
+# TODO(#59335): don't use _Testing_ prefix (due to pytest)
 query _Testing_GetEmployee($cpr_number: CPR!) {
-  employees(filter: {cpr_numbers: [$cpr_number], from_date: null, to_date: null}) {
+  employees(
+    filter: { cpr_numbers: [$cpr_number], from_date: null, to_date: null }
+  ) {
     objects {
       objects {
         cpr_number
@@ -14,18 +258,18 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
           from
           to
         }
-        engagements(filter: {from_date: null, to_date: null}) {
+        engagements(filter: { from_date: null, to_date: null }) {
           user_key
-          org_unit(filter: {from_date: null, to_date: null}) {
+          org_unit(filter: { from_date: null, to_date: null }) {
             user_key
           }
-          job_function(filter: {from_date: null, to_date: null}) {
+          job_function(filter: { from_date: null, to_date: null }) {
             user_key
           }
-          engagement_type(filter: {from_date: null, to_date: null}) {
+          engagement_type(filter: { from_date: null, to_date: null }) {
             user_key
           }
-          primary(filter: {from_date: null, to_date: null}) {
+          primary(filter: { from_date: null, to_date: null }) {
             user_key
           }
           validity {
@@ -33,15 +277,15 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
             to
           }
         }
-        addresses(filter: {from_date: null, to_date: null}) {
+        addresses(filter: { from_date: null, to_date: null }) {
           value
-          address_type(filter: {from_date: null, to_date: null}) {
+          address_type(filter: { from_date: null, to_date: null }) {
             user_key
           }
-          engagement(filter: {from_date: null, to_date: null}) {
+          engagement(filter: { from_date: null, to_date: null }) {
             user_key
           }
-          visibility(filter: {from_date: null, to_date: null}) {
+          visibility(filter: { from_date: null, to_date: null }) {
             user_key
           }
           validity {
@@ -49,12 +293,12 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
             to
           }
         }
-        itusers(filter: {from_date: null, to_date: null}) {
+        itusers(filter: { from_date: null, to_date: null }) {
           user_key
-          itsystem(filter: {from_date: null, to_date: null}) {
+          itsystem(filter: { from_date: null, to_date: null }) {
             user_key
           }
-          engagement(filter: {from_date: null, to_date: null}) {
+          engagement(filter: { from_date: null, to_date: null }) {
             user_key
           }
           validity {
@@ -68,19 +312,19 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
 }
 
 mutation _Testing_CreateEmployee(
-  $cpr_number: CPR!,
-  $given_name: String!,
-  $surname: String!,
-  $nickname_given_name: String = null,
-  $nickname_surname: String = null,
+  $cpr_number: CPR!
+  $given_name: String!
+  $surname: String!
+  $nickname_given_name: String = null
+  $nickname_surname: String = null
 ) {
   employee_create(
     input: {
-      cpr_number: $cpr_number,
-      given_name: $given_name,
-      surname: $surname,
-      nickname_given_name: $nickname_given_name,
-      nickname_surname: $nickname_surname,
+      cpr_number: $cpr_number
+      given_name: $given_name
+      surname: $surname
+      nickname_given_name: $nickname_given_name
+      nickname_surname: $nickname_surname
     }
   ) {
     uuid
@@ -88,7 +332,7 @@ mutation _Testing_CreateEmployee(
 }
 
 query _Testing_GetOrgUnitType {
-  classes(filter: {facet_user_keys: "org_unit_type", user_keys: "Afdeling"}) {
+  classes(filter: { facet_user_keys: "org_unit_type", user_keys: "Afdeling" }) {
     objects {
       uuid
     }
@@ -98,19 +342,18 @@ query _Testing_GetOrgUnitType {
 mutation _Testing_CreateOrgUnit($user_key: String!, $org_unit_type: UUID!) {
   org_unit_create(
     input: {
-      name: "Test Org Unit",
-      user_key: $user_key,
-      org_unit_type: $org_unit_type,
-      validity: {from: "2010-02-03"},
-    },
+      name: "Test Org Unit"
+      user_key: $user_key
+      org_unit_type: $org_unit_type
+      validity: { from: "2010-02-03" }
+    }
   ) {
     uuid
   }
 }
 
-
 query _Testing_GetItSystem($user_key: String!) {
-  itsystems(filter: {user_keys: [$user_key]}) {
+  itsystems(filter: { user_keys: [$user_key] }) {
     objects {
       uuid
     }
@@ -118,16 +361,16 @@ query _Testing_GetItSystem($user_key: String!) {
 }
 
 mutation _Testing_CreateOrgUnitItUser(
-  $user_key: String!,
-  $it_system: UUID!,
+  $user_key: String!
+  $it_system: UUID!
   $org_unit: UUID!
 ) {
   ituser_create(
     input: {
-      user_key: $user_key,
-      itsystem: $it_system,
-      org_unit: $org_unit,
-      validity: {from: "2010-02-03"},
+      user_key: $user_key
+      itsystem: $it_system
+      org_unit: $org_unit
+      validity: { from: "2010-02-03" }
     }
   ) {
     uuid
