@@ -149,13 +149,15 @@ class MO:
                 address_type_uuid=address.address_type.uuid,
                 person_uuid=one({p.uuid for p in (address.person or [])}),
                 engagement_uuid=only({e.uuid for e in (address.engagement or [])}),
-                visibility_uuid=visibility.uuid
-                if (visibility := address.visibility) is not None
-                else None,
+                visibility_uuid=(
+                    visibility.uuid
+                    if (visibility := address.visibility) is not None
+                    else None
+                ),
                 from_date=address.validity.from_.isoformat(),
-                to_date=to.isoformat()
-                if (to := address.validity.to) is not None
-                else None,
+                to_date=(
+                    to.isoformat() if (to := address.validity.to) is not None else None
+                ),
             )
             for address in addresses
         }
@@ -184,13 +186,17 @@ class MO:
                 person_uuid=one({p.uuid for p in engagement.person}),
                 job_function_uuid=engagement.job_function.uuid,
                 engagement_type_uuid=engagement.engagement_type.uuid,
-                primary_uuid=primary.uuid
-                if (primary := engagement.primary) is not None
-                else None,
+                primary_uuid=(
+                    primary.uuid
+                    if (primary := engagement.primary) is not None
+                    else None
+                ),
                 from_date=engagement.validity.from_.isoformat(),
-                to_date=to.isoformat()
-                if (to := engagement.validity.to) is not None
-                else None,
+                to_date=(
+                    to.isoformat()
+                    if (to := engagement.validity.to) is not None
+                    else None
+                ),
             )
             for engagement in engagements
         }
@@ -220,9 +226,9 @@ class MO:
                 person_uuid=one({p.uuid for p in (it_user.person or [])}),
                 engagement_uuid=only({e.uuid for e in (it_user.engagement or [])}),
                 from_date=it_user.validity.from_.isoformat(),
-                to_date=to.isoformat()
-                if (to := it_user.validity.to) is not None
-                else None,
+                to_date=(
+                    to.isoformat() if (to := it_user.validity.to) is not None else None
+                ),
             )
             for it_user in it_users
         )

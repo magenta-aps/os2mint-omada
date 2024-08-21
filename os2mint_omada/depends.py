@@ -18,7 +18,6 @@ from os2mint_omada.omada.models import OmadaUser
 GraphQLClient = Annotated[_GraphQLClient, Depends(from_context("graphql_client"))]
 
 # Omada context
-MO = Annotated[_MO, Depends(from_user_context("mo"))]
 OmadaAMQPSystem = Annotated[AMQPSystem, Depends(from_user_context("omada_amqp_system"))]
 OmadaAPI = Annotated[_OmadaAPI, Depends(from_user_context("omada_api"))]
 
@@ -43,3 +42,10 @@ async def current_omada_user(
 
 
 CurrentOmadaUser = Annotated[OmadaUser, Depends(current_omada_user)]
+
+
+def get_mo(graphql_client: GraphQLClient) -> _MO:
+    return _MO(graphql_client)
+
+
+MO = Annotated[_MO, Depends(get_mo)]
