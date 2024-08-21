@@ -21,7 +21,6 @@ more-itertools = "^9"
 
 # TODO(#59335): remove these
 ramodels = "^18"
-prometheus-client = "^0.20"
 starlette = "^0.38"
 gql = "^3"
 
