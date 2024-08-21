@@ -29,42 +29,18 @@ class MO:
         self.graphql_client = graphql_client
 
     async def get_it_systems(self, user_keys: list[str]) -> ITSystems:
-        """Get IT Systems configured in MO.
-
-        Args:
-            user_keys: IT systems to fetch.
-
-        Returns: Mapping from IT system user key to UUID.
-        """
         result = await self.graphql_client.get_it_systems(user_keys=user_keys)
         return ITSystems(
             {o.current.user_key: o.current.uuid for o in result.objects if o.current}
         )
 
     async def get_classes(self, facet_user_key: str) -> dict[str, UUID]:
-        """Get classes for the given facet user key.
-
-        Args:
-            facet_user_key: Facet to retrieve classes for.
-
-        Returns: Mapping from class user key to UUID.
-        """
         result = await self.graphql_client.get_classes(user_keys=[facet_user_key])
         facet = one(result.objects).current
         assert facet is not None
         return {c.user_key: c.uuid for c in facet.classes}
 
     async def get_employee_uuid_from_user_key(self, user_key: str) -> UUID | None:
-        """Find employee UUID by user key.
-
-        Omada users are linked to MO employees through user keys on the employee's
-        engagements.
-
-        Args:
-            user_key: User key to find employee for.
-
-        Returns: Employee UUID if found, otherwise None.
-        """
         result = await self.graphql_client.get_employee_uuid_from_user_key(
             user_keys=[user_key]
         )
@@ -77,13 +53,6 @@ class MO:
         return one(uuids)  # it's an error if different UUIDs are returned
 
     async def get_employee_uuid_from_cpr(self, cpr: str) -> UUID | None:
-        """Find employee UUID by CPR number.
-
-        Args:
-            cpr: CPR number to find employee for.
-
-        Returns: Employee UUID if matching employee exists, otherwise None.
-        """
         result = await self.graphql_client.get_employee_uuid_from_cpr(cpr_numbers=[cpr])
         employees = result.objects
         if not employees:
@@ -92,16 +61,6 @@ class MO:
         return one(uuids)  # it's an error if different UUIDs are returned
 
     async def get_employee_states(self, uuid: UUID) -> set[Employee]:
-        """Retrieve employee states.
-
-        The retrieved fields correspond to the fields which are synchronised from
-        Omada, i.e. exactly the fields we are interested in, to check up-to-dateness.
-
-        Args:
-            uuid: Employee UUID.
-
-        Returns: Set of employee objects; one for each state.
-        """
         result = await self.graphql_client.get_employee_states(uuids=[uuid])
         employee = only(result.objects)
         if employee is None:
@@ -109,13 +68,6 @@ class MO:
         return {Employee.parse_obj(o) for o in employee.objects}
 
     async def get_current_employee_state(self, uuid: UUID) -> Employee | None:
-        """Retrieve current employee state.
-
-        Args:
-            uuid: Employee UUID.
-
-        Returns: Employee objects.
-        """
         result = await self.graphql_client.get_current_employee_state(uuids=[uuid])
         employee = only(result.objects)
         if employee is None:
@@ -125,15 +77,6 @@ class MO:
     async def get_employee_addresses(
         self, uuid: UUID, address_types: list[UUID] | None = None
     ) -> set[Address]:
-        """Retrieve addresses related to an employee.
-
-        Args:
-            uuid: Employee UUID.
-            address_types: Only retrieve the given address types, to avoid terminating
-             addresses irrelevant to Omada.
-
-        Returns: Set of addresses related to the employee.
-        """
         result = await self.graphql_client.get_employee_addresses(
             employee_uuids=[uuid],
             address_types=address_types,
@@ -163,14 +106,6 @@ class MO:
         }
 
     async def get_employee_engagements(self, uuid: UUID) -> set[Engagement]:
-        """Retrieve engagements related to an employee.
-
-        Args:
-            uuid: Employee UUID.
-
-        Returns: Set of engagements related to the employee.
-        """
-
         result = await self.graphql_client.get_employee_engagements(
             employee_uuids=[uuid]
         )
@@ -204,15 +139,6 @@ class MO:
     async def get_employee_it_users(
         self, uuid: UUID, it_systems: list[UUID]
     ) -> set[ITUser]:
-        """Retrieve IT users related to an employee.
-
-        Args:
-            uuid: Employee UUID.
-            it_systems: Only retrieve IT users for the given IT systems, to avoid
-             terminating IT users irrelevant to Omada.
-
-        Returns: Set of IT users related to the employee.
-        """
         result = await self.graphql_client.get_employee_it_users(employee_uuids=[uuid])
         employee = only(result.objects)
         if employee is None:
@@ -237,13 +163,6 @@ class MO:
         return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
-        """Find organisational unit with the given IT system user user_key.
-
-        Args:
-            user_key: IT system user_key to find org unit for.
-
-        Returns: UUID of the org unit if found, otherwise raises KeyError.
-        """
         result = await self.graphql_client.get_org_unit_with_it_system_user_key(
             user_keys=[user_key]
         )
@@ -255,13 +174,6 @@ class MO:
         return one(uuids)  # it's an error if different UUIDs are returned
 
     async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
-        """Get organisational unit with the given UUID, validating that it exists.
-
-        Args:
-            uuid: UUID of the org unit to look up.
-
-        Returns: UUID of the org unit if it exists, otherwise raises KeyError.
-        """
         result = await self.graphql_client.get_org_unit_with_uuid(uuids=[uuid])
         try:
             org_unit = one(result.objects)
@@ -270,13 +182,6 @@ class MO:
         return org_unit.uuid
 
     async def get_org_unit_with_user_key(self, user_key: str) -> UUID:
-        """Get organisational unit with the given user key, validating that it exists.
-
-        Args:
-            user_key: User key of the org unit to look up.
-
-        Returns: UUID of the org unit if it exists, otherwise raises KeyError.
-        """
         result = await self.graphql_client.get_org_unit_with_user_key(
             user_keys=[user_key],
         )
@@ -287,13 +192,6 @@ class MO:
         return org_unit.uuid
 
     async def get_org_unit_validity(self, uuid: UUID) -> Validity:
-        """Get organisational unit's validity.
-
-        Args:
-            uuid: UUID of the org unit.
-
-        Returns: The org unit's validity.
-        """
         result = await self.graphql_client.get_org_unit_validity(
             uuids=[uuid],
         )
@@ -310,28 +208,13 @@ class MO:
         return validity_union(*validities)
 
     async def delete_address(self, obj: UUIDBase) -> None:
-        """Delete a MO address.
-
-        Args:
-            obj: Address to delete.
-        """
         logger.info("Deleting address", address=obj)
         await self.graphql_client.delete_address(uuid=obj.uuid)
 
     async def delete_engagement(self, obj: UUIDBase) -> None:
-        """Delete a MO engagement.
-
-        Args:
-            obj: engagement to delete.
-        """
         logger.info("Deleting engagement", engagement=obj)
         await self.graphql_client.delete_engagement(uuid=obj.uuid)
 
     async def delete_it_user(self, obj: UUIDBase) -> None:
-        """Delete a MO it_user.
-
-        Args:
-            obj: it_user to delete.
-        """
         logger.info("Deleting it_user", it_user=obj)
         await self.graphql_client.delete_it_user(uuid=obj.uuid)
