@@ -3,11 +3,9 @@
 import structlog
 from fastramqpi.depends import LegacyModelClient
 from fastramqpi.ramqp import Router
-from fastramqpi.ramqp.depends import PayloadBytes
 from fastramqpi.ramqp.depends import RateLimit
 from fastramqpi.ramqp.mo import MORouter
 from fastramqpi.ramqp.mo import PayloadType
-from pydantic import ValidationError
 
 from ... import depends
 from ...depends import CurrentOmadaUser

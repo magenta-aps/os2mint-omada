@@ -43,7 +43,9 @@ class TestingGetEmployeeEmployeesObjectsObjectsEngagements(BaseModel):
     user_key: str
     org_unit: List["TestingGetEmployeeEmployeesObjectsObjectsEngagementsOrgUnit"]
     job_function: "TestingGetEmployeeEmployeesObjectsObjectsEngagementsJobFunction"
-    engagement_type: "TestingGetEmployeeEmployeesObjectsObjectsEngagementsEngagementType"
+    engagement_type: (
+        "TestingGetEmployeeEmployeesObjectsObjectsEngagementsEngagementType"
+    )
     primary: Optional["TestingGetEmployeeEmployeesObjectsObjectsEngagementsPrimary"]
     validity: "TestingGetEmployeeEmployeesObjectsObjectsEngagementsValidity"
 

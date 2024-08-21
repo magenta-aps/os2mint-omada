@@ -66,7 +66,7 @@ def manual_egedal_omada_user() -> dict:
                 "UId": "0e39ce2d-39a5-42b0-befb-f8380f9c789c",
                 "KeyValue": None,
                 "KeyProperty": None,
-                "DisplayName": f"Prince||LORDAERON||00001337;",
+                "DisplayName": "Prince||LORDAERON||00001337;",
             },
             {
                 "Id": 6849240,
