@@ -3,8 +3,8 @@
 # mypy: disable-error-code=assignment
 from datetime import datetime
 from unittest.mock import AsyncMock
-from unittest.mock import call
 from unittest.mock import MagicMock
+from unittest.mock import call
 from uuid import uuid4
 
 from fastapi.encoders import jsonable_encoder

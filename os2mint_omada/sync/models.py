@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from pydantic import validator
 from ramodels.mo import Validity
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableMixin(BaseModel):

@@ -1,12 +1,15 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 import structlog
+from fastapi import Depends
 from fastramqpi.depends import LegacyModelClient
 from fastramqpi.ramqp import Router
-from fastramqpi.ramqp.depends import RateLimit
 from fastramqpi.ramqp.depends import RoutingKey
+from fastramqpi.ramqp.depends import rate_limit
 from fastramqpi.ramqp.mo import MORouter
 from fastramqpi.ramqp.mo import PayloadType
+
+from os2mint_omada.omada.event_generator import Event
 
 from ... import depends
 from ...depends import CurrentOmadaUser
@@ -17,9 +20,8 @@ from .engagement import sync_engagements
 from .it_user import sync_it_users
 from .models import EgedalOmadaUser
 from .models import ManualEgedalOmadaUser
-from os2mint_omada.omada.event_generator import Event
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 mo_router = MORouter()
 omada_router = Router()
 
@@ -27,12 +29,11 @@ omada_router = Router()
 #######################################################################################
 # Omada
 #######################################################################################
-@omada_router.register(Event.WILDCARD)
+@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_employee(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
@@ -47,13 +48,12 @@ async def sync_omada_employee(
     )
 
 
-@omada_router.register(Event.WILDCARD)
+@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_employee_nicknames(
     routing_key: RoutingKey,
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
@@ -68,13 +68,12 @@ async def sync_omada_employee_nicknames(
     )
 
 
-@omada_router.register(Event.WILDCARD)
+@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_engagements(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
@@ -96,13 +95,12 @@ async def sync_omada_engagements(
     )
 
 
-@omada_router.register(Event.WILDCARD)
+@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_addresses(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
@@ -121,13 +119,12 @@ async def sync_omada_addresses(
     )
 
 
-@omada_router.register(Event.WILDCARD)
+@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_it_users(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = EgedalOmadaUser.parse_obj(current_omada_user)
@@ -154,13 +151,12 @@ async def sync_omada_it_users(
 #  invariant should be enforced by RBAC.
 
 
-@mo_router.register("employee.employee.*")
+@mo_router.register("employee.employee.*", dependencies=[Depends(rate_limit())])
 async def sync_mo_engagements(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     employee_uuid = payload.uuid
     await sync_engagements(
@@ -171,13 +167,12 @@ async def sync_mo_engagements(
     )
 
 
-@mo_router.register("employee.engagement.*")
+@mo_router.register("employee.engagement.*", dependencies=[Depends(rate_limit())])
 async def sync_mo_addresses(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     employee_uuid = payload.uuid
     await sync_addresses(
@@ -188,13 +183,12 @@ async def sync_mo_addresses(
     )
 
 
-@mo_router.register("employee.engagement.*")
+@mo_router.register("employee.engagement.*", dependencies=[Depends(rate_limit())])
 async def sync_mo_it_users(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
     model_client: LegacyModelClient,
-    _: RateLimit,
 ) -> None:
     employee_uuid = payload.uuid
     await sync_it_users(

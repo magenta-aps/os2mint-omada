@@ -19,13 +19,14 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
 
-from .models import FrederikshavnOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.util import validity_intersection
 
-logger = structlog.get_logger(__name__)
+from .models import FrederikshavnOmadaUser
+
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableEngagement(ComparableMixin, Engagement):
@@ -171,7 +172,7 @@ async def sync_engagements(
             excess.add(first)
     if excess:
         logger.info("Deleting excess engagements", engagements=excess)
-        await asyncio.gather(*(mo.delete(a) for a in excess))
+        await asyncio.gather(*(mo.delete_engagement(a) for a in excess))
 
     # Create missing desired
     missing_comparable = desired - existing.keys()

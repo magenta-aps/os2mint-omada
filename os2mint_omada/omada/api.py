@@ -17,7 +17,7 @@ from pydantic import AnyHttpUrl
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.models import RawOmadaUser
 
-logger = structlog.get_logger(__name__)
+logger = structlog.stdlib.get_logger()
 
 
 class OmadaAPI:

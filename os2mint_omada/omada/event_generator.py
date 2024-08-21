@@ -15,8 +15,8 @@ from uuid import UUID
 
 import structlog
 from fastapi.encoders import jsonable_encoder
+from fastramqpi.metrics import dipex_last_success_timestamp
 from fastramqpi.ramqp import AMQPSystem
-from prometheus_client import Gauge
 from pydantic import parse_obj_as
 
 from os2mint_omada.config import OmadaSettings
@@ -24,14 +24,7 @@ from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.omada.models import OmadaUser
 from os2mint_omada.omada.models import RawOmadaUser
 
-logger = structlog.get_logger(__name__)
-
-
-omada_last_event_generate_timestamp = Gauge(
-    "omada_last_event_generate_timestamp",
-    "Timestamp of when the Omada event generator last successfully ran.",
-    unit="seconds",
-)
+logger = structlog.stdlib.get_logger()
 
 
 class Event(StrEnum):
@@ -140,7 +133,7 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
             )
 
         self._save_users(new_users_list)
-        omada_last_event_generate_timestamp.set_to_current_time()
+        dipex_last_success_timestamp.set_to_current_time()
 
     def _save_users(self, users: list[RawOmadaUser]) -> None:
         """Save known Omada users (dicts) to disk."""

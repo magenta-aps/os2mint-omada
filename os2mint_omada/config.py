@@ -8,7 +8,6 @@ from fastramqpi.ramqp.config import AMQPConnectionSettings
 from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import BaseSettings
-from pydantic import PositiveInt
 from pydantic import validator
 
 

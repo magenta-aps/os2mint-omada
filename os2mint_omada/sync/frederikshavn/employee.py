@@ -9,12 +9,13 @@ from fastramqpi.raclients.modelclient.mo import ModelClient
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from ramodels.mo import Employee
 
-from .models import FrederikshavnOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
 
-logger = structlog.get_logger(__name__)
+from .models import FrederikshavnOmadaUser
+
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):

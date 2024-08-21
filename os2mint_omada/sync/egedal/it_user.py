@@ -16,12 +16,13 @@ from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
 
-from .models import EgedalOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
 
-logger = structlog.get_logger(__name__)
+from .models import EgedalOmadaUser
+
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableITUser(ComparableMixin, ITUser):
@@ -89,7 +90,7 @@ async def sync_it_users(
     }
 
     # Get MO classes configuration
-    it_systems = await mo.get_it_systems(user_keys=it_user_map.values())
+    it_systems = await mo.get_it_systems(user_keys=list(it_user_map.values()))
     omada_it_systems = [it_systems[user_key] for user_key in it_user_map.values()]
 
     # Get current user data from MO
@@ -133,7 +134,7 @@ async def sync_it_users(
             excess.add(first)
     if excess:
         logger.info("Deleting excess IT users", it_users=excess)
-        await asyncio.gather(*(mo.delete(a) for a in excess))
+        await asyncio.gather(*(mo.delete_it_user(a) for a in excess))
 
     # Create missing desired
     missing_comparable = desired - existing.keys()

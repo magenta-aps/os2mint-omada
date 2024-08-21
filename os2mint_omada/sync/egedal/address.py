@@ -17,13 +17,14 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 
-from .models import EgedalOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
 
-logger = structlog.get_logger(__name__)
+from .models import EgedalOmadaUser
+
+logger = structlog.stdlib.get_logger()
 
 
 class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
@@ -144,7 +145,7 @@ async def sync_addresses(
             excess.add(first)
     if excess:
         logger.info("Deleting excess addresses", addresses=excess)
-        await asyncio.gather(*(mo.delete(a) for a in excess))
+        await asyncio.gather(*(mo.delete_address(a) for a in excess))
 
     # Create missing desired
     missing_comparable = desired - existing.keys()
