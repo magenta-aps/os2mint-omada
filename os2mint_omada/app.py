@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
 from contextlib import asynccontextmanager
-from typing import Any
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
@@ -25,7 +24,7 @@ from os2mint_omada.sync.silkeborg.events import mo_router as silkeborg_mo_router
 from os2mint_omada.sync.silkeborg.events import omada_router as silkeborg_omada_router
 
 
-def create_app(**kwargs: Any) -> FastAPI:
+def create_app() -> FastAPI:
     """FastRAMQPI application factory.
 
     Args:
@@ -33,11 +32,11 @@ def create_app(**kwargs: Any) -> FastAPI:
 
     Returns: FastAPI application.
     """
-    settings = Settings(**kwargs)
+    settings = Settings()
     fastramqpi = FastRAMQPI(
         application_name="omada",
         settings=settings.fastramqpi,
-        graphql_version=21,
+        graphql_version=21,  # TODO(#59335): update
         graphql_client_cls=GraphQLClient,
     )
     fastramqpi.add_context(settings=settings)
