@@ -13,8 +13,8 @@ from respx import MockRouter
 from os2mint_omada.config import OmadaBasicAuthSettings
 from os2mint_omada.config import OmadaOIDCSettings
 from os2mint_omada.config import OmadaSettings
-from os2mint_omada.omada.api import create_client
 from os2mint_omada.omada.api import OmadaAPI
+from os2mint_omada.omada.api import create_client
 
 
 async def test_create_client_oidc_auth(omada_settings: OmadaSettings) -> None:

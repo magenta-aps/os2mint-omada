@@ -16,10 +16,11 @@ from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
 
-from .models import FrederikshavnOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
+
+from .models import FrederikshavnOmadaUser
 
 logger = structlog.get_logger(__name__)
 

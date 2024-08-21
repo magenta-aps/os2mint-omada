@@ -32,11 +32,10 @@ repos:
         args: [ --config-file=pyproject.toml ]
         language: system
 
-  # TODO(#59335): enable
-  # - repo: https://github.com/fpgmaas/deptry.git
-  #   rev: 0.16.1
-  #   hooks:
-  #     - id: deptry
+  - repo: https://github.com/fpgmaas/deptry.git
+    rev: 0.16.1
+    hooks:
+      - id: deptry
 
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v3.27.0

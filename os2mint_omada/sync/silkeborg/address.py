@@ -17,11 +17,12 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Visibility
 from ramodels.mo.details import Address
 
-from .models import SilkeborgOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.sync.models import StripUserKeyMixin
+
+from .models import SilkeborgOmadaUser
 
 logger = structlog.get_logger(__name__)
 

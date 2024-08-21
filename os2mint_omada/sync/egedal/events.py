@@ -8,6 +8,8 @@ from fastramqpi.ramqp.depends import RoutingKey
 from fastramqpi.ramqp.mo import MORouter
 from fastramqpi.ramqp.mo import PayloadType
 
+from os2mint_omada.omada.event_generator import Event
+
 from ... import depends
 from ...depends import CurrentOmadaUser
 from .address import sync_addresses
@@ -17,7 +19,6 @@ from .engagement import sync_engagements
 from .it_user import sync_it_users
 from .models import EgedalOmadaUser
 from .models import ManualEgedalOmadaUser
-from os2mint_omada.omada.event_generator import Event
 
 logger = structlog.get_logger(__name__)
 mo_router = MORouter()

@@ -19,13 +19,14 @@ from ramodels.mo._shared import PersonRef
 from ramodels.mo._shared import Primary
 from ramodels.mo.details import Engagement
 
-from .models import EgedalOmadaEmployment
-from .models import EgedalOmadaUser
-from .models import ManualEgedalOmadaUser
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.sync.models import ComparableMixin
 from os2mint_omada.util import validity_intersection
+
+from .models import EgedalOmadaEmployment
+from .models import EgedalOmadaUser
+from .models import ManualEgedalOmadaUser
 
 logger = structlog.get_logger(__name__)
 
