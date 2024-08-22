@@ -154,13 +154,22 @@ query get_employee_engagements($employee_uuids: [UUID!]) {
   }
 }
 
-query get_employee_it_users($employee_uuids: [UUID!]) {
+query get_employee_it_users(
+  $employee_uuids: [UUID!]
+  $it_system_uuids: [UUID!]
+) {
   employees(
     filter: { uuids: $employee_uuids, from_date: null, to_date: null }
   ) {
     objects {
       objects {
-        itusers(filter: { from_date: null, to_date: null }) {
+        itusers(
+          filter: {
+            from_date: null
+            to_date: null
+            itsystem: { uuids: $it_system_uuids }
+          }
+        ) {
           uuid
           user_key
           itsystem(filter: { from_date: null, to_date: null }) {

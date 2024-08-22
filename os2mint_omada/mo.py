@@ -139,12 +139,15 @@ class MO:
     async def get_employee_it_users(
         self, uuid: UUID, it_systems: list[UUID]
     ) -> set[ITUser]:
-        result = await self.graphql_client.get_employee_it_users(employee_uuids=[uuid])
+        result = await self.graphql_client.get_employee_it_users(
+            employee_uuids=[uuid],
+            it_system_uuids=it_systems,
+        )
         employee = only(result.objects)
         if employee is None:
             return set()
         it_users = chain.from_iterable(o.itusers for o in employee.objects)
-        converted_it_users = (
+        return {
             ITUser.from_simplified_fields(
                 uuid=it_user.uuid,
                 user_key=it_user.user_key,
@@ -157,10 +160,7 @@ class MO:
                 ),
             )
             for it_user in it_users
-        )
-        # Ideally IT users would be filtered directly in GraphQL, but it is not
-        # currently supported. TODO(#59335): is it possible now?
-        return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
+        }
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         result = await self.graphql_client.get_org_unit_with_it_system_user_key(
