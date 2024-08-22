@@ -98,7 +98,7 @@ async def test_egedal_manual(
 
         # Employee
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.cpr_number == cpr_number
         assert employee.given_name == "Arthas"
         assert employee.surname == "Menethil"
@@ -222,7 +222,7 @@ async def test_egedal_manual(
 
         # Employee
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.given_name == "The King"
         assert employee.nickname_given_name == "Mr M."
 
@@ -284,7 +284,7 @@ async def test_egedal_manual(
     async def verify() -> None:
         employees = await graphql_client._testing__get_employee(cpr_number)
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.engagements == []
         assert employee.addresses == []
         assert employee.itusers == []
@@ -317,7 +317,7 @@ async def test_egedal_nickname(
 
         employees = await graphql_client._testing__get_employee(cpr_number)
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.nickname_given_name == given_name
         assert employee.nickname_surname == surname
 

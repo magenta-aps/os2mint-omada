@@ -30,7 +30,7 @@ query get_employee_uuid_from_user_key($user_keys: [String!]) {
     filter: { user_keys: $user_keys, from_date: null, to_date: null }
   ) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         person(filter: { from_date: null, to_date: null }) {
           uuid
         }
@@ -52,13 +52,13 @@ query get_employee_uuid_from_cpr($cpr_numbers: [CPR!]) {
 query get_employee_states($uuids: [UUID!]) {
   employees(filter: { uuids: $uuids, from_date: null, to_date: null }) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         uuid
-        givenname
+        givenname # TODO(#59335): given_name
         surname
-        nickname_givenname
+        nickname_givenname # TODO(#59335): nickname_given_name
         nickname_surname
-        cpr_no
+        cpr_no # TODO(#59335): cpr_number
       }
     }
   }
@@ -69,11 +69,11 @@ query get_current_employee_state($uuids: [UUID!]) {
     objects {
       current {
         uuid
-        givenname
+        givenname # TODO(#59335): given_name
         surname
-        nickname_givenname
+        nickname_givenname # TODO(#59335): nickname_given_name
         nickname_surname
-        cpr_no
+        cpr_no # TODO(#59335): cpr_number
         seniority
       }
     }
@@ -88,7 +88,7 @@ query get_employee_addresses(
     filter: { uuids: $employee_uuids, from_date: null, to_date: null }
   ) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         addresses(
           filter: {
             address_types: $address_types
@@ -125,7 +125,7 @@ query get_employee_engagements($employee_uuids: [UUID!]) {
     filter: { uuids: $employee_uuids, from_date: null, to_date: null }
   ) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         engagements(filter: { from_date: null, to_date: null }) {
           uuid
           user_key
@@ -162,7 +162,7 @@ query get_employee_it_users(
     filter: { uuids: $employee_uuids, from_date: null, to_date: null }
   ) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         itusers(
           filter: {
             from_date: null
@@ -194,7 +194,7 @@ query get_employee_it_users(
 query get_org_unit_with_it_system_user_key($user_keys: [String!]) {
   itusers(filter: { user_keys: $user_keys, from_date: null, to_date: null }) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         org_unit(filter: { from_date: null, to_date: null }) {
           uuid
         }
@@ -222,7 +222,7 @@ query get_org_unit_with_user_key($user_keys: [String!]) {
 query get_org_unit_validity($uuids: [UUID!]) {
   org_units(filter: { uuids: $uuids, from_date: null, to_date: null }) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         validity {
           from_date: from
           to_date: to
@@ -281,7 +281,7 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
     filter: { cpr_numbers: [$cpr_number], from_date: null, to_date: null }
   ) {
     objects {
-      objects {
+      validities(start: null, end: null) {
         cpr_number
         given_name
         surname

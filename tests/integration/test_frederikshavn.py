@@ -89,7 +89,7 @@ async def test_frederikshavn(
 
         # Employee
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.cpr_number == cpr_number
         assert employee.given_name == "Villads"
         assert employee.surname == "Vikar"
@@ -201,7 +201,7 @@ async def test_frederikshavn(
 
         # Employee
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.given_name == "Leonardo"
 
         # Engagement
@@ -244,7 +244,7 @@ async def test_frederikshavn(
     async def verify() -> None:
         employees = await graphql_client._testing__get_employee(cpr_number)
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.engagements == []
         assert employee.addresses == []
         assert employee.itusers == []
