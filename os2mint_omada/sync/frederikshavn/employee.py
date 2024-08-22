@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import defaultdict
 
 import structlog
-from fastramqpi.raclients.modelclient.mo import ModelClient
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from ramodels.mo import Employee
 
@@ -40,7 +39,6 @@ class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
 async def sync_employee(
     omada_user: FrederikshavnOmadaUser,
     mo: MO,
-    model_client: ModelClient,
 ) -> None:
     """Synchronise an Omada user to MO.
 

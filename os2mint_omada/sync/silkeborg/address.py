@@ -8,7 +8,6 @@ from typing import cast
 from uuid import UUID
 
 import structlog
-from fastramqpi.raclients.modelclient.mo import ModelClient
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from pydantic import parse_obj_as
 from ramodels.mo._shared import AddressType
@@ -70,7 +69,6 @@ async def sync_addresses(
     employee_uuid: UUID,
     mo: MO,
     omada_api: OmadaAPI,
-    model_client: ModelClient,
 ) -> None:
     """Synchronise Omada addresses to MO.
 
