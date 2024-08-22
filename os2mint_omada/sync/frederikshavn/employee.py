@@ -40,13 +40,6 @@ async def sync_employee(
     omada_user: FrederikshavnOmadaUser,
     mo: MO,
 ) -> None:
-    """Synchronise an Omada user to MO.
-
-    Args:
-        omada_user: Omada user to synchronise.
-
-    Returns: None.
-    """
     logger.info("Synchronising employee", omada_user=omada_user)
 
     # Find employee in MO

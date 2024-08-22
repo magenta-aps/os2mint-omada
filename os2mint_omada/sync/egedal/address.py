@@ -67,13 +67,6 @@ async def sync_addresses(
     mo: MO,
     omada_api: OmadaAPI,
 ) -> None:
-    """Synchronise Omada addresses to MO.
-
-    Args:
-        employee_uuid: UUID of MO employee to synchronise.
-
-    Returns: None.
-    """
     logger.info("Synchronising addresses", employee_uuid=employee_uuid)
 
     # Get current user data from MO

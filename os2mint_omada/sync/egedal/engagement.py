@@ -85,13 +85,6 @@ async def sync_engagements(
     mo: MO,
     omada_api: OmadaAPI,
 ) -> None:
-    """Synchronise Omada engagements to MO.
-
-    Args:
-        employee_uuid: UUID of MO employee to synchronise.
-
-    Returns: None.
-    """
     logger.info("Synchronising engagements", employee_uuid=employee_uuid)
 
     # Get current user data from MO

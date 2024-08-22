@@ -65,13 +65,6 @@ async def sync_it_users(
     mo: MO,
     omada_api: OmadaAPI,
 ) -> None:
-    """Synchronise Omada IT users to MO.
-
-    Args:
-        employee_uuid: UUID of MO employee to synchronise.
-
-    Returns: None.
-    """
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
     # Maps from Omada user attribute to IT system user key in MO

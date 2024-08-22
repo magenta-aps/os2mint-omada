@@ -43,13 +43,6 @@ async def sync_employee(
     omada_user: ManualEgedalOmadaUser,
     mo: MO,
 ) -> None:
-    """Synchronise an Omada user to MO.
-
-    Args:
-        omada_user: Omada user to synchronise.
-
-    Returns: None.
-    """
     logger.info("Synchronising employee", omada_user=omada_user)
 
     # Find employee in MO
@@ -98,14 +91,7 @@ async def sync_employee_nickname(
     omada_user: EgedalOmadaUser,
     mo: MO,
 ) -> None:
-    """Synchronise Omada nicknames to pre-existing MO employees.
-
-    Args:
-        event: Omada event.
-        omada_user: Omada user to synchronise.
-
-    Returns: None.
-    """
+    """Synchronise Omada nicknames to pre-existing MO employees."""
     logger.info("Synchronising employee nicknames", omada_user=omada_user)
 
     # Find employee in MO
