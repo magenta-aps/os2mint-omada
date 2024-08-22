@@ -223,6 +223,30 @@ query get_org_unit_validity($uuids: [UUID!]) {
   }
 }
 
+mutation create_address($input: AddressCreateInput!) {
+  address_create(input: $input) {
+    uuid
+  }
+}
+
+mutation create_employee($input: EmployeeCreateInput!) {
+  employee_create(input: $input) {
+    uuid
+  }
+}
+
+mutation create_engagement($input: EngagementCreateInput!) {
+  engagement_create(input: $input) {
+    uuid
+  }
+}
+
+mutation create_it_user($input: ITUserCreateInput!) {
+  ituser_create(input: $input) {
+    uuid
+  }
+}
+
 mutation delete_address($uuid: UUID!) {
   address_delete(uuid: $uuid) {
     uuid
