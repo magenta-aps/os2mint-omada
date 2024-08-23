@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 import structlog
 from fastapi import Depends
-from fastramqpi.depends import LegacyModelClient
 from fastramqpi.ramqp import Router
 from fastramqpi.ramqp.depends import rate_limit
 from fastramqpi.ramqp.mo import MORouter
@@ -30,7 +29,6 @@ omada_router = Router()
 async def sync_omada_employee(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
-    model_client: LegacyModelClient,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
@@ -38,7 +36,6 @@ async def sync_omada_employee(
     await sync_employee(
         omada_user=omada_user,
         mo=mo,
-        model_client=model_client,
     )
 
 
@@ -47,7 +44,6 @@ async def sync_omada_engagements(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: LegacyModelClient,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
@@ -62,7 +58,6 @@ async def sync_omada_engagements(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
-        model_client=model_client,
     )
 
 
@@ -71,7 +66,6 @@ async def sync_omada_addresses(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: LegacyModelClient,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
@@ -86,7 +80,6 @@ async def sync_omada_addresses(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
-        model_client=model_client,
     )
 
 
@@ -95,7 +88,6 @@ async def sync_omada_it_users(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: LegacyModelClient,
 ) -> None:
     # TODO: Dependency-inject user instead
     omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
@@ -110,7 +102,6 @@ async def sync_omada_it_users(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
-        model_client=model_client,
     )
 
 
@@ -127,14 +118,12 @@ async def sync_mo_engagements(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: LegacyModelClient,
 ) -> None:
     employee_uuid = payload.uuid
     await sync_engagements(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
-        model_client=model_client,
     )
 
 
@@ -143,14 +132,12 @@ async def sync_mo_addresses(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: LegacyModelClient,
 ) -> None:
     employee_uuid = payload.uuid
     await sync_addresses(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
-        model_client=model_client,
     )
 
 
@@ -159,12 +146,10 @@ async def sync_mo_it_users(
     payload: PayloadType,
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
-    model_client: LegacyModelClient,
 ) -> None:
     employee_uuid = payload.uuid
     await sync_it_users(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
-        model_client=model_client,
     )

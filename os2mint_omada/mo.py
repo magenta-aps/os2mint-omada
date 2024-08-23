@@ -47,7 +47,7 @@ class MO:
         engagements = result.objects
         if not engagements:
             return None
-        objects = chain.from_iterable(e.objects for e in engagements)
+        objects = chain.from_iterable(e.validities for e in engagements)
         employees = chain.from_iterable(o.person for o in objects)
         uuids = {e.uuid for e in employees}
         return one(uuids)  # it's an error if different UUIDs are returned
@@ -65,7 +65,7 @@ class MO:
         employee = only(result.objects)
         if employee is None:
             return set()
-        return {Employee.parse_obj(o) for o in employee.objects}
+        return {Employee.parse_obj(v) for v in employee.validities}
 
     async def get_current_employee_state(self, uuid: UUID) -> Employee | None:
         result = await self.graphql_client.get_current_employee_state(uuids=[uuid])
@@ -84,7 +84,7 @@ class MO:
         employee = only(result.objects)
         if employee is None:
             return set()
-        addresses = chain.from_iterable(o.addresses for o in employee.objects)
+        addresses = chain.from_iterable(v.addresses for v in employee.validities)
         return {
             Address.from_simplified_fields(
                 uuid=address.uuid,
@@ -112,7 +112,7 @@ class MO:
         employee = only(result.objects)
         if employee is None:
             return set()
-        engagements = chain.from_iterable(o.engagements for o in employee.objects)
+        engagements = chain.from_iterable(v.engagements for v in employee.validities)
         return {
             Engagement.from_simplified_fields(
                 uuid=engagement.uuid,
@@ -139,12 +139,15 @@ class MO:
     async def get_employee_it_users(
         self, uuid: UUID, it_systems: list[UUID]
     ) -> set[ITUser]:
-        result = await self.graphql_client.get_employee_it_users(employee_uuids=[uuid])
+        result = await self.graphql_client.get_employee_it_users(
+            employee_uuids=[uuid],
+            it_system_uuids=it_systems,
+        )
         employee = only(result.objects)
         if employee is None:
             return set()
-        it_users = chain.from_iterable(o.itusers for o in employee.objects)
-        converted_it_users = (
+        it_users = chain.from_iterable(v.itusers for v in employee.validities)
+        return {
             ITUser.from_simplified_fields(
                 uuid=it_user.uuid,
                 user_key=it_user.user_key,
@@ -157,10 +160,7 @@ class MO:
                 ),
             )
             for it_user in it_users
-        )
-        # Ideally IT users would be filtered directly in GraphQL, but it is not
-        # currently supported. TODO(#59335): is it possible now?
-        return {u for u in converted_it_users if u.itsystem.uuid in it_systems}
+        }
 
     async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
         result = await self.graphql_client.get_org_unit_with_it_system_user_key(
@@ -169,8 +169,8 @@ class MO:
         it_users = result.objects
         if not it_users:
             raise KeyError(f"No organisation unit with {user_key=} found")
-        objects = chain.from_iterable(u.objects for u in it_users)
-        uuids = {ou.uuid for o in objects for ou in o.org_unit or []}
+        validities = chain.from_iterable(u.validities for u in it_users)
+        uuids = {ou.uuid for v in validities for ou in v.org_unit or []}
         return one(uuids)  # it's an error if different UUIDs are returned
 
     async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
@@ -196,14 +196,13 @@ class MO:
             uuids=[uuid],
         )
         org_unit = one(result.objects)
-        objs = org_unit.objects
         # Consolidate validities from all past/present/future versions of the org unit
         validities = (
             Validity(
-                from_date=obj.validity.from_date,
-                to_date=obj.validity.to_date,
+                from_date=validity.validity.from_date,
+                to_date=validity.validity.to_date,
             )
-            for obj in objs
+            for validity in org_unit.validities
         )
         return validity_union(*validities)
 

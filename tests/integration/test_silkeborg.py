@@ -105,7 +105,7 @@ async def test_silkeborg_manual(
 
         # Employee
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.cpr_number == cpr_number
         assert employee.given_name == "Mia"
         assert employee.surname == "Hansen"
@@ -216,7 +216,7 @@ async def test_silkeborg_manual(
 
         # Employee
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         # Existing employees in Silkeborg must never be modified, so the name should be
         # unchanged.
         assert employee.given_name == "Mia"
@@ -264,7 +264,7 @@ async def test_silkeborg_manual(
     async def verify() -> None:
         employees = await graphql_client._testing__get_employee(cpr_number)
         employee_states = one(employees.objects)
-        employee = one(employee_states.objects)
+        employee = one(employee_states.validities)
         assert employee.engagements == []
         assert employee.addresses == []
         assert employee.itusers == []

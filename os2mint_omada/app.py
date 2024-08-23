@@ -33,7 +33,7 @@ def create_app() -> FastAPI:
     fastramqpi = FastRAMQPI(
         application_name="omada",
         settings=settings.fastramqpi,
-        graphql_version=21,  # TODO(#59335): update
+        graphql_version=22,
         graphql_client_cls=GraphQLClient,
     )
     fastramqpi.add_context(settings=settings)
