@@ -15,12 +15,14 @@ from ramodels.mo import Validity
 logger = structlog.stdlib.get_logger()
 
 
-class ComparableMixin(BaseModel):
+class StripUUIDMixin(BaseModel):
     @validator("uuid", check_fields=False)
     def strip_uuid(cls, uuid: UUID) -> None:
         """Strip UUID to allow for convenient comparison of models."""
         return None
 
+
+class ValidityAtMidnightMixin(BaseModel):
     @validator("validity", check_fields=False)
     def validity_at_midnight(cls, validity: Validity) -> Validity:
         """Normalise validity dates to allow for convenient comparison of models.
@@ -38,6 +40,10 @@ class ComparableMixin(BaseModel):
             from_date=at_midnight(validity.from_date),
             to_date=at_midnight(validity.to_date),
         )
+
+
+class ComparableMixin(StripUUIDMixin, ValidityAtMidnightMixin, BaseModel):
+    pass
 
 
 class StripUserKeyMixin(BaseModel):
