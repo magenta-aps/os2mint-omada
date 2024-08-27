@@ -14,6 +14,7 @@ from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
+from uuid import uuid4
 
 from os2mint_omada.mo import MO
 from os2mint_omada.omada.api import OmadaAPI
@@ -59,6 +60,40 @@ class OldComparableITUser(ComparableMixin, ITUser):
         )
 
 
+# NOTE: TODO
+class NewComparableITUser(ComparableMixin, ITUser):
+    @classmethod
+    def from_omada(
+        cls,
+        omada_user: FrederikshavnOmadaUser,
+        employee_uuid: UUID,
+        engagement_uuid: UUID,
+        it_system_uuid: UUID,
+    ) -> OldComparableITUser | None:
+        """Construct (comparable) MO IT user for a specific attribute on an Omada user.
+
+        Args:
+            omada_user: Omada user.
+            employee_uuid: MO employee UUID.
+            engagement_uuid: MO engagement UUID.
+            it_system_uuid: IT system of the IT user.
+
+        Returns: Comparable MO IT user if the Omada attribute is set, otherwise None.
+        """
+        uuid = uuid4()
+        user_key = omada_user.ad_login
+        if uuid is None or user_key is None:
+            return None
+        return cls(  # type: ignore[call-arg]
+            uuid=uuid,
+            user_key=str(user_key),
+            itsystem=ITSystemRef(uuid=it_system_uuid),
+            person=PersonRef(uuid=employee_uuid),
+            engagement=EngagementRef(uuid=engagement_uuid),
+            validity=omada_user.validity,
+        )
+
+
 @handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
 async def sync_it_users(
     employee_uuid: UUID,
@@ -66,6 +101,33 @@ async def sync_it_users(
     omada_api: OmadaAPI,
 ) -> None:
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
+
+    # Get MO classes configuration
+    mo_omada_it_system = await mo.get_it_systems(["omada_ad"])
+
+    # Get current user data from MO
+    mo_omada_it_users = await mo.get_employee_it_users(
+        uuid=employee_uuid,
+        it_systems=list(mo_omada_it_system.values())
+    )
+    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
+
+    # Get current user data from Omada. Note that we are fetching Omada users for
+    # ALL engagements to avoid deleting too many IT users
+    engagements = {e.user_key: e for e in mo_engagements}
+    raw_omada_users = await omada_api.get_users_by(
+        "C_MEDARBEJDERNR_ODATA", engagements.keys()
+    )
+    omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
+
+    # Existing IT users in MO
+    existing: defaultdict[NewComparableITUser, set[ITUser]] = defaultdict(set)
+    for mo_it_user in mo_omada_it_users:
+        comparable_it_user = NewComparableITUser(**mo_it_user.dict())
+        existing[comparable_it_user].add(mo_it_user)
+
+
+
 
     # BEGIN OLD LOGIC
     # =========================================================================
