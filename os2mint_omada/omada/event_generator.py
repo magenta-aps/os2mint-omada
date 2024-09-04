@@ -5,11 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 import random
-from asyncio import CancelledError
-from asyncio import Task
-from contextlib import AbstractAsyncContextManager
+from contextlib import suppress
 from enum import StrEnum
 from types import TracebackType
+from typing import AsyncContextManager
 from typing import Type
 from uuid import UUID
 
@@ -37,7 +36,7 @@ class Event(StrEnum):
     WILDCARD = "*"
 
 
-class OmadaEventGenerator(AbstractAsyncContextManager):
+class OmadaEventGenerator(AsyncContextManager):
     def __init__(
         self, settings: OmadaSettings, api: OmadaAPI, amqp_system: AMQPSystem
     ) -> None:
@@ -59,8 +58,8 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
     async def __aenter__(self) -> OmadaEventGenerator:
         """Start the scheduler task."""
         logger.debug("Starting Omada event scheduler")
-        self._scheduler_task: Task = asyncio.create_task(self._scheduler())
-        return await super().__aenter__()
+        self._scheduler_task: asyncio.Task = asyncio.create_task(self._scheduler())
+        return self
 
     async def __aexit__(
         self,
@@ -71,7 +70,8 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
         """Stop the scheduler task."""
         logger.debug("Stopping Omada event scheduler")
         self._scheduler_task.cancel()
-        return await super().__aexit__(__exc_type, __exc_value, __traceback)
+        with suppress(asyncio.CancelledError):
+            await self._scheduler_task
 
     async def _scheduler(self) -> None:
         """The scheduler periodically and invokes the event generation logic."""
@@ -80,6 +80,9 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
             try:
                 await self.generate()
                 await asyncio.sleep(self.settings.interval)
+            except asyncio.CancelledError:
+                logger.info("Stopping Omada scheduler")
+                raise
             except Exception:  # pylint: disable=broad-except
                 logger.exception("Failed to generate events")
                 # Wait a random amount of time before retrying, to avoid two or more
@@ -88,9 +91,6 @@ class OmadaEventGenerator(AbstractAsyncContextManager):
                 wait = random.randint(30, 120)
                 logger.info("Waiting to resume scheduler", wait=wait)
                 await asyncio.sleep(wait)
-            except CancelledError:
-                logger.info("Stopping Omada scheduler")
-                break
 
     async def generate(self) -> None:
         """Generate Omada events based on the live Omada API view and saved state."""
