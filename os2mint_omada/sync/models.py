@@ -10,21 +10,21 @@ from uuid import UUID
 import structlog
 from pydantic import BaseModel
 from pydantic import validator
-from ramodels.mo import Validity
+from ramodels.mo import Validity as RAValidity
 
 logger = structlog.stdlib.get_logger()
 
 
-class StripUUIDMixin(BaseModel):
+class RAStripUUIDMixin(BaseModel):
     @validator("uuid", check_fields=False)
     def strip_uuid(cls, uuid: UUID) -> None:
         """Strip UUID to allow for convenient comparison of models."""
         return None
 
 
-class ValidityAtMidnightMixin(BaseModel):
+class RAValidityAtMidnightMixin(BaseModel):
     @validator("validity", check_fields=False)
-    def validity_at_midnight(cls, validity: Validity) -> Validity:
+    def validity_at_midnight(cls, validity: RAValidity) -> RAValidity:
         """Normalise validity dates to allow for convenient comparison of models.
 
         Date(time)s are converted to "midnight" for MO compatibility by removing the
@@ -36,17 +36,17 @@ class ValidityAtMidnightMixin(BaseModel):
                 return None
             return datetime.combine(date, time.min)
 
-        return Validity(
+        return RAValidity(
             from_date=at_midnight(validity.from_date),
             to_date=at_midnight(validity.to_date),
         )
 
 
-class ComparableMixin(StripUUIDMixin, ValidityAtMidnightMixin, BaseModel):
+class RAComparableMixin(RAStripUUIDMixin, RAValidityAtMidnightMixin, BaseModel):
     pass
 
 
-class StripUserKeyMixin(BaseModel):
+class RAStripUserKeyMixin(BaseModel):
     @validator("user_key", check_fields=False)
     def strip_user_key(cls, user_key: Any | None) -> None:
         """Strip user key to allow for convenient comparison of models.

@@ -13,13 +13,13 @@ from os2mint_omada.mo import MO
 from os2mint_omada.omada.event_generator import Event
 from os2mint_omada.sync.egedal.models import EgedalOmadaUser
 from os2mint_omada.sync.egedal.models import ManualEgedalOmadaUser
-from os2mint_omada.sync.models import ComparableMixin
-from os2mint_omada.sync.models import StripUserKeyMixin
+from os2mint_omada.sync.models import RAComparableMixin
+from os2mint_omada.sync.models import RAStripUserKeyMixin
 
 logger = structlog.stdlib.get_logger()
 
 
-class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
+class ComparableEmployee(RAStripUserKeyMixin, RAComparableMixin, Employee):
     pass
 
 
