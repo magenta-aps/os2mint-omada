@@ -20,22 +20,7 @@ logger = structlog.stdlib.get_logger()
 
 
 class ComparableEmployee(StripUserKeyMixin, ComparableMixin, Employee):
-    @classmethod
-    def from_omada(cls, omada_user: ManualEgedalOmadaUser) -> ComparableEmployee:
-        """Construct (comparable) MO employee from a omada user.
-
-        Args:
-            omada_user: Omada user.
-
-        Returns: Comparable MO employee.
-        """
-        return cls(  # type: ignore[call-arg]
-            givenname=omada_user.first_name,
-            surname=omada_user.last_name,
-            cpr_no=omada_user.cpr_number,
-            nickname_givenname=omada_user.nickname_first_name,
-            nickname_surname=omada_user.nickname_last_name,
-        )
+    pass
 
 
 @handle_exclusively_decorator(key=lambda omada_user, *_, **__: omada_user.cpr_number)
@@ -59,7 +44,15 @@ async def sync_employee(
         existing[comparable_employee].add(mo_employee_state)
 
     # Desired employee states from Omada (only one)
-    desired = {ComparableEmployee.from_omada(omada_user)}
+    desired = {
+        ComparableEmployee(  # type: ignore[call-arg]
+            givenname=omada_user.first_name,
+            surname=omada_user.last_name,
+            cpr_no=omada_user.cpr_number,
+            nickname_givenname=omada_user.nickname_first_name,
+            nickname_surname=omada_user.nickname_last_name,
+        )
+    }
 
     # Delete excess existing
     # TODO: Implement when supported by MO
