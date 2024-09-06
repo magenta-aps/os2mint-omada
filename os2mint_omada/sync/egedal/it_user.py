@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
-from typing import cast
 from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from more_itertools import only
 from pydantic import parse_obj_as
+from ramodels.mo import Validity
 from ramodels.mo._shared import ITSystemRef
 from ramodels.mo._shared import PersonRef
 from ramodels.mo.details import ITUser
@@ -27,33 +27,7 @@ logger = structlog.stdlib.get_logger()
 
 
 class ComparableITUser(ComparableMixin, ITUser):
-    @classmethod
-    def from_omada(
-        cls,
-        omada_user: EgedalOmadaUser,
-        omada_attr: str,
-        employee_uuid: UUID,
-        it_system_uuid: UUID,
-    ) -> ComparableITUser | None:
-        """Construct (comparable) MO IT user for a specific attribute on an Omada user.
-
-        Args:
-            omada_user: Omada user.
-            omada_attr: Attribute on the Omada user to use as the IT user account name.
-            employee_uuid: MO employee UUID.
-            it_system_uuid: IT system of the IT user.
-
-        Returns: Comparable MO IT user if the Omada attribute is set, otherwise None.
-        """
-        omada_value = getattr(omada_user, omada_attr)
-        if omada_value is None:
-            return None
-        return cls(  # type: ignore[call-arg]
-            user_key=str(omada_value),
-            itsystem=ITSystemRef(uuid=it_system_uuid),
-            person=PersonRef(uuid=employee_uuid),
-            validity=omada_user.validity,
-        )
+    pass
 
 
 @handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
@@ -104,19 +78,22 @@ async def sync_it_users(
         existing[comparable_it_user].add(mo_it_user)
 
     # Desired IT users from Omada
-    desired_with_none: set[ComparableITUser | None] = {
-        ComparableITUser.from_omada(
-            omada_user=omada_user,
-            omada_attr=omada_attr,
-            employee_uuid=employee_uuid,
-            it_system_uuid=it_systems[mo_it_system_user_key],
-        )
-        for omada_user in omada_users
-        for omada_attr, mo_it_system_user_key in it_user_map.items()
-    }
-    desired: set[ComparableITUser] = cast(
-        set[ComparableITUser], desired_with_none - {None}
-    )
+    desired = set()
+    for omada_user in omada_users:
+        for omada_attr, mo_it_system_user_key in it_user_map.items():
+            omada_value = getattr(omada_user, omada_attr)
+            if omada_value is None:
+                continue
+            c = ComparableITUser(  # type: ignore[call-arg]
+                user_key=str(omada_value),
+                itsystem=ITSystemRef(uuid=it_systems[mo_it_system_user_key]),
+                person=PersonRef(uuid=employee_uuid),
+                validity=Validity(
+                    from_date=omada_user.validity.from_date,
+                    to_date=omada_user.validity.to_date,
+                ),
+            )
+            desired.add(c)
 
     # Delete excess existing
     excess: set[ITUser] = set()
