@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
-from typing import cast
 from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from pydantic import parse_obj_as
+from ramodels.mo import Validity
 from ramodels.mo._shared import AddressType
 from ramodels.mo._shared import EngagementRef
 from ramodels.mo._shared import PersonRef
@@ -29,39 +29,7 @@ logger = structlog.stdlib.get_logger()
 
 
 class ComparableAddress(StripUserKeyMixin, ComparableMixin, Address):
-    @classmethod
-    def from_omada(
-        cls,
-        omada_user: SilkeborgOmadaUser,
-        omada_attr: str,
-        employee_uuid: UUID,
-        engagement_uuid: UUID,
-        address_type_uuid: UUID,
-        visibility_uuid: UUID,
-    ) -> ComparableAddress | None:
-        """Construct (comparable) MO address for a specific attribute on an Omada user.
-
-        Args:
-            omada_user: Omada user.
-            omada_attr: Attribute on the Omada user to use for the address value.
-            employee_uuid: MO employee UUID.
-            engagement_uuid: MO engagement UUID.
-            address_type_uuid: Type class of the address.
-            visibility_uuid: Visibility class of the address.
-
-        Returns: Comparable MO address if the Omada attribute is set, otherwise None.
-        """
-        omada_value = getattr(omada_user, omada_attr)
-        if omada_value is None:
-            return None
-        return cls(  # type: ignore[call-arg]
-            value=omada_value,
-            address_type=AddressType(uuid=address_type_uuid),
-            person=PersonRef(uuid=employee_uuid),
-            engagement=EngagementRef(uuid=engagement_uuid),
-            visibility=Visibility(uuid=visibility_uuid),
-            validity=omada_user.validity,
-        )
+    pass
 
 
 @handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
@@ -108,21 +76,26 @@ async def sync_addresses(
         existing[comparable_address].add(mo_address)
 
     # Desired addresses from Omada
-    desired_with_none: set[ComparableAddress | None] = {
-        ComparableAddress.from_omada(
-            omada_user=omada_user,
-            omada_attr=omada_attr,
-            employee_uuid=employee_uuid,
-            engagement_uuid=engagements[omada_user.service_number].uuid,
-            address_type_uuid=address_types[mo_address_user_key],
-            visibility_uuid=visibility_uuid,
-        )
-        for omada_user in omada_users
-        for omada_attr, mo_address_user_key in address_map.items()
-    }
-    desired: set[ComparableAddress] = cast(
-        set[ComparableAddress], desired_with_none - {None}
-    )
+    desired = set()
+    for omada_user in omada_users:
+        for omada_attr, mo_address_user_key in address_map.items():
+            omada_value = getattr(omada_user, omada_attr)
+            if omada_value is None:
+                continue
+            c = ComparableAddress(  # type: ignore[call-arg]
+                value=omada_value,
+                address_type=AddressType(uuid=address_types[mo_address_user_key]),
+                person=PersonRef(uuid=employee_uuid),
+                engagement=EngagementRef(
+                    uuid=engagements[omada_user.service_number].uuid
+                ),
+                visibility=Visibility(uuid=visibility_uuid),
+                validity=Validity(
+                    from_date=omada_user.validity.from_date,
+                    to_date=omada_user.validity.to_date,
+                ),
+            )
+            desired.add(c)
 
     # Delete excess existing
     excess: set[Address] = set()
