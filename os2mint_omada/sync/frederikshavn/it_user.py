@@ -26,7 +26,7 @@ from .models import FrederikshavnOmadaUser
 logger = structlog.stdlib.get_logger()
 
 
-class OldComparableITUser(ComparableMixin, ITUser):
+class ComparableITUser(ComparableMixin, ITUser):
     @classmethod
     def from_omada(
         cls,
@@ -35,7 +35,7 @@ class OldComparableITUser(ComparableMixin, ITUser):
         employee_uuid: UUID,
         engagement_uuid: UUID,
         it_system_uuid: UUID,
-    ) -> OldComparableITUser | None:
+    ) -> ComparableITUser | None:
         """Construct (comparable) MO IT user for a specific attribute on an Omada user.
 
         Args:
@@ -67,9 +67,6 @@ async def sync_it_users(
 ) -> None:
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
-    # BEGIN OLD LOGIC
-    # =========================================================================
-    # TODO(#58872): remove when fully migrated to new IT-user objects
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_login": "omada_ad_login",
@@ -95,14 +92,14 @@ async def sync_it_users(
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
     # Existing IT users in MO
-    existing: defaultdict[OldComparableITUser, set[ITUser]] = defaultdict(set)
+    existing: defaultdict[ComparableITUser, set[ITUser]] = defaultdict(set)
     for mo_it_user in mo_it_users:
-        comparable_it_user = OldComparableITUser(**mo_it_user.dict())
+        comparable_it_user = ComparableITUser(**mo_it_user.dict())
         existing[comparable_it_user].add(mo_it_user)
 
     # Desired IT users from Omada
-    desired_with_none: set[OldComparableITUser | None] = {
-        OldComparableITUser.from_omada(
+    desired_with_none: set[ComparableITUser | None] = {
+        ComparableITUser.from_omada(
             omada_user=omada_user,
             omada_attr=omada_attr,
             employee_uuid=employee_uuid,
@@ -112,11 +109,9 @@ async def sync_it_users(
         for omada_user in omada_users
         for omada_attr, mo_it_system_user_key in it_user_map.items()
     }
-    desired: set[OldComparableITUser] = cast(
-        set[OldComparableITUser], desired_with_none - {None}
+    desired: set[ComparableITUser] = cast(
+        set[ComparableITUser], desired_with_none - {None}
     )
-    # =========================================================================
-    # END OLD LOGIC
 
     # Delete excess existing
     excess: set[ITUser] = set()
