@@ -10,7 +10,6 @@ import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
 from more_itertools import only
 from pydantic import parse_obj_as
-from ramodels.mo import Validity
 from ramodels.mo._shared import EngagementType
 from ramodels.mo._shared import JobFunction
 from ramodels.mo._shared import OrgUnitRef
@@ -33,50 +32,7 @@ logger = structlog.stdlib.get_logger()
 
 
 class ComparableEngagement(ComparableMixin, Engagement):
-    @classmethod
-    def from_omada(
-        cls,
-        omada_user: ManualEgedalOmadaUser,
-        omada_employment: EgedalOmadaEmployment,
-        person_uuid: UUID,
-        org_unit_uuid: UUID,
-        org_unit_validity: Validity,
-        job_functions: dict[str, UUID],
-        engagement_type_uuid: UUID,
-        primary_type_uuid: UUID,
-    ) -> ComparableEngagement:
-        """Construct (comparable) MO engagement from an omada user.
-
-        Args:
-            omada_user: Omada user.
-            omada_employment: Omada user's employment.
-            person_uuid: Employee of the engagement.
-            org_unit_uuid: Org unit of the engagement.
-            org_unit_validity: Validity of the org unit of the engagement. This is
-             needed because the Omada user's validity sometimes lies outside the
-             interval of the org unit, which is not accepted by MO.
-            job_functions: Map of all engagement job functions in MO.
-            engagement_type_uuid: Engagement type for the engagement.
-            primary_type_uuid: Primary class of the engagement.
-
-        Returns: Comparable MO engagement.
-        """
-        try:
-            job_function_uuid = job_functions[omada_employment.job_title]
-        except KeyError:
-            # Fallback job function for engagements if the job title from Omada does
-            # not exist in MO.
-            job_function_uuid = job_functions["not_applicable"]
-
-        return cls(  # type: ignore[call-arg]
-            user_key=omada_employment.employment_number,
-            person=PersonRef(uuid=person_uuid),
-            org_unit=OrgUnitRef(uuid=org_unit_uuid),
-            job_function=JobFunction(uuid=job_function_uuid),
-            engagement_type=EngagementType(uuid=engagement_type_uuid),
-            primary=Primary(uuid=primary_type_uuid),
-            validity=validity_intersection(omada_user.validity, org_unit_validity),
-        )
+    pass
 
 
 @handle_exclusively_decorator(key=lambda employee_uuid, *_, **__: employee_uuid)
@@ -145,15 +101,20 @@ async def sync_engagements(
         # The org unit's validity is needed to ensure the engagement's validity
         # does not lie outside this interval.
         org_unit_validity = await mo.get_org_unit_validity(org_unit_uuid)
-        return ComparableEngagement.from_omada(
-            omada_user=omada_user,
-            omada_employment=omada_employment,
-            person_uuid=employee_uuid,
-            org_unit_uuid=org_unit_uuid,
-            org_unit_validity=org_unit_validity,
-            job_functions=job_functions,
-            engagement_type_uuid=engagement_type_uuid,
-            primary_type_uuid=primary_type_uuid,
+        try:
+            job_function_uuid = job_functions[omada_employment.job_title]
+        except KeyError:
+            # Fallback job function for engagements if the job title from Omada does
+            # not exist in MO.
+            job_function_uuid = job_functions["not_applicable"]
+        return ComparableEngagement(  # type: ignore[call-arg]
+            user_key=omada_employment.employment_number,
+            person=PersonRef(uuid=employee_uuid),
+            org_unit=OrgUnitRef(uuid=org_unit_uuid),
+            job_function=JobFunction(uuid=job_function_uuid),
+            engagement_type=EngagementType(uuid=engagement_type_uuid),
+            primary=Primary(uuid=primary_type_uuid),
+            validity=validity_intersection(omada_user.validity, org_unit_validity),
         )
 
     desired_tuples = await asyncio.gather(
