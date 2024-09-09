@@ -118,7 +118,7 @@ async def sync_engagements(
         engagement_type_uuid = omada_engagement_type_for_visibility[
             omada_user.is_visible
         ]
-        return ComparableEngagement(  # type: ignore[call-arg]
+        return ComparableEngagement(
             user_key=omada_user.service_number,
             person=employee_uuid,
             org_unit=org_unit_uuid,

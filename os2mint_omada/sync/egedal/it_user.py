@@ -77,7 +77,7 @@ async def sync_it_users(
             omada_value = getattr(omada_user, omada_attr)
             if omada_value is None:
                 continue
-            c = ComparableITUser(  # type: ignore[call-arg]
+            c = ComparableITUser(
                 user_key=str(omada_value),
                 it_system=it_systems[mo_it_system_user_key],
                 person=employee_uuid,

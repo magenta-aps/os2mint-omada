@@ -96,7 +96,7 @@ async def sync_engagements(
             # Fallback job function for engagements if the job title from Omada does
             # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
-        return ComparableEngagement(  # type: ignore[call-arg]
+        return ComparableEngagement(
             user_key=omada_user.employee_number,
             person=employee_uuid,
             org_unit=org_unit_uuid,

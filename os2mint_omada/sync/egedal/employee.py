@@ -40,11 +40,11 @@ async def sync_employee(
 
     # Desired employee states from Omada (only one)
     desired = {
-        ComparableEmployee(  # type: ignore[call-arg]
-            givenname=omada_user.first_name,
+        ComparableEmployee(
+            given_name=omada_user.first_name,
             surname=omada_user.last_name,
-            cpr_no=omada_user.cpr_number,
-            nickname_givenname=omada_user.nickname_first_name,
+            cpr_number=omada_user.cpr_number,
+            nickname_given_name=omada_user.nickname_first_name,
             nickname_surname=omada_user.nickname_last_name,
         )
     }

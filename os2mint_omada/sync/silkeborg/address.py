@@ -72,7 +72,7 @@ async def sync_addresses(
             omada_value = getattr(omada_user, omada_attr)
             if omada_value is None:
                 continue
-            c = ComparableAddress(  # type: ignore[call-arg]
+            c = ComparableAddress(
                 value=omada_value,
                 address_type=address_types[mo_address_user_key],
                 person=employee_uuid,
