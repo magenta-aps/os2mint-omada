@@ -4,59 +4,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from datetime import time
-from typing import Any
 from uuid import UUID
 
 import structlog
 from pydantic import BaseModel
 from pydantic import Extra
 from pydantic import validator
-from ramodels.mo import Validity as RAValidity
 
 logger = structlog.stdlib.get_logger()
-
-
-class RAStripUUIDMixin(BaseModel):
-    @validator("uuid", check_fields=False)
-    def strip_uuid(cls, uuid: UUID) -> None:
-        """Strip UUID to allow for convenient comparison of models."""
-        return None
-
-
-class RAValidityAtMidnightMixin(BaseModel):
-    @validator("validity", check_fields=False)
-    def validity_at_midnight(cls, validity: RAValidity) -> RAValidity:
-        """Normalise validity dates to allow for convenient comparison of models.
-
-        Date(time)s are converted to "midnight" for MO compatibility by removing the
-        time-component.
-        """
-
-        def at_midnight(date: datetime | None) -> datetime | None:
-            if date is None:
-                return None
-            return datetime.combine(date, time.min)
-
-        return RAValidity(
-            from_date=at_midnight(validity.from_date),
-            to_date=at_midnight(validity.to_date),
-        )
-
-
-class RAComparableMixin(RAStripUUIDMixin, RAValidityAtMidnightMixin, BaseModel):
-    pass
-
-
-class RAStripUserKeyMixin(BaseModel):
-    @validator("user_key", check_fields=False)
-    def strip_user_key(cls, user_key: Any | None) -> None:
-        """Strip user key to allow for convenient comparison of models.
-
-        Should only be used on objects where the user key does not contain actual
-        relevant data, but is simply a copy of the UUID (as automatically set by MOBase
-        if absent).
-        """
-        return None
 
 
 class StrictBaseModel(BaseModel):
@@ -65,25 +20,6 @@ class StrictBaseModel(BaseModel):
     class Config:
         extra = Extra.forbid
         frozen = True
-
-
-class StripUUIDMixin(StrictBaseModel):
-    @validator("uuid", check_fields=False)
-    def strip_uuid(cls, uuid: UUID | None) -> None:
-        """Strip UUID to allow for convenient comparison of models."""
-        return None
-
-
-class StripUserKeyMixin(StrictBaseModel):
-    @validator("user_key", check_fields=False)
-    def strip_user_key(cls, user_key: Any | None) -> None:
-        """Strip user key to allow for convenient comparison of models.
-
-        Should only be used on objects where the user key does not contain actual
-        relevant data, but is simply a copy of the UUID (as automatically set by MOBase
-        if absent).
-        """
-        return None
 
 
 class Validity(StrictBaseModel):
@@ -112,10 +48,6 @@ class Address(StrictBaseModel):
     validity: Validity
 
 
-class ComparableAddress(StripUUIDMixin, Address):
-    pass
-
-
 class Employee(StrictBaseModel):
     uuid: UUID | None
     cpr_number: str
@@ -123,10 +55,6 @@ class Employee(StrictBaseModel):
     surname: str
     nickname_given_name: str | None
     nickname_surname: str | None
-
-
-class ComparableEmployee(StripUUIDMixin, Employee):
-    pass
 
 
 class Engagement(StrictBaseModel):
@@ -140,10 +68,6 @@ class Engagement(StrictBaseModel):
     validity: Validity
 
 
-class ComparableEngagement(StripUUIDMixin, Engagement):
-    pass
-
-
 class ITUser(StrictBaseModel):
     uuid: UUID | None
     user_key: str | None
@@ -151,6 +75,26 @@ class ITUser(StrictBaseModel):
     person: UUID
     engagement: UUID | None
     validity: Validity
+
+
+class StripUUIDMixin(StrictBaseModel):
+    """Strip UUID to allow for convenient comparison of models."""
+
+    @validator("uuid", check_fields=False)
+    def strip_uuid(cls, uuid: UUID | None) -> None:
+        return None
+
+
+class ComparableAddress(StripUUIDMixin, Address):
+    pass
+
+
+class ComparableEmployee(StripUUIDMixin, Employee):
+    pass
+
+
+class ComparableEngagement(StripUUIDMixin, Engagement):
+    pass
 
 
 class ComparableITUser(StripUUIDMixin, ITUser):
