@@ -94,15 +94,15 @@ async def sync_employee_nickname(
 
     # Desired employee state with nickname from Omada
     if event == Event.DELETE:
-        desired_nickname_givenname = None
+        desired_nickname_given_name = None
         desired_nickname_surname = None
     else:
-        desired_nickname_givenname = omada_user.nickname_first_name
+        desired_nickname_given_name = omada_user.nickname_first_name
         desired_nickname_surname = omada_user.nickname_last_name
 
     desired = mo_employee_state.copy(
         update=dict(
-            nickname_givenname=desired_nickname_givenname,
+            nickname_given_name=desired_nickname_given_name,
             nickname_surname=desired_nickname_surname,
         )
     )

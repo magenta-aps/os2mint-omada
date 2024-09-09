@@ -54,11 +54,11 @@ query get_employee_states($uuids: [UUID!]) {
     objects {
       validities(start: null, end: null) {
         uuid
-        givenname # TODO(#59335): given_name
+        given_name
         surname
-        nickname_givenname # TODO(#59335): nickname_given_name
+        nickname_given_name
         nickname_surname
-        cpr_no # TODO(#59335): cpr_number
+        cpr_number
       }
     }
   }
@@ -69,11 +69,11 @@ query get_current_employee_state($uuids: [UUID!]) {
     objects {
       current {
         uuid
-        givenname # TODO(#59335): given_name
+        given_name
         surname
-        nickname_givenname # TODO(#59335): nickname_given_name
+        nickname_given_name
         nickname_surname
-        cpr_no # TODO(#59335): cpr_number
+        cpr_number
         seniority
       }
     }
@@ -365,7 +365,9 @@ mutation _Testing_CreateEmployee(
 }
 
 query _Testing_GetOrgUnitType {
-  classes(filter: { facet_user_keys: "org_unit_type", user_keys: "Afdeling" }) {
+  classes(
+    filter: { facet: { user_keys: "org_unit_type" }, user_keys: "Afdeling" }
+  ) {
     objects {
       uuid
     }

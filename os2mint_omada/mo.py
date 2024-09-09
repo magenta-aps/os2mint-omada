@@ -67,10 +67,10 @@ class MO:
         return {
             Employee(
                 uuid=v.uuid,
-                cpr_number=v.cpr_no,
-                given_name=v.givenname,
+                cpr_number=v.cpr_number,
+                given_name=v.given_name,
                 surname=v.surname,
-                nickname_given_name=v.nickname_givenname,
+                nickname_given_name=v.nickname_given_name,
                 nickname_surname=v.nickname_surname,
             )
             for v in employee.validities
@@ -85,10 +85,10 @@ class MO:
         assert current is not None
         return Employee(
             uuid=current.uuid,
-            cpr_number=current.cpr_no,
-            given_name=current.givenname,
+            cpr_number=current.cpr_number,
+            given_name=current.given_name,
             surname=current.surname,
-            nickname_given_name=current.nickname_givenname,
+            nickname_given_name=current.nickname_given_name,
             nickname_surname=current.nickname_surname,
         )
 
