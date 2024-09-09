@@ -10,7 +10,6 @@ import structlog
 from more_itertools import one
 from more_itertools import only
 from ramodels.mo import Employee
-from ramodels.mo import Validity as RAValidity
 from ramodels.mo._shared import UUIDBase
 from ramodels.mo.details import Engagement
 
@@ -100,7 +99,7 @@ class MO:
                 engagement=only({e.uuid for e in (address.engagement or [])}),
                 validity=Validity(
                     start=address.validity.from_,
-                    end=to if (to := address.validity.to) is not None else None,
+                    end=address.validity.to,
                 ),
             )
             for address in addresses
@@ -157,7 +156,7 @@ class MO:
                 engagement=only({e.uuid for e in (it_user.engagement or [])}),
                 validity=Validity(
                     start=it_user.validity.from_,
-                    end=to if (to := it_user.validity.to) is not None else None,
+                    end=it_user.validity.to,
                 ),
             )
             for it_user in it_users
@@ -192,16 +191,16 @@ class MO:
             raise KeyError(f"No organisation unit with {user_key=} found") from e
         return org_unit.uuid
 
-    async def get_org_unit_validity(self, uuid: UUID) -> RAValidity:
+    async def get_org_unit_validity(self, uuid: UUID) -> Validity:
         result = await self.graphql_client.get_org_unit_validity(
             uuids=[uuid],
         )
         org_unit = one(result.objects)
         # Consolidate validities from all past/present/future versions of the org unit
         validities = (
-            RAValidity(
-                from_date=validity.validity.from_date,
-                to_date=validity.validity.to_date,
+            Validity(
+                start=validity.validity.from_date,
+                end=validity.validity.to_date,
             )
             for validity in org_unit.validities
         )
