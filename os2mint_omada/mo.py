@@ -166,6 +166,7 @@ class MO:
         return {
             ITUser(
                 uuid=it_user.uuid,
+                external_id=it_user.external_id,
                 user_key=it_user.user_key,
                 it_system=it_user.itsystem.uuid,
                 person=one({p.uuid for p in (it_user.person or [])}),

@@ -171,6 +171,7 @@ async def test_egedal_manual(
             [u.dict() for u in employee.itusers],
             [
                 {
+                    "external_id": "da0b84b8-8e31-426b-965d-0ac0aba1d69f",
                     "user_key": "da0b84b8-8e31-426b-965d-0ac0aba1d69f",
                     "itsystem": {"user_key": "omada_ad_guid"},
                     "engagement": None,
@@ -270,9 +271,15 @@ async def test_egedal_manual(
         }
 
         # IT Users
-        assert {u.user_key for u in employee.itusers} == {
-            "44332211-6655-8877-9900-aabbccddeeff",
-            "LK1337",
+        assert {(u.external_id, u.user_key) for u in employee.itusers} == {
+            (
+                "44332211-6655-8877-9900-aabbccddeeff",
+                "44332211-6655-8877-9900-aabbccddeeff",
+            ),
+            (
+                "44332211-6655-8877-9900-aabbccddeeff",
+                "LK1337",
+            ),
         }
 
     await verify()

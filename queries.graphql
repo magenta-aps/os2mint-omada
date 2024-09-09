@@ -171,6 +171,7 @@ query get_employee_it_users(
           }
         ) {
           uuid
+          external_id
           user_key
           itsystem(filter: { from_date: null, to_date: null }) {
             uuid
@@ -327,6 +328,7 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
           }
         }
         itusers(filter: { from_date: null, to_date: null }) {
+          external_id
           user_key
           itsystem(filter: { from_date: null, to_date: null }) {
             user_key

@@ -68,6 +68,8 @@ async def sync_it_users(
             if omada_value is None:
                 continue
             c = ComparableITUser(
+                # AD GUID is not present in the Omada view
+                external_id=None,
                 user_key=str(omada_value),
                 it_system=it_systems[mo_it_system_user_key],
                 person=employee_uuid,
@@ -95,6 +97,7 @@ async def sync_it_users(
         for missing in missing_mo:
             await mo.graphql_client.create_it_user(
                 ITUserCreateInput(
+                    external_id=missing.external_id,
                     user_key=missing.user_key,
                     itsystem=missing.it_system,
                     person=missing.person,

@@ -70,6 +70,7 @@ class Engagement(StrictBaseModel):
 
 class ITUser(StrictBaseModel):
     uuid: UUID | None
+    external_id: str | None
     user_key: str | None
     it_system: UUID
     person: UUID
