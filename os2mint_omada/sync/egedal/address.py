@@ -34,7 +34,7 @@ async def sync_addresses(
     # Get current user data from MO
     employee_states = await mo.get_employee_states(employee_uuid)
     assert employee_states
-    cpr_number = only({e.cpr_no for e in employee_states})
+    cpr_number = only({e.cpr_number for e in employee_states})
 
     if cpr_number is None:
         logger.warning(

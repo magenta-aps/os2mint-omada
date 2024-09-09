@@ -116,6 +116,19 @@ class ComparableAddress(StripUUIDMixin, Address):
     pass
 
 
+class Employee(StrictBaseModel):
+    uuid: UUID | None
+    cpr_number: str
+    given_name: str
+    surname: str
+    nickname_given_name: str | None
+    nickname_surname: str | None
+
+
+class ComparableEmployee(StripUUIDMixin, Employee):
+    pass
+
+
 class Engagement(StrictBaseModel):
     uuid: UUID | None
     user_key: str
