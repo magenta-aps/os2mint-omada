@@ -102,6 +102,20 @@ class Validity(StrictBaseModel):
         return datetime.combine(value, time.min)
 
 
+class Address(StrictBaseModel):
+    uuid: UUID | None
+    value: str
+    address_type: UUID
+    person: UUID
+    visibility: UUID | None
+    engagement: UUID | None
+    validity: Validity
+
+
+class ComparableAddress(StripUUIDMixin, Address):
+    pass
+
+
 class ITUser(StrictBaseModel):
     uuid: UUID | None
     user_key: str | None
