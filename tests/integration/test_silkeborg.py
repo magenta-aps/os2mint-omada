@@ -176,6 +176,7 @@ async def test_silkeborg_manual(
             [u.dict() for u in employee.itusers],
             [
                 {
+                    "external_id": "74dea272-d90b-47c7-8d99-c8efa372fa03",
                     "user_key": "74dea272-d90b-47c7-8d99-c8efa372fa03",
                     "itsystem": {"user_key": "omada_ad_guid"},
                     "engagement": [{"user_key": "v1216"}],
@@ -250,9 +251,15 @@ async def test_silkeborg_manual(
         }
 
         # IT Users
-        assert {u.user_key for u in employee.itusers} == {
-            "74dea272-d90b-47c7-8d99-c8efa372fa03",
-            "DRV1216",
+        assert {(u.external_id, u.user_key) for u in employee.itusers} == {
+            (
+                "74dea272-d90b-47c7-8d99-c8efa372fa03",
+                "74dea272-d90b-47c7-8d99-c8efa372fa03",
+            ),
+            (
+                "74dea272-d90b-47c7-8d99-c8efa372fa03",
+                "DRV1216",
+            ),
         }
 
     await verify()

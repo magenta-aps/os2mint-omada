@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from pydantic import Extra
 from pydantic import Field
 from pydantic import validator
-from ramodels.mo import Validity
+
+from os2mint_omada.sync.models import Validity
 
 RawOmadaUser = dict[str, Any]
 
@@ -62,6 +63,6 @@ class OmadaUser(BaseModel):
     def validity(self) -> Validity:
         """Return MO-compatible Validity object."""
         return Validity(
-            from_date=self.valid_from,
-            to_date=self.valid_to,
+            start=self.valid_from,
+            end=self.valid_to,
         )

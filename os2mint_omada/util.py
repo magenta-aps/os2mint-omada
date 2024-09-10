@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
-from ramodels.mo import Validity
+from os2mint_omada.sync.models import Validity
 
 
 def validity_union(*validities: Validity) -> Validity:
@@ -11,17 +11,17 @@ def validity_union(*validities: Validity) -> Validity:
 
     Returns: Validity union.
     """
-    from_dates = [v.from_date for v in validities]
-    to_dates = [v.to_date for v in validities]
+    starts = [v.start for v in validities]
+    ends = [v.end for v in validities]
 
-    from_date = min(from_dates)
+    start = min(starts)
 
-    if any(d is None for d in to_dates):
-        to_date = None
+    if any(e is None for e in ends):
+        end = None
     else:
-        to_date = max(to_dates, default=None)  # type: ignore
+        end = max(ends, default=None)  # type: ignore
 
-    return Validity(from_date=from_date, to_date=to_date)
+    return Validity(start=start, end=end)
 
 
 def validity_intersection(*validities: Validity) -> Validity:
@@ -32,10 +32,10 @@ def validity_intersection(*validities: Validity) -> Validity:
 
     Returns: Validity intersection.
     """
-    from_dates = [v.from_date for v in validities]
-    to_dates = [v.to_date for v in validities]
+    starts = [v.start for v in validities]
+    ends = [v.end for v in validities]
 
-    from_date = max(from_dates)
-    to_date = min(filter(None, to_dates), default=None)
+    start = max(starts)
+    end = min(filter(None, ends), default=None)
 
-    return Validity(from_date=from_date, to_date=to_date)
+    return Validity(start=start, end=end)

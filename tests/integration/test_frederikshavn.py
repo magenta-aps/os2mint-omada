@@ -168,6 +168,7 @@ async def test_frederikshavn(
             [u.dict() for u in employee.itusers],
             [
                 {
+                    "external_id": None,
                     "user_key": "VIVI04",
                     "itsystem": {"user_key": "omada_ad_login"},
                     "engagement": [{"user_key": "1337007"}],
@@ -231,8 +232,8 @@ async def test_frederikshavn(
         }
 
         # IT Users
-        assert {u.user_key for u in employee.itusers} == {
-            "LEO42",
+        assert {(u.external_id, u.user_key) for u in employee.itusers} == {
+            (None, "LEO42"),
         }
 
     await verify()
