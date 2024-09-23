@@ -171,7 +171,7 @@ async def test_frederikshavn(
                     "external_id": None,
                     "user_key": "VIVI04",
                     "itsystem": {"user_key": "omada_ad_login"},
-                    "engagement": [{"user_key": "1337007"}],
+                    "engagement": None,
                     "validity": {
                         "from_": datetime(
                             2021, 1, 31, 0, 0, tzinfo=timezone(timedelta(hours=1))
