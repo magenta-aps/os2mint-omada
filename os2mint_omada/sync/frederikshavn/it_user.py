@@ -73,7 +73,6 @@ async def sync_it_users(
                 user_key=str(omada_value),
                 it_system=it_systems[mo_it_system_user_key],
                 person=employee_uuid,
-                engagement=engagements[omada_user.employee_number].uuid,
                 validity=omada_user.validity,
             )
             desired.add(c)
@@ -101,7 +100,6 @@ async def sync_it_users(
                     user_key=missing.user_key,
                     itsystem=missing.it_system,
                     person=missing.person,
-                    engagement=missing.engagement,
                     validity=RAValidityInput(
                         from_=missing.validity.start,
                         to=missing.validity.end,
