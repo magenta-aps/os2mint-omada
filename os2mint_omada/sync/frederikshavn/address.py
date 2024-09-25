@@ -78,7 +78,6 @@ async def sync_addresses(
                 address_type=address_types[mo_address_user_key],
                 person=employee_uuid,
                 visibility=visibility_uuid,
-                engagement=engagements[omada_user.employee_number].uuid,
                 validity=omada_user.validity,
             )
             desired.add(c)

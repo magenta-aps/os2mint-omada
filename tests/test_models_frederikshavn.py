@@ -122,7 +122,6 @@ def test_strip_leading_zeroes(frederikshavn_omada_user: dict) -> None:
     assert frederikshavn_omada_user["C_MEDARBEJDERNR_ODATA"] == "120589"
     assert frederikshavn_omada_user["C_OUID_ODATA"] == "01012415"
     user = FrederikshavnOmadaUser.parse_obj(frederikshavn_omada_user)
-    assert user.employee_number == "120589"
     assert user.org_unit == "1012415"
 
 
