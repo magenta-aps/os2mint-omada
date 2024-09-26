@@ -8,6 +8,7 @@ from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
+from more_itertools import only
 from pydantic import parse_obj_as
 
 from os2mint_omada.mo import MO
@@ -30,6 +31,18 @@ async def sync_addresses(
 ) -> None:
     logger.info("Synchronising addresses", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = only({e.cpr_number for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronize employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
+
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
         "email": "OmadaEmailEmployee",
@@ -46,18 +59,14 @@ async def sync_addresses(
     visibility_uuid = visibility_classes["Public"]
 
     # Get current user data from MO
-    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
     mo_addresses = await mo.get_employee_addresses(
         uuid=employee_uuid,
         address_types=omada_address_types,
     )
 
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many addresses
-    engagements = {e.user_key: e for e in mo_engagements}
-    raw_omada_users = await omada_api.get_users_by(
-        "C_MEDARBEJDERNR_ODATA", engagements.keys()
-    )
+    # Get current user data from Omada. Note that we are fetching ALL Omada users for
+    # the CPR-number to avoid deleting too many addresses
+    raw_omada_users = await omada_api.get_users_by("C_CPRNUMBER", [cpr_number])
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
     # Existing addresses in MO
@@ -78,7 +87,6 @@ async def sync_addresses(
                 address_type=address_types[mo_address_user_key],
                 person=employee_uuid,
                 visibility=visibility_uuid,
-                engagement=engagements[omada_user.employee_number].uuid,
                 validity=omada_user.validity,
             )
             desired.add(c)
@@ -105,7 +113,6 @@ async def sync_addresses(
                     value=missing.value,
                     address_type=missing.address_type,
                     person=missing.person,
-                    engagement=missing.engagement,
                     visibility=missing.visibility,
                     validity=RAValidityInput(
                         from_=missing.validity.start,

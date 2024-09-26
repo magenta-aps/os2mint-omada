@@ -66,7 +66,7 @@ async def test_frederikshavn(
         # Employee
         "FIRSTNAME": "Villads",
         "LASTNAME": "Vikar",
-        "C_CPRNUMBER": "070699-4939",
+        "C_CPRNUMBER": cpr_number,
         # Engagement
         "C_MEDARBEJDERNR_ODATA": "1337007",
         "C_JOBTITLE_ODATA": "Vikar",
@@ -103,7 +103,7 @@ async def test_frederikshavn(
             [e.dict() for e in employee.engagements],
             [
                 {
-                    "user_key": "1337007",
+                    "user_key": "",
                     "org_unit": [{"user_key": "1012415"}],
                     "job_function": {"user_key": "Vikar"},
                     "engagement_type": {"user_key": "omada_manually_created"},
@@ -125,7 +125,7 @@ async def test_frederikshavn(
                 {
                     "value": "+4512313212",
                     "address_type": {"user_key": "OmadaPhoneEmployee"},
-                    "engagement": [{"user_key": "1337007"}],
+                    "engagement": None,
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -137,7 +137,7 @@ async def test_frederikshavn(
                 {
                     "value": "12345678",
                     "address_type": {"user_key": "OmadaMobilePhoneEmployee"},
-                    "engagement": [{"user_key": "1337007"}],
+                    "engagement": None,
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -149,9 +149,7 @@ async def test_frederikshavn(
                 {
                     "value": "VIVI04@frederikshavn.dk",
                     "address_type": {"user_key": "OmadaEmailEmployee"},
-                    "engagement": [
-                        {"user_key": "1337007"},
-                    ],
+                    "engagement": None,
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -210,7 +208,7 @@ async def test_frederikshavn(
             [e.dict() for e in employee.engagements],
             [
                 {
-                    "user_key": "1337420",
+                    "user_key": "",
                     "org_unit": [{"user_key": "1012415"}],
                     "job_function": {"user_key": "not_applicable"},
                     "engagement_type": {"user_key": "omada_manually_created"},

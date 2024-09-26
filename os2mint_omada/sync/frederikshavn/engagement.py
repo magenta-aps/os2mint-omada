@@ -99,7 +99,7 @@ async def sync_engagements(
             # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
         return ComparableEngagement(
-            user_key=omada_user.employee_number,
+            user_key="",
             person=employee_uuid,
             org_unit=org_unit_uuid,
             job_function=job_function_uuid,
@@ -132,7 +132,7 @@ async def sync_engagements(
         for missing in missing_mo:
             await mo.graphql_client.create_engagement(
                 EngagementCreateInput(
-                    user_key=missing.user_key,
+                    user_key="",
                     person=missing.person,
                     org_unit=missing.org_unit,
                     job_function=missing.job_function,

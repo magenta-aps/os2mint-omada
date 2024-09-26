@@ -8,6 +8,7 @@ from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
+from more_itertools import only
 from pydantic import parse_obj_as
 
 from os2mint_omada.mo import MO
@@ -30,6 +31,17 @@ async def sync_it_users(
 ) -> None:
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = only({e.cpr_number for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronise employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_login": "omada_ad_login",
@@ -44,14 +56,10 @@ async def sync_it_users(
         uuid=employee_uuid,
         it_systems=omada_it_systems,
     )
-    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many IT users
-    engagements = {e.user_key: e for e in mo_engagements}
-    raw_omada_users = await omada_api.get_users_by(
-        "C_MEDARBEJDERNR_ODATA", engagements.keys()
-    )
+    # Get current user data from Omada. Note that we are fetching ALL Omada users for
+    # the CPR-number to avoid deleting too many IT users
+    raw_omada_users = await omada_api.get_users_by("C_CPRNUMBER", [cpr_number])
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
     # Existing IT users in MO
