@@ -24,7 +24,7 @@ class FrederikshavnOmadaUser(OmadaUser):
 
     # Engagement
     employee_number: str = Field(alias="C_MEDARBEJDERNR_ODATA")
-    job_title: str = Field(alias="C_JOBTITLE_ODATA")
+    job_title: str | None = Field(alias="C_JOBTITLE_ODATA")
     org_unit: str = Field(alias="C_OUID_ODATA")
 
     # IT User

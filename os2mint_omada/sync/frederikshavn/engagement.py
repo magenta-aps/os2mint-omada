@@ -91,7 +91,9 @@ async def sync_engagements(
         # does not lie outside this interval.
         org_unit_validity = await mo.get_org_unit_validity(org_unit_uuid)
         try:
-            job_function_uuid = job_functions[omada_user.job_title]
+            job_function_uuid = job_functions[
+                omada_user.job_title  # type: ignore[index]
+            ]
         except KeyError:
             # Fallback job function for engagements if the job title from Omada does
             # not exist in MO.
