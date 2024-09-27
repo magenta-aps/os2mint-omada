@@ -8,6 +8,7 @@ from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
+from more_itertools import only
 from pydantic import parse_obj_as
 
 from os2mint_omada.mo import MO
@@ -30,6 +31,18 @@ async def sync_it_users(
 ) -> None:
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = only({e.cpr_number for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronise employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
+
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_login": "omada_ad_login",
@@ -44,13 +57,14 @@ async def sync_it_users(
         uuid=employee_uuid,
         it_systems=omada_it_systems,
     )
-    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many IT users
-    engagements = {e.user_key: e for e in mo_engagements}
+    # Get current user data from Omada
+    # Frederikshavn stores CPR numbers in Omada using the 'xxxxxx-xxxx' format, whereas
+    # MO stores it as 'xxxxxxxxxx'. We search both variations to be sure.
+    assert len(cpr_number) == 10
+    cpr_number_with_dash = f"{cpr_number[:6]}-{cpr_number[6:]}"
     raw_omada_users = await omada_api.get_users_by(
-        "C_MEDARBEJDERNR_ODATA", engagements.keys()
+        "C_CPRNUMBER", [cpr_number, cpr_number_with_dash]
     )
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
