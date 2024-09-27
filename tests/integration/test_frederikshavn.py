@@ -66,7 +66,7 @@ async def test_frederikshavn(
         # Employee
         "FIRSTNAME": "Villads",
         "LASTNAME": "Vikar",
-        "C_CPRNUMBER": cpr_number,
+        "C_CPRNUMBER": "070699-4939",
         # Engagement
         "C_MEDARBEJDERNR_ODATA": "1337007",
         "C_JOBTITLE_ODATA": "Vikar",

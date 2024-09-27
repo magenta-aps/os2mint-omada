@@ -132,7 +132,7 @@ async def sync_engagements(
         for missing in missing_mo:
             await mo.graphql_client.create_engagement(
                 EngagementCreateInput(
-                    user_key="",
+                    user_key=missing.user_key,
                     person=missing.person,
                     org_unit=missing.org_unit,
                     job_function=missing.job_function,

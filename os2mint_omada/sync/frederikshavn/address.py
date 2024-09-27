@@ -64,9 +64,14 @@ async def sync_addresses(
         address_types=omada_address_types,
     )
 
-    # Get current user data from Omada. Note that we are fetching ALL Omada users for
-    # the CPR-number to avoid deleting too many addresses
-    raw_omada_users = await omada_api.get_users_by("C_CPRNUMBER", [cpr_number])
+    # Get current user data from Omada
+    # Frederikshavn stores CPR numbers in Omada using the 'xxxxxx-xxxx' format, whereas
+    # MO stores it as 'xxxxxxxxxx'. We search both variations to be sure.
+    assert len(cpr_number) == 10
+    cpr_number_with_dash = f"{cpr_number[:6]}-{cpr_number[6:]}"
+    raw_omada_users = await omada_api.get_users_by(
+        "C_CPRNUMBER", [cpr_number, cpr_number_with_dash]
+    )
     omada_users = parse_obj_as(list[FrederikshavnOmadaUser], raw_omada_users)
 
     # Existing addresses in MO
