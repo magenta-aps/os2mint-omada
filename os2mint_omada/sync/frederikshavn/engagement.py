@@ -90,15 +90,14 @@ async def sync_engagements(
         # The org unit's validity is needed to ensure the engagement's validity
         # does not lie outside this interval.
         org_unit_validity = await mo.get_org_unit_validity(org_unit_uuid)
-        if omada_user.job_title is None:
+        try:
+            job_function_uuid = job_functions[
+                omada_user.job_title  # type: ignore[index]
+            ]
+        except KeyError:
+            # Fallback job function for engagements if the job title from Omada does
+            # not exist in MO.
             job_function_uuid = job_functions["not_applicable"]
-        else:
-            try:
-                job_function_uuid = job_functions[omada_user.job_title]
-            except KeyError:
-                # Fallback job function for engagements if the job title from Omada does
-                # not exist in MO.
-                job_function_uuid = job_functions["not_applicable"]
         return ComparableEngagement(
             user_key=omada_user.employee_number,
             person=employee_uuid,
