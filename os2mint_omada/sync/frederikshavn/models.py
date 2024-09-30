@@ -6,7 +6,7 @@ from pydantic import Field
 from pydantic import validator
 
 from os2mint_omada.omada.models import OmadaUser
-from os2mint_omada.sync.models import CPR_ONLY_NORMAL_REGEX
+from os2mint_omada.sync.models import CPR_INCL_FICTIVE_REGEX
 
 
 class FrederikshavnOmadaUser(OmadaUser):
@@ -19,7 +19,7 @@ class FrederikshavnOmadaUser(OmadaUser):
         alias="C_CPRNUMBER",
         min_length=10,
         max_length=10,
-        regex=CPR_ONLY_NORMAL_REGEX,
+        regex=CPR_INCL_FICTIVE_REGEX,
     )
 
     # Engagement
