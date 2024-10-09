@@ -80,6 +80,7 @@ async def test_silkeborg_manual(
         "C_TJENESTENR": "v1216",
         # IT Users
         "C_OBJECTGUID_I_AD": "74dea272-d90b-47c7-8d99-c8efa372fa03",
+        "C_LOGIN": "DRV1216",
         # Addresses
         "EMAIL": "Mia.Hansen@silkeborg.dk",
         "C_DIREKTE_TLF": "",
@@ -188,7 +189,21 @@ async def test_silkeborg_manual(
                             2022, 12, 1, 0, 0, tzinfo=timezone(timedelta(hours=1))
                         ),
                     },
-                }
+                },
+                {
+                    "external_id": "74dea272-d90b-47c7-8d99-c8efa372fa03",
+                    "user_key": "DRV1216",
+                    "itsystem": {"user_key": "omada_login"},
+                    "engagement": [{"user_key": "v1216"}],
+                    "validity": {
+                        "from_": datetime(
+                            2012, 8, 27, 0, 0, tzinfo=timezone(timedelta(hours=2))
+                        ),
+                        "to": datetime(
+                            2022, 12, 1, 0, 0, tzinfo=timezone(timedelta(hours=1))
+                        ),
+                    },
+                },
             ],
         )
 
@@ -202,7 +217,7 @@ async def test_silkeborg_manual(
         "C_DIREKTE_TLF": "19890604",
         "CELLPHONE": None,  # deleted
         # IT Users
-        "C_LOGIN": "DRV1216",
+        "C_LOGIN": "VB18210",
         # Employee (manual)
         "C_FORNAVNE": "Alice",
         # Engagement (manual)
@@ -258,7 +273,7 @@ async def test_silkeborg_manual(
             ),
             (
                 "74dea272-d90b-47c7-8d99-c8efa372fa03",
-                "DRV1216",
+                "VB18210",
             ),
         }
 
@@ -309,6 +324,9 @@ async def test_silkeborg_user_refresh(
         },
         # Engagement
         "C_TJENESTENR": "v666",
+        # IT Users
+        "C_OBJECTGUID_I_AD": "74dea272-d90b-47c7-8d99-c8efa372fa03",
+        "C_LOGIN": "DRV1216",
         # Employee (manual)
         "C_FORNAVNE": "Kashigi",
         "LASTNAME": "Yabushige",
