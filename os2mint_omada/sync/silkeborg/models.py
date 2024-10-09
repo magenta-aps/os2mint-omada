@@ -15,8 +15,8 @@ class SilkeborgOmadaUser(OmadaUser):
     service_number: str = Field(alias="C_TJENESTENR")
 
     # IT User
-    ad_guid: UUID | None = Field(alias="C_OBJECTGUID_I_AD")
-    login: str | None = Field(alias="C_LOGIN")
+    ad_guid: UUID = Field(alias="C_OBJECTGUID_I_AD")
+    login: str = Field(alias="C_LOGIN")
 
     # Address
     email: str | None = Field(alias="EMAIL")
