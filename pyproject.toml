@@ -17,7 +17,7 @@ uvicorn = "^0.29"
 httpx = "^0.27"
 fastramqpi = "^10"
 fastapi = "0.112.2"
-websockets = "^13.0.1" # for ariadne
+websockets = "^13" # for ariadne
 more-itertools = "^9"
 
 [tool.poetry.group.pre-commit.dependencies]
