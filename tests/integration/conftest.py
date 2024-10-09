@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: MPL-2.0
 from collections.abc import AsyncIterator
 from collections.abc import Callable
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Awaitable
 
 import pytest
-from fastapi.testclient import TestClient
+from asgi_lifespan import LifespanManager
+from asgi_lifespan._types import ASGIApp
+from fastapi import FastAPI
 from fastramqpi.ramqp.depends import rate_limit
 from gql.client import AsyncClientSession
+from httpx import ASGITransport
 from httpx import AsyncClient
 from pytest import MonkeyPatch
 from respx import ASGIHandler
@@ -20,7 +22,7 @@ from tests.fakes import fake_omada_api
 
 
 @pytest.fixture
-def omada_mock(respx_mock: MockRouter) -> Callable[[list], None]:
+async def omada_mock(respx_mock: MockRouter) -> Callable[[list], None]:
     """Allow tests to fake the Omada API."""
 
     def _omada_mock(values: list) -> None:
@@ -34,8 +36,7 @@ def omada_mock(respx_mock: MockRouter) -> Callable[[list], None]:
 
 
 @pytest.fixture
-def test_client(monkeypatch: MonkeyPatch, tmp_path: Path) -> Iterator[TestClient]:
-    """Create ASGI test client with associated lifecycles."""
+async def _app(monkeypatch: MonkeyPatch, tmp_path: Path) -> FastAPI:
     monkeypatch.setenv("OMADA__URL", "http://fake-omada-api/")
     monkeypatch.setenv("OMADA__INTERVAL", "1")
     monkeypatch.setenv("OMADA__PERSISTENCE_FILE", str(tmp_path / "omada.json"))
@@ -45,14 +46,36 @@ def test_client(monkeypatch: MonkeyPatch, tmp_path: Path) -> Iterator[TestClient
     # Decrease rate-limit to avoid tests (and developers) timing out
     app.dependency_overrides[rate_limit()] = rate_limit(1)
 
-    with TestClient(app) as client:
+    return app
+
+
+@pytest.fixture
+async def asgiapp(_app: FastAPI) -> AsyncIterator[ASGIApp]:
+    """ASGI app with lifespan run."""
+    async with LifespanManager(_app) as manager:
+        yield manager.app
+
+
+@pytest.fixture
+async def app(_app: FastAPI, asgiapp: ASGIApp) -> FastAPI:
+    """FastAPI app with lifespan run."""
+    return _app
+
+
+@pytest.fixture
+async def test_client(asgiapp: ASGIApp) -> AsyncIterator[AsyncClient]:
+    """Create test client with associated lifecycles."""
+    transport = ASGITransport(app=asgiapp, client=("1.2.3.4", 123))  # type: ignore
+    async with AsyncClient(
+        transport=transport, base_url="http://example.com"
+    ) as client:
         yield client
 
 
 @pytest.fixture
-async def graphql_client(test_client: TestClient) -> AsyncIterator[AsyncClientSession]:
+async def graphql_client(app: FastAPI) -> AsyncClientSession:
     """Authenticated GraphQL codegen client for OS2mo."""
-    yield test_client.app_state["context"]["graphql_client"]
+    return app.state.context["graphql_client"]
 
 
 @pytest.fixture
