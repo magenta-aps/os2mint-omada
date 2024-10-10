@@ -140,7 +140,10 @@ async def sync_mo_engagements(
     )
 
 
-@mo_router.register("employee.engagement.*", dependencies=[Depends(rate_limit())])
+# Unlike Egedal and Frederikshavn, addresses in Silkeborg are linked not only to
+# engagements, but also IT-users. Therefore, we should wait with synchronising
+# addresses until after IT-users.
+@mo_router.register("employee.it.*", dependencies=[Depends(rate_limit())])
 async def sync_mo_addresses(
     payload: PayloadType,
     mo: depends.MO,

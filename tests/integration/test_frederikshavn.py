@@ -126,6 +126,7 @@ async def test_frederikshavn(
                     "value": "+4512313212",
                     "address_type": {"user_key": "OmadaPhoneEmployee"},
                     "engagement": None,
+                    "ituser": [],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -138,6 +139,7 @@ async def test_frederikshavn(
                     "value": "12345678",
                     "address_type": {"user_key": "OmadaMobilePhoneEmployee"},
                     "engagement": None,
+                    "ituser": [],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -150,6 +152,7 @@ async def test_frederikshavn(
                     "value": "VIVI04@frederikshavn.dk",
                     "address_type": {"user_key": "OmadaEmailEmployee"},
                     "engagement": None,
+                    "ituser": [],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
