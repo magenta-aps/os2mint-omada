@@ -115,6 +115,7 @@ class MO:
                     else None
                 ),
                 engagement=only({e.uuid for e in (address.engagement or [])}),
+                it_user=only({u.uuid for u in (address.ituser or [])}),
                 validity=Validity(
                     start=address.validity.from_,
                     end=address.validity.to,

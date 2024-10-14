@@ -45,6 +45,7 @@ class Address(StrictBaseModel):
     person: UUID
     visibility: UUID | None
     engagement: UUID | None
+    it_user: UUID | None
     validity: Validity
 
 

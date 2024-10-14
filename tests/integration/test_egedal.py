@@ -139,6 +139,7 @@ async def test_egedal_manual(
                     "value": "22334455",
                     "address_type": {"user_key": "OmadaPhoneEmployee"},
                     "engagement": None,
+                    "ituser": [],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -153,6 +154,7 @@ async def test_egedal_manual(
                     "value": "arthas@egepost.dk",
                     "address_type": {"user_key": "OmadaEmailEmployee"},
                     "engagement": None,
+                    "ituser": [],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(

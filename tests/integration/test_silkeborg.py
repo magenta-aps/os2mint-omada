@@ -145,6 +145,7 @@ async def test_silkeborg_manual(
                     "value": "Mia.Hansen@silkeborg.dk",
                     "address_type": {"user_key": "EmailEmployee"},
                     "engagement": [{"user_key": "v1216"}],
+                    "ituser": [{"user_key": "DRV1216"}],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(
@@ -159,6 +160,7 @@ async def test_silkeborg_manual(
                     "value": "12345678",
                     "address_type": {"user_key": "MobilePhoneEmployee"},
                     "engagement": [{"user_key": "v1216"}],
+                    "ituser": [{"user_key": "DRV1216"}],
                     "visibility": {"user_key": "Public"},
                     "validity": {
                         "from_": datetime(

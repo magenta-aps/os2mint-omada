@@ -107,6 +107,9 @@ query get_employee_addresses(
           engagement(filter: { from_date: null, to_date: null }) {
             uuid
           }
+          ituser(filter: { from_date: null, to_date: null }) {
+            uuid
+          }
           visibility(filter: { from_date: null, to_date: null }) {
             uuid
           }
@@ -317,6 +320,9 @@ query _Testing_GetEmployee($cpr_number: CPR!) {
             user_key
           }
           engagement(filter: { from_date: null, to_date: null }) {
+            user_key
+          }
+          ituser(filter: { from_date: null, to_date: null }) {
             user_key
           }
           visibility(filter: { from_date: null, to_date: null }) {

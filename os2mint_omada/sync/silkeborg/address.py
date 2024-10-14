@@ -41,6 +41,8 @@ async def sync_addresses(
     # Get MO classes configuration
     address_types = await mo.get_classes("employee_address_type")
     omada_address_types = [address_types[user_key] for user_key in address_map.values()]
+    it_systems = await mo.get_it_systems(user_keys=["omada_login"])
+    omada_it_system = it_systems["omada_login"]
 
     # Visibility class for created addresses
     visibility_classes = await mo.get_classes("visibility")
@@ -48,6 +50,15 @@ async def sync_addresses(
 
     # Get current user data from MO
     mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
+    engagements = {e.user_key: e for e in mo_engagements}
+
+    mo_it_users = await mo.get_employee_it_users(
+        uuid=employee_uuid,
+        it_systems=[omada_it_system],
+    )
+    it_users = {u.engagement: u for u in mo_it_users}
+    assert all(u is not None for u in it_users)
+
     mo_addresses = await mo.get_employee_addresses(
         uuid=employee_uuid,
         address_types=omada_address_types,
@@ -55,7 +66,6 @@ async def sync_addresses(
 
     # Get current user data from Omada. Note that we are fetching Omada users for
     # ALL engagements to avoid deleting too many addresses
-    engagements = {e.user_key: e for e in mo_engagements}
     raw_omada_users = await omada_api.get_users_by("C_TJENESTENR", engagements.keys())
     omada_users = parse_obj_as(list[SilkeborgOmadaUser], raw_omada_users)
 
@@ -72,12 +82,14 @@ async def sync_addresses(
             omada_value = getattr(omada_user, omada_attr)
             if omada_value is None:
                 continue
+            engagement = engagements[omada_user.service_number].uuid
             c = ComparableAddress(
                 value=omada_value,
                 address_type=address_types[mo_address_user_key],
                 person=employee_uuid,
                 visibility=visibility_uuid,
-                engagement=engagements[omada_user.service_number].uuid,
+                engagement=engagement,
+                it_user=it_users[engagement].uuid,
                 validity=omada_user.validity,
             )
             desired.add(c)
@@ -105,6 +117,7 @@ async def sync_addresses(
                     address_type=missing.address_type,
                     person=missing.person,
                     engagement=missing.engagement,
+                    ituser=missing.it_user,
                     visibility=missing.visibility,
                     validity=RAValidityInput(
                         from_=missing.validity.start,
