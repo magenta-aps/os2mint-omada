@@ -38,10 +38,9 @@ be synchronised automatically when (and if) this organisation unit is created in
 MO. To force-synchronise Omada users for the newly created organisation unit,
 the `/sync/omada` endpoint can be used.
 
-
-## Development
-The following command is useful to force-synchronise all users from the fake
-Omada API:
+### HTTP API
+The following command is useful to force-synchronise all users from the Omada
+API:
 ```
 curl -X POST 'http://localhost:8000/sync/omada'
 ```
@@ -54,6 +53,15 @@ The following can be used to retrieve a list of users from the Omada API:
 ```
 curl --get 'http://localhost:8000/get-users' --data-urlencode "omada_filter=EMAIL eq 'foo@example.com'"
 ```
+
+A common error is users in the Omada view which do not have one of the required
+fields in the model, e.g. CPR-number. Empty fields are (often) represented by
+an empty string in the Omada view, so these users can be found using:
+```
+curl --get 'http://localhost:8000/get-users' --data-urlencode "omada_filter=C_CPRNUMBER eq ''"
+```
+The field `C_CPRNUMBER` is customer-specific; see `sync/*/models.py`.
+
 
 ## Versioning
 This project uses [Semantic Versioning](https://semver.org/) with the following
