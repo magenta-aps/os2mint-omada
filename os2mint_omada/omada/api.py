@@ -50,7 +50,7 @@ class OmadaAPI:
         response.raise_for_status()
         users = response.json()["value"]
         logger.info("Retrieved Omada IT users")
-        # logger.debug("Retrieved Omada IT users", users=users)
+        logger.debug("Retrieved Omada IT users", users=users)
         return users
 
     async def get_users_by(
