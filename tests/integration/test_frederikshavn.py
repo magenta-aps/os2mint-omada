@@ -262,11 +262,12 @@ async def test_frederikshavn_user_refresh(
     org_unit: str,
     get_num_queued_messages: Callable[[], Awaitable[int]],
 ) -> None:
-    invalid_cpr = "0000000000"
-    valid_cpr = "1604650441"
+    cpr_number = "1604650441"
+    invalid_first_name = ""
+    valid_first_name = "Kashigi"
 
     # Precondition: The person does not already exist
-    employee = await graphql_client._testing__get_employee(valid_cpr)
+    employee = await graphql_client._testing__get_employee(cpr_number)
     assert employee.objects == []
     # Precondition: There are no messages in the AMQP queues
     assert await get_num_queued_messages() == 0
@@ -283,9 +284,9 @@ async def test_frederikshavn_user_refresh(
             "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
         },
         # Employee
-        "FIRSTNAME": "Kashigi",
+        "FIRSTNAME": invalid_first_name,
         "LASTNAME": "Yabushige",
-        "C_CPRNUMBER": invalid_cpr,
+        "C_CPRNUMBER": cpr_number,
         # Engagement
         "C_MEDARBEJDERNR_ODATA": "666",
         "C_JOBTITLE_ODATA": "Vikar",
@@ -303,7 +304,7 @@ async def test_frederikshavn_user_refresh(
     # Serve corrected Omada user
     corrected_omada_user = {
         **omada_user,
-        "C_CPRNUMBER": valid_cpr,
+        "FIRSTNAME": valid_first_name,
     }
     omada_mock([corrected_omada_user])
 
@@ -311,7 +312,7 @@ async def test_frederikshavn_user_refresh(
     async def verify() -> None:
         # The invalid user from the queue should be disregarded in favour of updated
         # data (with valid CPR) directly from Omada.
-        employees = await graphql_client._testing__get_employee(valid_cpr)
+        employees = await graphql_client._testing__get_employee(cpr_number)
         assert employees.objects
         assert await get_num_queued_messages() == 0
 
