@@ -6,8 +6,11 @@ from fastramqpi.ramqp import Router
 from fastramqpi.ramqp.depends import rate_limit
 from fastramqpi.ramqp.mo import MORouter
 from fastramqpi.ramqp.mo import PayloadType
+from fastramqpi.ramqp.utils import AcknowledgeMessage
+from pydantic import ValidationError
 
 from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.omada.models import OmadaUser
 
 from ... import depends
 from ...depends import CurrentOmadaUser
@@ -22,6 +25,22 @@ mo_router = MORouter()
 omada_router = Router()
 
 
+def parse_user(omada_user: OmadaUser) -> FrederikshavnOmadaUser:
+    try:
+        return FrederikshavnOmadaUser.parse_obj(omada_user)
+    except ValidationError as exc:
+        # A lot of Omada-users in Frederikshavn have a bad CPR-number. Ignore
+        # them so it doesn't block the synchronisation of proper users.
+        if all(e["loc"] == ("C_CPRNUMBER",) for e in exc.errors()):
+            logger.warning(
+                "Failed to parse user: ignoring",
+                user=omada_user,
+                exc=exc,
+            )
+            raise AcknowledgeMessage()
+        raise
+
+
 #######################################################################################
 # Omada
 #######################################################################################
@@ -30,9 +49,7 @@ async def sync_omada_employee(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
 ) -> None:
-    # TODO: Dependency-inject user instead
-    omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
-
+    omada_user = parse_user(current_omada_user)
     await sync_employee(
         omada_user=omada_user,
         mo=mo,
@@ -45,8 +62,7 @@ async def sync_omada_engagements(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
 ) -> None:
-    # TODO: Dependency-inject user instead
-    omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
+    omada_user = parse_user(current_omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
@@ -67,8 +83,7 @@ async def sync_omada_addresses(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
 ) -> None:
-    # TODO: Dependency-inject user instead
-    omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
+    omada_user = parse_user(current_omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
@@ -89,8 +104,7 @@ async def sync_omada_it_users(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
 ) -> None:
-    # TODO: Dependency-inject user instead
-    omada_user = FrederikshavnOmadaUser.parse_obj(current_omada_user)
+    omada_user = parse_user(current_omada_user)
 
     # Find employee in MO
     employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
