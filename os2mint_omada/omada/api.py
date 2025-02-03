@@ -9,8 +9,10 @@ from typing import Type
 
 import structlog
 from fastramqpi.raclients.auth import AuthenticatedAsyncHTTPXClient
+from fastramqpi.ramqp.utils import RequeueMessage
 from httpx import AsyncClient
 from httpx import BasicAuth
+from httpx import HTTPStatusError
 from more_itertools import flatten
 from pydantic import AnyHttpUrl
 
@@ -47,7 +49,14 @@ class OmadaAPI:
 
         logger.info("Getting Omada IT users", params=params)
         response = await self.client.get(self.url, params=params)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except HTTPStatusError:
+            logger.exception("Failed to retrieve Omada IT users")
+            # Chill before requeueing so we don't spam exceptions if the Omada
+            # API is down or our credentials are bad.
+            await asyncio.sleep(30)
+            raise RequeueMessage()
         users = response.json()["value"]
         logger.info("Retrieved Omada IT users")
         logger.debug("Retrieved Omada IT users", users=users)
