@@ -9,7 +9,6 @@ from typing import Type
 
 import structlog
 from fastramqpi.raclients.auth import AuthenticatedAsyncHTTPXClient
-from fastramqpi.ramqp.utils import RequeueMessage
 from httpx import AsyncClient
 from httpx import BasicAuth
 from httpx import HTTPStatusError
@@ -56,7 +55,7 @@ class OmadaAPI:
             # Chill before requeueing so we don't spam exceptions if the Omada
             # API is down or our credentials are bad.
             await asyncio.sleep(30)
-            raise RequeueMessage()
+            raise
         users = response.json()["value"]
         logger.info("Retrieved Omada IT users")
         logger.debug("Retrieved Omada IT users", users=users)
