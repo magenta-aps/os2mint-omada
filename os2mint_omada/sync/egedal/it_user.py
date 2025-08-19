@@ -8,7 +8,7 @@ from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
-from more_itertools import only
+from more_itertools import one
 from pydantic import parse_obj_as
 
 from os2mint_omada.mo import MO
@@ -34,7 +34,7 @@ async def sync_it_users(
     # Get current user data from MO
     employee_states = await mo.get_employee_states(employee_uuid)
     assert employee_states
-    cpr_number = only({e.cpr_number for e in employee_states})
+    cpr_number = one({e.cpr_number for e in employee_states})
 
     if cpr_number is None:
         logger.warning(

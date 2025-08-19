@@ -51,7 +51,7 @@ class Address(StrictBaseModel):
 
 class Employee(StrictBaseModel):
     uuid: UUID | None
-    cpr_number: str
+    cpr_number: str | None
     given_name: str
     surname: str
     nickname_given_name: str | None
