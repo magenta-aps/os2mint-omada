@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     fastramqpi: FastRAMQPISettings
 
     omada: OmadaSettings
-    customer: Literal["egedal", "frederikshavn", "silkeborg"]
+    customer: Literal["frederikshavn", "silkeborg"]
 
     class Config:
         frozen = True

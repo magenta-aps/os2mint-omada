@@ -19,7 +19,7 @@ facets:
     InstitutionPhoneEmployee:
       title: "Institutionstelefonnummer"
       scope: "PHONE"
-    # Frederikshavn and Egedal use Omada-specific classes
+    # Frederikshavn use Omada-specific classes
     OmadaEmailEmployee:
       title: "Email (Omada)"
       scope: "EMAIL"

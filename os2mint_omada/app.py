@@ -11,8 +11,6 @@ from os2mint_omada.config import Settings
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.omada.api import create_client
 from os2mint_omada.omada.event_generator import OmadaEventGenerator
-from os2mint_omada.sync.egedal.events import mo_router as egedal_mo_router
-from os2mint_omada.sync.egedal.events import omada_router as egedal_omada_router
 from os2mint_omada.sync.frederikshavn.events import mo_router as frederikshavn_mo_router
 from os2mint_omada.sync.frederikshavn.events import (
     omada_router as frederikshavn_omada_router,
@@ -40,9 +38,6 @@ def create_app() -> FastAPI:
     context = fastramqpi.get_context()
 
     match settings.customer:
-        case "egedal":
-            mo_router = egedal_mo_router
-            omada_router = egedal_omada_router
         case "frederikshavn":
             mo_router = frederikshavn_mo_router
             omada_router = frederikshavn_omada_router
