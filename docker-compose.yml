@@ -23,7 +23,7 @@ services:
     environment:
       LOG_LEVEL: DEBUG
       JSON_LOGS: "false"
-      CUSTOMER: egedal
+      CUSTOMER: frederikshavn
 
       # OS2mo
       FASTRAMQPI__MO_URL: "http://mo:5000"
@@ -47,7 +47,7 @@ services:
     command: ["uvicorn", "--factory", "tests.fakes.fake_omada_api:create_app", "--host", "0.0.0.0", "--port", "80"]
     volumes:
       - ./:/app/:ro
-      - ./schemas/egedal/odata.json:/odata.json:ro
+      - ./schemas/frederikshavn/odata.json:/odata.json:ro
 
 networks:
   default:
