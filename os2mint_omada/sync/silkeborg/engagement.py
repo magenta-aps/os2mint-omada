@@ -91,18 +91,9 @@ async def sync_engagements(
     async def build_comparable_engagement(
         omada_user: ManualSilkeborgOmadaUser,
     ) -> ComparableEngagement:
-        # By default, engagements for manual Omada users are linked to the org unit
-        # which has an IT system with user key equal to the 'org_unit' field on the
-        # user.
-        try:
-            org_unit_uuid = await mo.get_org_unit_with_it_system_user_key(
-                str(omada_user.org_unit)
-            )
-        except KeyError:
-            # Unfortunately, some org units are imported into MO with the UUID from the
-            # system we are integrating with, so as a fallback, we check for an org unit
-            # with the UUID directly. The KeyError of this lookup isn't caught.
-            org_unit_uuid = await mo.get_org_unit_with_uuid(omada_user.org_unit)
+        # Engagements for Omada users are linked to the org unit through the
+        # org unit's UUID.
+        org_unit_uuid = omada_user.org_unit
 
         # The org unit's validity is needed to ensure the engagement's validity
         # does not lie outside this interval.
