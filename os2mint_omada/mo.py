@@ -180,25 +180,6 @@ class MO:
             for it_user in it_users
         }
 
-    async def get_org_unit_with_it_system_user_key(self, user_key: str) -> UUID:
-        result = await self.graphql_client.get_org_unit_with_it_system_user_key(
-            user_keys=[user_key]
-        )
-        it_users = result.objects
-        if not it_users:
-            raise KeyError(f"No organisation unit with {user_key=} found")
-        validities = chain.from_iterable(u.validities for u in it_users)
-        uuids = {ou.uuid for v in validities for ou in v.org_unit or []}
-        return one(uuids)  # it's an error if different UUIDs are returned
-
-    async def get_org_unit_with_uuid(self, uuid: UUID) -> UUID:
-        result = await self.graphql_client.get_org_unit_with_uuid(uuids=[uuid])
-        try:
-            org_unit = one(result.objects)
-        except ValueError as e:
-            raise KeyError(f"No organisation unit with {uuid=} found") from e
-        return org_unit.uuid
-
     async def get_org_unit_with_user_key(self, user_key: str) -> UUID:
         result = await self.graphql_client.get_org_unit_with_user_key(
             user_keys=[user_key],

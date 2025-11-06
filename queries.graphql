@@ -195,26 +195,6 @@ query get_employee_it_users(
   }
 }
 
-query get_org_unit_with_it_system_user_key($user_keys: [String!]) {
-  itusers(filter: { user_keys: $user_keys, from_date: null, to_date: null }) {
-    objects {
-      validities(start: null, end: null) {
-        org_unit(filter: { from_date: null, to_date: null }) {
-          uuid
-        }
-      }
-    }
-  }
-}
-
-query get_org_unit_with_uuid($uuids: [UUID!]) {
-  org_units(filter: { uuids: $uuids, from_date: null, to_date: null }) {
-    objects {
-      uuid
-    }
-  }
-}
-
 query get_org_unit_with_user_key($user_keys: [String!]) {
   org_units(filter: { user_keys: $user_keys, from_date: null, to_date: null }) {
     objects {
@@ -388,31 +368,6 @@ mutation _Testing_CreateOrgUnit($user_key: String!, $org_unit_type: UUID!) {
       name: "Test Org Unit"
       user_key: $user_key
       org_unit_type: $org_unit_type
-      validity: { from: "2010-02-03" }
-    }
-  ) {
-    uuid
-  }
-}
-
-query _Testing_GetItSystem($user_key: String!) {
-  itsystems(filter: { user_keys: [$user_key] }) {
-    objects {
-      uuid
-    }
-  }
-}
-
-mutation _Testing_CreateOrgUnitItUser(
-  $user_key: String!
-  $it_system: UUID!
-  $org_unit: UUID!
-) {
-  ituser_create(
-    input: {
-      user_key: $user_key
-      itsystem: $it_system
-      org_unit: $org_unit
       validity: { from: "2010-02-03" }
     }
   ) {

@@ -36,21 +36,8 @@ async def org_unit(graphql_client: GraphQLClient) -> str:
         user_key=user_key,
         org_unit_type=org_unit_type_uuid,
     )
-    org_unit_uuid = org_unit.uuid
 
-    # Get it-system uuid
-    it_systems = await graphql_client._testing__get_it_system(user_key="FK-ORG-UUID")
-    it_system_uuid = one(it_systems.objects).uuid
-
-    # Create IT-user with FK-org UUID for the org unit
-    it_user_user_key = "77d2c378-92d2-462d-876d-58bb7f4e98a1"
-    await graphql_client._testing__create_org_unit_it_user(
-        user_key=it_user_user_key,
-        it_system=it_system_uuid,
-        org_unit=org_unit_uuid,
-    )
-
-    return it_user_user_key
+    return str(org_unit.uuid)
 
 
 @pytest.mark.integration_test
