@@ -117,14 +117,6 @@ async def sync_omada_it_users(
 #  authoritative for these objects, so we do not expect them to be modified. This
 #  invariant should be enforced by RBAC.
 
-# TODO: Engagements for manual Omada users are created in the organisational unit with
-#  an IT user on the unit containing the UUID of the 'org_unit'/'C_ORGANISATIONSKODE'
-#  attribute of the Omada user, and as a fallback on the org unit with the given UUID
-#  directly. For this reason, we should also watch changes to IT users on org units,
-#  as well as the creation of org units themselves (for the fallback).
-#  For now, however, it is assumed that all organisational unit are created in MO
-#  before the users appear in Omada.
-
 
 @mo_router.register("employee.employee.*", dependencies=[Depends(rate_limit())])
 async def sync_mo_engagements(
