@@ -48,7 +48,7 @@ services:
       FASTRAMQPI__DATABASE__NAME: "fastramqpi"
 
       # Omada
-      CUSTOMER: frederikshavn
+      CUSTOMER: silkeborg
       OMADA__URL: "http://fake-omada-api/"
       OMADA__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
     volumes:
@@ -71,7 +71,7 @@ services:
       ]
     volumes:
       - ./:/app/:ro
-      - ./schemas/frederikshavn/odata.json:/odata.json:ro
+      - ./schemas/silkeborg.json:/odata.json:ro
 
   db:
     image: postgres:16
