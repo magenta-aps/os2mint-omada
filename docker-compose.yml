@@ -19,11 +19,19 @@ services:
 
   omada:
     build: .
-    command: ["uvicorn", "--factory", "os2mint_omada.app:create_app", "--host", "0.0.0.0", "--reload"]
+    command:
+      [
+        "uvicorn",
+        "--factory",
+        "os2mint_omada.app:create_app",
+        "--host",
+        "0.0.0.0",
+        "--reload",
+      ]
     environment:
+      # FastRAMQPI
       LOG_LEVEL: DEBUG
       JSON_LOGS: "false"
-      CUSTOMER: frederikshavn
 
       # OS2mo
       FASTRAMQPI__MO_URL: "http://mo:5000"
@@ -33,7 +41,14 @@ services:
       FASTRAMQPI__AUTH_REALM: "mo"
       FASTRAMQPI__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
 
+      # Database
+      FASTRAMQPI__DATABASE__USER: "fastramqpi"
+      FASTRAMQPI__DATABASE__PASSWORD: "fastramqpi"
+      FASTRAMQPI__DATABASE__HOST: "db"
+      FASTRAMQPI__DATABASE__NAME: "fastramqpi"
+
       # Omada
+      CUSTOMER: frederikshavn
       OMADA__URL: "http://fake-omada-api/"
       OMADA__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
     volumes:
@@ -44,10 +59,26 @@ services:
 
   fake-omada-api:
     build: .
-    command: ["uvicorn", "--factory", "tests.fakes.fake_omada_api:create_app", "--host", "0.0.0.0", "--port", "80"]
+    command:
+      [
+        "uvicorn",
+        "--factory",
+        "tests.fakes.fake_omada_api:create_app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "80",
+      ]
     volumes:
       - ./:/app/:ro
       - ./schemas/frederikshavn/odata.json:/odata.json:ro
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: "fastramqpi"
+      POSTGRES_PASSWORD: "fastramqpi"
+      POSTGRES_DB: "fastramqpi"
 
 networks:
   default:
