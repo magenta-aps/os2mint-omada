@@ -39,18 +39,6 @@ class MO:
         assert facet is not None
         return {c.user_key: c.uuid for c in facet.classes}
 
-    async def get_employee_uuid_from_user_key(self, user_key: str) -> UUID | None:
-        result = await self.graphql_client.get_employee_uuid_from_user_key(
-            user_keys=[user_key]
-        )
-        engagements = result.objects
-        if not engagements:
-            return None
-        objects = chain.from_iterable(e.validities for e in engagements)
-        employees = chain.from_iterable(o.person for o in objects)
-        uuids = {e.uuid for e in employees}
-        return one(uuids)  # it's an error if different UUIDs are returned
-
     async def get_employee_uuid_from_cpr(self, cpr: str) -> UUID | None:
         result = await self.graphql_client.get_employee_uuid_from_cpr(cpr_numbers=[cpr])
         employees = result.objects

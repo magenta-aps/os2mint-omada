@@ -164,17 +164,6 @@ from .get_employee_states import GetEmployeeStatesEmployeesObjectsValidities
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCpr
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployees
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployeesObjects
-from .get_employee_uuid_from_user_key import GetEmployeeUuidFromUserKey
-from .get_employee_uuid_from_user_key import GetEmployeeUuidFromUserKeyEngagements
-from .get_employee_uuid_from_user_key import (
-    GetEmployeeUuidFromUserKeyEngagementsObjects,
-)
-from .get_employee_uuid_from_user_key import (
-    GetEmployeeUuidFromUserKeyEngagementsObjectsValidities,
-)
-from .get_employee_uuid_from_user_key import (
-    GetEmployeeUuidFromUserKeyEngagementsObjectsValiditiesPerson,
-)
 from .get_it_systems import GetItSystems
 from .get_it_systems import GetItSystemsItsystems
 from .get_it_systems import GetItSystemsItsystemsObjects
@@ -405,11 +394,6 @@ __all__ = [
     "GetEmployeeUuidFromCpr",
     "GetEmployeeUuidFromCprEmployees",
     "GetEmployeeUuidFromCprEmployeesObjects",
-    "GetEmployeeUuidFromUserKey",
-    "GetEmployeeUuidFromUserKeyEngagements",
-    "GetEmployeeUuidFromUserKeyEngagementsObjects",
-    "GetEmployeeUuidFromUserKeyEngagementsObjectsValidities",
-    "GetEmployeeUuidFromUserKeyEngagementsObjectsValiditiesPerson",
     "GetItSystems",
     "GetItSystemsItsystems",
     "GetItSystemsItsystemsObjects",

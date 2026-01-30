@@ -25,20 +25,6 @@ query get_classes($user_keys: [String!]) {
   }
 }
 
-query get_employee_uuid_from_user_key($user_keys: [String!]) {
-  engagements(
-    filter: { user_keys: $user_keys, from_date: null, to_date: null }
-  ) {
-    objects {
-      validities(start: null, end: null) {
-        person(filter: { from_date: null, to_date: null }) {
-          uuid
-        }
-      }
-    }
-  }
-}
-
 query get_employee_uuid_from_cpr($cpr_numbers: [CPR!]) {
   employees(
     filter: { cpr_numbers: $cpr_numbers, from_date: null, to_date: null }
@@ -257,7 +243,6 @@ mutation delete_it_user($uuid: UUID!) {
     uuid
   }
 }
-
 
 # TODO(#59335): don't use _Testing_ prefix (due to pytest)
 query _Testing_GetEmployee($cpr_number: CPR!) {
