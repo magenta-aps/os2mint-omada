@@ -59,10 +59,6 @@ async def test_frederikshavn(
         "UId": "347a7d7a-49d6-4e90-93c8-88f3a0a40548",
         "VALIDFROM": "2021-01-31T08:44:00+01:00",
         "VALIDTO": "9999-12-31T00:00:00+01:00",
-        "IDENTITYCATEGORY": {
-            "Id": 1000245,
-            "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
-        },
         # Employee
         "FIRSTNAME": "Villads",
         "LASTNAME": "Vikar",
@@ -279,10 +275,6 @@ async def test_frederikshavn_user_refresh(
         "UId": "ceed2021-44f4-43e6-a8b7-fac9f4569443",
         "VALIDFROM": "2006-06-06T00:00:00+01:00",
         "VALIDTO": "2012-12-12T00:00:00+01:00",
-        "IDENTITYCATEGORY": {
-            "Id": 1000245,
-            "UId": "7e7b6153-539d-459a-b47b-2500ddb76543",
-        },
         # Employee
         "FIRSTNAME": invalid_first_name,
         "LASTNAME": "Yabushige",
