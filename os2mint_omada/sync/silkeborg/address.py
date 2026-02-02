@@ -8,6 +8,7 @@ from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
+from more_itertools import one
 from pydantic import parse_obj_as
 
 from os2mint_omada.mo import MO
@@ -30,6 +31,18 @@ async def sync_addresses(
 ) -> None:
     logger.info("Synchronising addresses", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = one({e.cpr_number for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronize employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
+
     # Maps from Omada user attribute to employee address type (class) user key in MO
     address_map: dict[str, str] = {
         "email": "EmailEmployee",
@@ -41,17 +54,27 @@ async def sync_addresses(
     # Get MO classes configuration
     address_types = await mo.get_classes("employee_address_type")
     omada_address_types = [address_types[user_key] for user_key in address_map.values()]
-    it_systems = await mo.get_it_systems(user_keys=["omada_login"])
-    omada_it_system = it_systems["omada_login"]
 
     # Visibility class for created addresses
     visibility_classes = await mo.get_classes("visibility")
     visibility_uuid = visibility_classes["Public"]
 
     # Get current user data from MO
+    mo_addresses = await mo.get_employee_addresses(
+        uuid=employee_uuid,
+        address_types=omada_address_types,
+    )
+
+    # In Silkeborg we connect the addresses to their corresponding Omada
+    # IT-user and Omada/SD engagement.
+
+    # Get current MO engagements
     mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
     engagements = {e.user_key: e for e in mo_engagements}
 
+    # Get current MO IT-users
+    it_systems = await mo.get_it_systems(user_keys=["omada_login"])
+    omada_it_system = it_systems["omada_login"]
     mo_it_users = await mo.get_employee_it_users(
         uuid=employee_uuid,
         it_systems=[omada_it_system],
@@ -59,14 +82,8 @@ async def sync_addresses(
     it_users = {u.engagement: u for u in mo_it_users}
     assert all(u is not None for u in it_users)
 
-    mo_addresses = await mo.get_employee_addresses(
-        uuid=employee_uuid,
-        address_types=omada_address_types,
-    )
-
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many addresses
-    raw_omada_users = await omada_api.get_users_by("C_TJENESTENR", engagements.keys())
+    # Get current user data from Omada
+    raw_omada_users = await omada_api.get_users_by("C_CPRNR", [cpr_number])
     omada_users = parse_obj_as(list[SilkeborgOmadaUser], raw_omada_users)
 
     # Existing addresses in MO
