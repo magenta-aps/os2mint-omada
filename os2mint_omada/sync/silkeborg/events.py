@@ -77,7 +77,7 @@ async def sync_omada_addresses(
     omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping addresses synchronisation")
         return
@@ -98,7 +98,7 @@ async def sync_omada_it_users(
     omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_user_key(omada_user.service_number)
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping IT user synchronisation")
         return
@@ -116,14 +116,6 @@ async def sync_omada_it_users(
 # TODO: MO ITUsers and Addresses are not watched since the Omada integration is
 #  authoritative for these objects, so we do not expect them to be modified. This
 #  invariant should be enforced by RBAC.
-
-# TODO: Engagements for manual Omada users are created in the organisational unit with
-#  an IT user on the unit containing the UUID of the 'org_unit'/'C_ORGANISATIONSKODE'
-#  attribute of the Omada user, and as a fallback on the org unit with the given UUID
-#  directly. For this reason, we should also watch changes to IT users on org units,
-#  as well as the creation of org units themselves (for the fallback).
-#  For now, however, it is assumed that all organisational unit are created in MO
-#  before the users appear in Omada.
 
 
 @mo_router.register("employee.employee.*", dependencies=[Depends(rate_limit())])

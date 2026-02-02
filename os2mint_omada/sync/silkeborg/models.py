@@ -11,6 +11,14 @@ from os2mint_omada.sync.models import CPR_INCL_FICTIVE_REGEX
 class SilkeborgOmadaUser(OmadaUser):
     """Silkeborg-specific Omada user model."""
 
+    # Employee
+    cpr_number: str = Field(
+        alias="C_CPRNR",
+        min_length=10,
+        max_length=10,
+        regex=CPR_INCL_FICTIVE_REGEX,
+    )
+
     # Engagement
     service_number: str = Field(alias="C_TJENESTENR")
 
@@ -40,12 +48,6 @@ class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     # Employee
     first_name: str = Field(alias="C_FORNAVNE")
     last_name: str = Field(alias="LASTNAME")
-    cpr_number: str = Field(
-        alias="C_CPRNR",
-        min_length=10,
-        max_length=10,
-        regex=CPR_INCL_FICTIVE_REGEX,
-    )
 
     # Engagement
     job_title: str | None = Field(alias="JOBTITLE")
