@@ -12,7 +12,6 @@ from fastapi.encoders import jsonable_encoder
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.event_generator import Event
 from os2mint_omada.omada.event_generator import OmadaEventGenerator
-from os2mint_omada.omada.models import IdentityCategory
 from os2mint_omada.omada.models import OmadaUser
 
 
@@ -21,10 +20,6 @@ def get_test_user(id: int) -> OmadaUser:
         id=id,
         uid=uuid4(),
         valid_from=datetime(2023, 1, 2),
-        identity_category=IdentityCategory(
-            id="123",
-            uid=uuid4(),
-        ),
     )
 
 

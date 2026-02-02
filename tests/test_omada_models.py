@@ -13,10 +13,6 @@ def omada_user() -> dict:
         "UId": "5fe3ef67-c6e5-4d09-bdee-80b9bf40544d",
         "VALIDFROM": "2016-06-15T00:00:00+02:00",
         "VALIDTO": "2022-04-18T22:05:21+02:00",
-        "IDENTITYCATEGORY": {
-            "Id": 123,
-            "UId": "e61de13e-d6fb-4c9e-90fd-75f9f1e1df5a",
-        },
     }
 
 

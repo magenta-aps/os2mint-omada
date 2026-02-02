@@ -16,17 +16,6 @@ from os2mint_omada.sync.models import Validity
 RawOmadaUser = dict[str, Any]
 
 
-class IdentityCategory(BaseModel):
-    """Identifies the type of Omada user."""
-
-    id: str = Field(alias="Id")
-    uid: UUID = Field(alias="UId")
-
-    class Config:
-        # Allow fields to be populated by both alias and model attribute name
-        allow_population_by_field_name = True
-
-
 class OmadaUser(BaseModel):
     """General Omada user model with base fields."""
 
@@ -35,8 +24,6 @@ class OmadaUser(BaseModel):
 
     valid_from: datetime = Field(alias="VALIDFROM")
     valid_to: datetime | None = Field(alias="VALIDTO", default=None)
-
-    identity_category: IdentityCategory = Field(alias="IDENTITYCATEGORY")
 
     @validator("*", pre=True)
     def empty_string_is_none(cls, value: Any) -> Any:

@@ -59,10 +59,8 @@ async def test_silkeborg_manual(
         "UId": "38e4a0f1-1290-40e3-ad83-896abd1d3e50",
         "VALIDFROM": "2012-08-27T00:00:00+02:00",
         "VALIDTO": "2022-12-01T01:00:00+01:00",
-        "IDENTITYCATEGORY": {
-            "Id": 561,
-            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
-        },
+        # Employee
+        "C_CPRNR": cpr_number,
         # Engagement
         "C_TJENESTENR": "v1216",
         # IT Users
@@ -76,7 +74,6 @@ async def test_silkeborg_manual(
         # Employee (manual)
         "C_FORNAVNE": "Mia",
         "LASTNAME": "Hansen",
-        "C_CPRNR": cpr_number,
         # Engagement (manual)
         "JOBTITLE": "Medarbejder",
         "C_ORGANISATIONSKODE": org_unit,
@@ -307,10 +304,8 @@ async def test_silkeborg_user_refresh(
         "UId": "73a04b28-9c4a-4b1c-82fa-76705a656341",
         "VALIDFROM": "2006-06-06T00:00:00+01:00",
         "VALIDTO": "2012-12-12T00:00:00+01:00",
-        "IDENTITYCATEGORY": {
-            "Id": 561,
-            "UId": "270a1807-95ca-40b4-9ce5-475d8961f31b",
-        },
+        # Employee
+        "C_CPRNR": invalid_cpr,
         # Engagement
         "C_TJENESTENR": "v666",
         # IT Users
@@ -319,7 +314,6 @@ async def test_silkeborg_user_refresh(
         # Employee (manual)
         "C_FORNAVNE": "Kashigi",
         "LASTNAME": "Yabushige",
-        "C_CPRNR": invalid_cpr,
         # Engagement (manual)
         "JOBTITLE": "Medarbejder",
         "C_ORGANISATIONSKODE": org_unit,
