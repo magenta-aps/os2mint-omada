@@ -8,6 +8,7 @@ from uuid import UUID
 
 import structlog
 from fastramqpi.ramqp.depends import handle_exclusively_decorator
+from more_itertools import one
 from pydantic import parse_obj_as
 
 from os2mint_omada.mo import MO
@@ -30,6 +31,18 @@ async def sync_it_users(
 ) -> None:
     logger.info("Synchronising IT users", employee_uuid=employee_uuid)
 
+    # Get current user data from MO
+    employee_states = await mo.get_employee_states(employee_uuid)
+    assert employee_states
+    cpr_number = one({e.cpr_number for e in employee_states})
+
+    if cpr_number is None:
+        logger.warning(
+            "Cannot synchronise employee without CPR number",
+            employee_uuid=employee_uuid,
+        )
+        return
+
     # Maps from Omada user attribute to IT system user key in MO
     it_user_map: dict[str, str] = {
         "ad_guid": "omada_ad_guid",
@@ -45,12 +58,16 @@ async def sync_it_users(
         uuid=employee_uuid,
         it_systems=omada_it_systems,
     )
-    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
 
-    # Get current user data from Omada. Note that we are fetching Omada users for
-    # ALL engagements to avoid deleting too many IT users
+    # In Silkeborg we connect the addresses to their corresponding Omada
+    # IT-user and Omada/SD engagement.
+
+    # Get current MO engagements
+    mo_engagements = await mo.get_employee_engagements(uuid=employee_uuid)
     engagements = {e.user_key: e for e in mo_engagements}
-    raw_omada_users = await omada_api.get_users_by("C_TJENESTENR", engagements.keys())
+
+    # Get current user data from Omada
+    raw_omada_users = await omada_api.get_users_by("C_CPRNR", [cpr_number])
     omada_users = parse_obj_as(list[SilkeborgOmadaUser], raw_omada_users)
 
     # Existing IT users in MO
