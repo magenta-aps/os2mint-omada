@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
+# SPDX-License-Identifier: MPL-2.0
+
 [tool.poetry]
 name = "os2mint_omada"
 version = "0.0.0"  # versioning handled by conventional commits
