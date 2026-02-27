@@ -99,7 +99,7 @@ async def sync_addresses(
             omada_value = getattr(omada_user, omada_attr)
             if omada_value is None:
                 continue
-            engagement = engagements[omada_user.service_number].uuid
+            engagement = engagements[omada_user.engagement_user_key].uuid
             c = ComparableAddress(
                 value=omada_value,
                 address_type=address_types[mo_address_user_key],

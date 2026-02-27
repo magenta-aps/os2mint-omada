@@ -19,18 +19,18 @@ services:
 
   omada:
     build: .
-    command:
-      [
-        "uvicorn",
-        "--factory",
-        "os2mint_omada.app:create_app",
-        "--host",
-        "0.0.0.0",
-        "--reload",
-      ]
+    command: ["sleep", "inf"]
+      # [
+      #   "uvicorn",
+      #   "--factory",
+      #   "os2mint_omada.app:create_app",
+      #   "--host",
+      #   "0.0.0.0",
+      #   "--reload",
+      # ]
     environment:
       # FastRAMQPI
-      LOG_LEVEL: DEBUG
+      # LOG_LEVEL: DEBUG
       JSON_LOGS: "false"
 
       # OS2mo

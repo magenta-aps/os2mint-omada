@@ -31,7 +31,6 @@ async def sync_omada_employee(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
 ) -> None:
-    # TODO: Dependency-inject user instead
     omada_user = SilkeborgOmadaUser.parse_obj(current_omada_user)
     if not omada_user.is_manual:
         return
@@ -49,14 +48,10 @@ async def sync_omada_engagements(
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
 ) -> None:
-    # TODO: Dependency-inject user instead
-    omada_user = SilkeborgOmadaUser.parse_obj(current_omada_user)
-    if not omada_user.is_manual:
-        return
-    manual_omada_user = ManualSilkeborgOmadaUser.parse_obj(omada_user)
+    omada_user: SilkeborgOmadaUser = SilkeborgOmadaUser.parse_obj(current_omada_user)
 
     # Find employee in MO
-    employee_uuid = await mo.get_employee_uuid_from_cpr(manual_omada_user.cpr_number)
+    employee_uuid = await mo.get_employee_uuid_from_cpr(omada_user.cpr_number)
     if employee_uuid is None:
         logger.info("No employee in MO: skipping engagements synchronisation")
         return

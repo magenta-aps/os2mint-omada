@@ -90,7 +90,7 @@ async def sync_it_users(
                 user_key=str(omada_value),
                 it_system=it_systems[mo_it_system_user_key],
                 person=employee_uuid,
-                engagement=engagements[omada_user.service_number].uuid,
+                engagement=engagements[omada_user.engagement_user_key].uuid,
                 validity=omada_user.validity,
             )
             desired.add(c)

@@ -56,6 +56,9 @@ facets:
     omada_manually_created_hidden:
       title: "(Omada) Manuelt oprettet (Skjult)"
       scope: "TEXT"
+    deltid: # SD
+      title: "Deltid"
+      scope: "TEXT"
   visibility:
     Public:
       title: "Må vises eksternt"

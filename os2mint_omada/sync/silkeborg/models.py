@@ -56,6 +56,15 @@ class SilkeborgOmadaUser(OmadaUser):
         """Manual users don't have a C_OS2MO_ID ID."""
         return self.os2mo_id is None
 
+    @property
+    def engagement_user_key(self) -> str:
+        # Map to the engagement created by ourselves
+        if self.is_manual:
+            return self.service_number
+        # Map to engagement from SD
+        assert self.os2mo_id is not None
+        return self.os2mo_id
+
 
 class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
     """Silkeborg-specific Omada user with additional fields for 'manual' users."""
