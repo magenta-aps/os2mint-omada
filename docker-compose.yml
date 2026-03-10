@@ -30,7 +30,7 @@ services:
       ]
     environment:
       # FastRAMQPI
-      LOG_LEVEL: DEBUG
+      LOG_LEVEL: INFO
       JSON_LOGS: "false"
 
       # OS2mo
