@@ -1,6 +1,10 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from zoneinfo import ZoneInfo
+
 from os2mint_omada.sync.models import Validity
+
+MO_TZ = ZoneInfo("Europe/Copenhagen")
 
 
 def validity_union(*validities: Validity) -> Validity:
