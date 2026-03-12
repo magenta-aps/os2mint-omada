@@ -7,27 +7,28 @@ from pydantic import Field
 from os2mint_omada.omada.models import OmadaUser
 from os2mint_omada.sync.models import CPR_INCL_FICTIVE_REGEX
 
-# All users have a C_TJENESTENR, and SD users additionally have a C_OS2MO_ID. A
-# user is a 'manual' user if it isn't an SD user.
-#
-# | C_TJENESTENR | C_OS2MO_ID | count | manual? |
-# |--------------|------------|-------|---------|
-# | Yes          | Yes        | 7000  | No      |
-# | Yes          | No         | 600   | Yes     |
-#
-# All users have addresses and IT-users synchronised. Manual users also have
-# their employee object and associated engagements synchronised from Omada.
-#
-# C_TJENESTENR and C_OS2MO_ID are similar, and it is possible to calculate one
-# from the other. An example:
-#
-#   C_TJENESTENR: 1000F
-#   C_OS2MO_ID: TF-10005
-#
-
 
 class SilkeborgOmadaUser(OmadaUser):
-    """Silkeborg-specific Omada user model."""
+    """Silkeborg-specific Omada user model.
+
+    All users have a C_TJENESTENR, and SD users additionally have a C_OS2MO_ID.
+    A user is a 'manual' user if it isn't an SD user.
+
+    | C_TJENESTENR | C_OS2MO_ID | count | manual? |
+    |--------------|------------|-------|---------|
+    | Yes          | Yes        | 7000  | No      |
+    | Yes          | No         | 600   | Yes     |
+
+    All users have addresses and IT-users synchronised. Manual users also have
+    their employee object and associated engagements synchronised from Omada.
+
+    C_TJENESTENR and C_OS2MO_ID are similar, and it is possible to calculate
+    one from the other. An example:
+
+        C_TJENESTENR: 1000F
+        C_OS2MO_ID: TF-10005
+
+    """
 
     # Employee
     cpr_number: str = Field(
@@ -55,6 +56,15 @@ class SilkeborgOmadaUser(OmadaUser):
     def is_manual(self) -> bool:
         """Manual users don't have a C_OS2MO_ID ID."""
         return self.os2mo_id is None
+
+    @property
+    def engagement_user_key(self) -> str:
+        # Map to the engagement created by ourselves
+        if self.is_manual:
+            return self.service_number
+        # Map to engagement from SD
+        assert self.os2mo_id is not None
+        return self.os2mo_id
 
 
 class ManualSilkeborgOmadaUser(SilkeborgOmadaUser):
