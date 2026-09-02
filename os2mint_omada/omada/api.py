@@ -91,9 +91,6 @@ def create_client(
     kwargs: dict[str, Any] = dict(
         timeout=60,
     )
-    if settings.insecure_skip_tls_verify:
-        logger.warning("INSECURE: Skipping TLS verification for Omada API!")
-        kwargs["verify"] = False
     if settings.oidc is not None:
         client_cls = AuthenticatedAsyncHTTPXClient
         kwargs.update(**settings.oidc.dict())
