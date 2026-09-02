@@ -14,9 +14,9 @@ variables:
 stages:
   - sync
   - lint
+  - build
   - test
   - coverage
-  - build
   - release
   - deploy
 
@@ -50,7 +50,7 @@ include:
       - gitlab-ci-templates/common/no-interrupt.v1.yml
       - gitlab-ci-templates/common/conventional-commits.v1.yml
       - gitlab-ci-templates/common/pre-commit.v1.yml
-      - gitlab-ci-templates/python/pytest.v1.yml
+      - gitlab-ci-templates/python/pytest.v2.yml
       - gitlab-ci-templates/common/docker-build.v1.yml
       - gitlab-ci-templates/common/docker-release.v1.yml
       - gitlab-ci-templates/common/config-updater-meta.v1.yml
