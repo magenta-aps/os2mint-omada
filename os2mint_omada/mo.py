@@ -47,6 +47,26 @@ class MO:
         uuids = {e.uuid for e in employees}
         return one(uuids)  # it's an error if different UUIDs are returned
 
+    async def get_employee_uuid_from_engagement(self, eng_uuid: UUID) -> UUID | None:
+        result = await self.graphql_client.get_employee_uuid_from_engagement(
+            uuids=[eng_uuid]
+        )
+        engagement = only(result.objects)
+        if engagement is None:
+            return None
+        uuids = {p.uuid for v in engagement.validities for p in v.person}
+        return one(uuids)  # it's an error if different UUIDs are returned
+
+    async def get_employee_uuid_from_ituser(self, ituser_uuid: UUID) -> UUID | None:
+        result = await self.graphql_client.get_employee_uuid_from_ituser(
+            uuids=[ituser_uuid]
+        )
+        it_user = only(result.objects)
+        if it_user is None:
+            return None
+        uuids = {p.uuid for v in it_user.validities for p in (v.person or [])}
+        return one(uuids)  # it's an error if different UUIDs are returned
+
     async def get_employee_states(self, uuid: UUID) -> set[Employee]:
         result = await self.graphql_client.get_employee_states(uuids=[uuid])
         employee = only(result.objects)
