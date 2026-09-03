@@ -1,15 +1,18 @@
 # SPDX-FileCopyrightText: Magenta ApS <https://magenta.dk>
 # SPDX-License-Identifier: MPL-2.0
+from uuid import UUID
+
 import structlog
+from fastapi import APIRouter
 from fastapi import Depends
+from fastramqpi.events import Event
+from fastramqpi.events import Listener
 from fastramqpi.ramqp import Router
 from fastramqpi.ramqp.depends import rate_limit
-from fastramqpi.ramqp.mo import MORouter
-from fastramqpi.ramqp.mo import PayloadType
 from fastramqpi.ramqp.utils import AcknowledgeMessage
 from pydantic import ValidationError
 
-from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.omada.event_generator import Event as OmadaEvent
 from os2mint_omada.omada.models import OmadaUser
 
 from ... import depends
@@ -21,8 +24,26 @@ from .it_user import sync_it_users
 from .models import FrederikshavnOmadaUser
 
 logger = structlog.stdlib.get_logger()
-mo_router = MORouter()
+mo_router = APIRouter()
 omada_router = Router()
+
+# MO GraphQL event listeners declared by the integration. The `subject` of each
+# event is the UUID of the changed object, which we resolve to the affected
+# employee before synchronising.
+mo_listeners = [
+    Listener(
+        namespace="mo",
+        user_key="person",
+        routing_key="person",
+        path="/events/mo/person",
+    ),
+    Listener(
+        namespace="mo",
+        user_key="engagement",
+        routing_key="engagement",
+        path="/events/mo/engagement",
+    ),
+]
 
 
 def parse_user(omada_user: OmadaUser) -> FrederikshavnOmadaUser:
@@ -44,7 +65,7 @@ def parse_user(omada_user: OmadaUser) -> FrederikshavnOmadaUser:
 #######################################################################################
 # Omada
 #######################################################################################
-@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
+@omada_router.register(OmadaEvent.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_employee(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
@@ -56,7 +77,7 @@ async def sync_omada_employee(
     )
 
 
-@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
+@omada_router.register(OmadaEvent.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_engagements(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
@@ -77,7 +98,7 @@ async def sync_omada_engagements(
     )
 
 
-@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
+@omada_router.register(OmadaEvent.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_addresses(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
@@ -98,7 +119,7 @@ async def sync_omada_addresses(
     )
 
 
-@omada_router.register(Event.WILDCARD, dependencies=[Depends(rate_limit())])
+@omada_router.register(OmadaEvent.WILDCARD, dependencies=[Depends(rate_limit())])
 async def sync_omada_it_users(
     current_omada_user: CurrentOmadaUser,
     mo: depends.MO,
@@ -127,13 +148,13 @@ async def sync_omada_it_users(
 #  invariant should be enforced by RBAC.
 
 
-@mo_router.register("employee.employee.*", dependencies=[Depends(rate_limit())])
+@mo_router.post("/events/mo/person")
 async def sync_mo_engagements(
-    payload: PayloadType,
+    event: Event[UUID],
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
 ) -> None:
-    employee_uuid = payload.uuid
+    employee_uuid = event.subject
     await sync_engagements(
         employee_uuid=employee_uuid,
         mo=mo,
@@ -141,27 +162,23 @@ async def sync_mo_engagements(
     )
 
 
-@mo_router.register("employee.engagement.*", dependencies=[Depends(rate_limit())])
-async def sync_mo_addresses(
-    payload: PayloadType,
+# In Frederikshavn both addresses and IT-users are linked to engagements, so
+# both are synchronised in response to engagement events.
+@mo_router.post("/events/mo/engagement")
+async def sync_mo_addresses_and_it_users(
+    event: Event[UUID],
     mo: depends.MO,
     omada_api: depends.OmadaAPI,
 ) -> None:
-    employee_uuid = payload.uuid
+    employee_uuid = await mo.get_employee_uuid_from_engagement(event.subject)
+    if employee_uuid is None:
+        logger.info("No employee for engagement: skipping synchronisation")
+        return
     await sync_addresses(
         employee_uuid=employee_uuid,
         mo=mo,
         omada_api=omada_api,
     )
-
-
-@mo_router.register("employee.engagement.*", dependencies=[Depends(rate_limit())])
-async def sync_mo_it_users(
-    payload: PayloadType,
-    mo: depends.MO,
-    omada_api: depends.OmadaAPI,
-) -> None:
-    employee_uuid = payload.uuid
     await sync_it_users(
         employee_uuid=employee_uuid,
         mo=mo,
