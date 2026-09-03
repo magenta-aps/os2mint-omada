@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from fastapi import FastAPI
+from fastramqpi.events import GraphQLEvents
 from fastramqpi.main import FastRAMQPI
 from fastramqpi.ramqp import AMQPSystem
 
@@ -11,10 +12,14 @@ from os2mint_omada.config import Settings
 from os2mint_omada.omada.api import OmadaAPI
 from os2mint_omada.omada.api import create_client
 from os2mint_omada.omada.event_generator import OmadaEventGenerator
+from os2mint_omada.sync.frederikshavn.events import (
+    mo_listeners as frederikshavn_mo_listeners,
+)
 from os2mint_omada.sync.frederikshavn.events import mo_router as frederikshavn_mo_router
 from os2mint_omada.sync.frederikshavn.events import (
     omada_router as frederikshavn_omada_router,
 )
+from os2mint_omada.sync.silkeborg.events import mo_listeners as silkeborg_mo_listeners
 from os2mint_omada.sync.silkeborg.events import mo_router as silkeborg_mo_router
 from os2mint_omada.sync.silkeborg.events import omada_router as silkeborg_omada_router
 
@@ -28,32 +33,35 @@ def create_app() -> FastAPI:
     Returns: FastAPI application.
     """
     settings = Settings()
+
+    match settings.customer:
+        case "frederikshavn":
+            mo_router = frederikshavn_mo_router
+            mo_listeners = frederikshavn_mo_listeners
+            omada_router = frederikshavn_omada_router
+        case "silkeborg":
+            mo_router = silkeborg_mo_router
+            mo_listeners = silkeborg_mo_listeners
+            omada_router = silkeborg_omada_router
+        case _:
+            raise ValueError("Improperly configured")
+
     fastramqpi = FastRAMQPI(
         application_name="omada",
         settings=settings.fastramqpi,
         graphql_version=22,
         graphql_client_cls=GraphQLClient,
+        graphql_events=GraphQLEvents(declare_listeners=mo_listeners),
     )
     fastramqpi.add_context(settings=settings)
     context = fastramqpi.get_context()
-
-    match settings.customer:
-        case "frederikshavn":
-            mo_router = frederikshavn_mo_router
-            omada_router = frederikshavn_omada_router
-        case "silkeborg":
-            mo_router = silkeborg_mo_router
-            omada_router = silkeborg_omada_router
-        case _:
-            raise ValueError("Improperly configured")
 
     # FastAPI router
     app = fastramqpi.get_app()
     app.include_router(api.router)
 
-    # MO AMQP
-    mo_amqp_system = fastramqpi.get_amqpsystem()
-    mo_amqp_system.router.registry.update(mo_router.registry)
+    # MO GraphQL events
+    app.include_router(mo_router)
 
     # Omada API
     omada_client = create_client(settings.omada)
