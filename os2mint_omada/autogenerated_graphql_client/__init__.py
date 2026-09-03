@@ -164,6 +164,26 @@ from .get_employee_states import GetEmployeeStatesEmployeesObjectsValidities
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCpr
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployees
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployeesObjects
+from .get_employee_uuid_from_engagement import GetEmployeeUuidFromEngagement
+from .get_employee_uuid_from_engagement import GetEmployeeUuidFromEngagementEngagements
+from .get_employee_uuid_from_engagement import (
+    GetEmployeeUuidFromEngagementEngagementsObjects,
+)
+from .get_employee_uuid_from_engagement import (
+    GetEmployeeUuidFromEngagementEngagementsObjectsValidities,
+)
+from .get_employee_uuid_from_engagement import (
+    GetEmployeeUuidFromEngagementEngagementsObjectsValiditiesPerson,
+)
+from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuser
+from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserItusers
+from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserItusersObjects
+from .get_employee_uuid_from_ituser import (
+    GetEmployeeUuidFromItuserItusersObjectsValidities,
+)
+from .get_employee_uuid_from_ituser import (
+    GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson,
+)
 from .get_it_systems import GetItSystems
 from .get_it_systems import GetItSystemsItsystems
 from .get_it_systems import GetItSystemsItsystemsObjects
@@ -394,6 +414,16 @@ __all__ = [
     "GetEmployeeUuidFromCpr",
     "GetEmployeeUuidFromCprEmployees",
     "GetEmployeeUuidFromCprEmployeesObjects",
+    "GetEmployeeUuidFromEngagement",
+    "GetEmployeeUuidFromEngagementEngagements",
+    "GetEmployeeUuidFromEngagementEngagementsObjects",
+    "GetEmployeeUuidFromEngagementEngagementsObjectsValidities",
+    "GetEmployeeUuidFromEngagementEngagementsObjectsValiditiesPerson",
+    "GetEmployeeUuidFromItuser",
+    "GetEmployeeUuidFromItuserItusers",
+    "GetEmployeeUuidFromItuserItusersObjects",
+    "GetEmployeeUuidFromItuserItusersObjectsValidities",
+    "GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson",
     "GetItSystems",
     "GetItSystemsItsystems",
     "GetItSystemsItsystemsObjects",
