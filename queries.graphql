@@ -35,6 +35,30 @@ query get_employee_uuid_from_cpr($cpr_numbers: [CPR!]) {
   }
 }
 
+query get_employee_uuid_from_engagement($uuids: [UUID!]) {
+  engagements(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+    objects {
+      validities(start: null, end: null) {
+        person(filter: { from_date: null, to_date: null }) {
+          uuid
+        }
+      }
+    }
+  }
+}
+
+query get_employee_uuid_from_ituser($uuids: [UUID!]) {
+  itusers(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+    objects {
+      validities(start: null, end: null) {
+        person(filter: { from_date: null, to_date: null }) {
+          uuid
+        }
+      }
+    }
+  }
+}
+
 query get_employee_states($uuids: [UUID!]) {
   employees(filter: { uuids: $uuids, from_date: null, to_date: null }) {
     objects {
