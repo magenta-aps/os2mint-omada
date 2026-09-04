@@ -25,7 +25,7 @@ from os2mint_omada.omada.models import RawOmadaUser
 logger = structlog.stdlib.get_logger()
 
 
-class Event(StrEnum):
+class OmadaEvent(StrEnum):
     """Omada AMQP event type."""
 
     CREATE = "create"
@@ -112,13 +112,13 @@ class OmadaEventGenerator(AsyncContextManager):
                 continue
             # Otherwise, determine change type
             if old is None:
-                event = Event.CREATE
+                event = OmadaEvent.CREATE
                 payload = new
             elif new is None:
-                event = Event.DELETE
+                event = OmadaEvent.DELETE
                 payload = old
             else:
-                event = Event.UPDATE
+                event = OmadaEvent.UPDATE
                 payload = new
             # Publish to AMQP
             logger.info("Detected Omada event", change=event, uid=uid)
