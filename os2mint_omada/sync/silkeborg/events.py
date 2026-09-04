@@ -10,7 +10,7 @@ from fastramqpi.events import Listener
 from fastramqpi.ramqp import Router
 from fastramqpi.ramqp.depends import rate_limit
 
-from os2mint_omada.omada.event_generator import Event as OmadaEvent
+from os2mint_omada.omada.event_generator import OmadaEvent
 
 from ... import depends
 from ...depends import CurrentOmadaUser

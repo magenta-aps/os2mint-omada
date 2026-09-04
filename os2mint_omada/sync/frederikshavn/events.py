@@ -12,7 +12,7 @@ from fastramqpi.ramqp.depends import rate_limit
 from fastramqpi.ramqp.utils import AcknowledgeMessage
 from pydantic import ValidationError
 
-from os2mint_omada.omada.event_generator import Event as OmadaEvent
+from os2mint_omada.omada.event_generator import OmadaEvent
 from os2mint_omada.omada.models import OmadaUser
 
 from ... import depends

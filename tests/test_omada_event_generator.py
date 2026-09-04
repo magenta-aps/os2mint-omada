@@ -10,7 +10,7 @@ from uuid import uuid4
 from fastapi.encoders import jsonable_encoder
 
 from os2mint_omada.config import OmadaSettings
-from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.omada.event_generator import OmadaEvent
 from os2mint_omada.omada.event_generator import OmadaEventGenerator
 from os2mint_omada.omada.models import OmadaUser
 
@@ -53,15 +53,15 @@ async def test_generate(omada_settings: OmadaSettings):
     amqp_system.publish_message.assert_has_awaits(
         calls=[
             call(
-                routing_key=Event.CREATE,
+                routing_key=OmadaEvent.CREATE,
                 payload=jsonable_encoder(new_d),
             ),
             call(
-                routing_key=Event.DELETE,
+                routing_key=OmadaEvent.DELETE,
                 payload=jsonable_encoder(old_c),
             ),
             call(
-                routing_key=Event.UPDATE,
+                routing_key=OmadaEvent.UPDATE,
                 payload=jsonable_encoder(new_b),
             ),
         ],

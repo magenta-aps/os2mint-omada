@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from fastapi import status
 
 from os2mint_omada import depends
-from os2mint_omada.omada.event_generator import Event
+from os2mint_omada.omada.event_generator import OmadaEvent
 from os2mint_omada.omada.models import RawOmadaUser
 
 router = APIRouter()
@@ -24,7 +24,7 @@ async def sync_omada(
     logger.info("Synchronising raw Omada users", omada_users=raw_omada_users)
     for raw_omada_user in raw_omada_users:
         await omada_amqp_system.publish_message(
-            routing_key=Event.REFRESH,
+            routing_key=OmadaEvent.REFRESH,
             payload=raw_omada_user,
         )
 
