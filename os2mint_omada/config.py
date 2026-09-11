@@ -18,11 +18,6 @@ class OmadaOIDCSettings(BaseModel):
     scope: str
 
 
-class OmadaBasicAuthSettings(BaseModel):
-    username: str
-    password: str
-
-
 class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
     exchange = "omada"
     queue_prefix = "omada"
@@ -32,7 +27,6 @@ class OmadaSettings(BaseModel):
     # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     url: AnyHttpUrl
     oidc: OmadaOIDCSettings | None = None
-    basic_auth: OmadaBasicAuthSettings | None = None
 
     amqp: OmadaAMQPConnectionSettings
     interval: int = 600
