@@ -4,13 +4,10 @@ from typing import AsyncGenerator
 
 import pytest
 from fastramqpi.raclients.auth import AuthenticatedAsyncHTTPXClient
-from httpx import AsyncClient
-from httpx import Request
 from pydantic import AnyHttpUrl
 from pydantic import parse_obj_as
 from respx import MockRouter
 
-from os2mint_omada.config import OmadaBasicAuthSettings
 from os2mint_omada.config import OmadaOIDCSettings
 from os2mint_omada.config import OmadaSettings
 from os2mint_omada.omada.api import OmadaAPI
@@ -31,20 +28,6 @@ async def test_create_client_oidc_auth(omada_settings: OmadaSettings) -> None:
     assert client.client_secret == omada_settings.oidc.client_secret
     assert client.token_endpoint == omada_settings.oidc.token_endpoint
     assert client.scope == omada_settings.oidc.scope
-
-
-async def test_create_client_basic_auth(omada_settings: OmadaSettings) -> None:
-    """Test that basic auth settings are passed through."""
-    omada_settings.basic_auth = OmadaBasicAuthSettings(
-        username="AzureDiamond",
-        password="hunter2",
-    )
-    client = create_client(omada_settings)
-    assert isinstance(client, AsyncClient)
-    assert client.auth is not None
-    request = next(client.auth.auth_flow(Request("GET", "example.com")))
-    # base64("AzureDiamond:hunter2") == "QXp1cmVEaWFtb25kOmh1bnRlcjI="
-    assert request.headers["Authorization"] == "Basic QXp1cmVEaWFtb25kOmh1bnRlcjI="
 
 
 @pytest.fixture

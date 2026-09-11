@@ -10,7 +10,6 @@ from typing import Type
 import structlog
 from fastramqpi.raclients.auth import AuthenticatedAsyncHTTPXClient
 from httpx import AsyncClient
-from httpx import BasicAuth
 from more_itertools import flatten
 from pydantic import AnyHttpUrl
 
@@ -94,8 +93,6 @@ def create_client(
     if settings.oidc is not None:
         client_cls = AuthenticatedAsyncHTTPXClient
         kwargs.update(**settings.oidc.dict())
-    if settings.basic_auth is not None:
-        kwargs["auth"] = BasicAuth(**settings.basic_auth.dict())
 
     logger.debug("Creating Omada client", kwargs=kwargs)
     client = client_cls(**kwargs)
