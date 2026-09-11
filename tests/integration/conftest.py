@@ -50,7 +50,7 @@ async def app(monkeypatch: MonkeyPatch, tmp_path: Path) -> FastAPI:
 async def graphql_client(mo_client: AsyncClient) -> AsyncIterator[GraphQLClient]:
     """Authenticated GraphQL codegen client for OS2mo."""
     graphql_client = GraphQLClient(
-        url=f"{mo_client.base_url}/graphql/v22",
+        url=f"{mo_client.base_url}/graphql/v30",
         http_client=mo_client,
     )
     async with graphql_client as client:
