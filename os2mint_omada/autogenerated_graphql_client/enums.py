@@ -1,8 +1,9 @@
 from enum import Enum
 
 
-class AuditLogModel(str, Enum):
-    AUDIT_LOG = "AUDIT_LOG"
+class AccessLogModel(str, Enum):
+    ACCESS_LOG = "ACCESS_LOG"
+    ACTOR = "ACTOR"
     PERSON = "PERSON"
     FACET = "FACET"
     IT_SYSTEM = "IT_SYSTEM"
@@ -15,6 +16,16 @@ class AuditLogModel(str, Enum):
 class FileStore(str, Enum):
     EXPORTS = "EXPORTS"
     INSIGHTS = "INSIGHTS"
+
+
+class HardcodedActor(str, Enum):
+    NO_AUTH = "NO_AUTH"
+    LEGACY_AUTH = "LEGACY_AUTH"
+    BEFORE_ACTOR = "BEFORE_ACTOR"
+    LORA_USER = "LORA_USER"
+    UNABLE_TO_PARSE_TOKEN = "UNABLE_TO_PARSE_TOKEN"
+    MISSING_UUID_ON_TOKEN = "MISSING_UUID_ON_TOKEN"
+    NO_AUTH_MIDDLEWARE = "NO_AUTH_MIDDLEWARE"
 
 
 class OwnerInferencePriority(str, Enum):
