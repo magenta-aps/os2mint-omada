@@ -44,9 +44,11 @@ from .get_employee_states import GetEmployeeStatesEmployees
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCpr
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployees
 from .get_employee_uuid_from_engagement import GetEmployeeUuidFromEngagement
-from .get_employee_uuid_from_engagement import GetEmployeeUuidFromEngagementEngagements
+from .get_employee_uuid_from_engagement import (
+    GetEmployeeUuidFromEngagementRegistrations,
+)
 from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuser
-from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserItusers
+from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserRegistrations
 from .get_it_systems import GetItSystems
 from .get_it_systems import GetItSystemsItsystems
 from .get_org_unit_validity import GetOrgUnitValidity
@@ -125,14 +127,17 @@ class GraphQLClient(AsyncBaseClient):
 
     async def get_employee_uuid_from_engagement(
         self, uuids: Union[Optional[List[UUID]], UnsetType] = UNSET
-    ) -> GetEmployeeUuidFromEngagementEngagements:
+    ) -> GetEmployeeUuidFromEngagementRegistrations:
         query = gql("""
             query get_employee_uuid_from_engagement($uuids: [UUID!]) {
-              engagements(filter: {uuids: $uuids, from_date: null, to_date: null}) {
+              registrations(filter: {uuids: $uuids}) {
                 objects {
-                  validities(start: null, end: null) {
-                    person(filter: {from_date: null, to_date: null}) {
-                      uuid
+                  __typename
+                  ... on EngagementRegistration {
+                    validities(start: null, end: null) {
+                      person_response {
+                        uuid
+                      }
                     }
                   }
                 }
@@ -142,18 +147,21 @@ class GraphQLClient(AsyncBaseClient):
         variables: dict[str, object] = {"uuids": uuids}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetEmployeeUuidFromEngagement.parse_obj(data).engagements
+        return GetEmployeeUuidFromEngagement.parse_obj(data).registrations
 
     async def get_employee_uuid_from_ituser(
         self, uuids: Union[Optional[List[UUID]], UnsetType] = UNSET
-    ) -> GetEmployeeUuidFromItuserItusers:
+    ) -> GetEmployeeUuidFromItuserRegistrations:
         query = gql("""
             query get_employee_uuid_from_ituser($uuids: [UUID!]) {
-              itusers(filter: {uuids: $uuids, from_date: null, to_date: null}) {
+              registrations(filter: {uuids: $uuids}) {
                 objects {
-                  validities(start: null, end: null) {
-                    person(filter: {from_date: null, to_date: null}) {
-                      uuid
+                  __typename
+                  ... on ITUserRegistration {
+                    validities(start: null, end: null) {
+                      person_response {
+                        uuid
+                      }
                     }
                   }
                 }
@@ -163,7 +171,7 @@ class GraphQLClient(AsyncBaseClient):
         variables: dict[str, object] = {"uuids": uuids}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetEmployeeUuidFromItuser.parse_obj(data).itusers
+        return GetEmployeeUuidFromItuser.parse_obj(data).registrations
 
     async def get_employee_states(
         self, uuids: Union[Optional[List[UUID]], UnsetType] = UNSET

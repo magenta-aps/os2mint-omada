@@ -166,24 +166,34 @@ from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCpr
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployees
 from .get_employee_uuid_from_cpr import GetEmployeeUuidFromCprEmployeesObjects
 from .get_employee_uuid_from_engagement import GetEmployeeUuidFromEngagement
-from .get_employee_uuid_from_engagement import GetEmployeeUuidFromEngagementEngagements
 from .get_employee_uuid_from_engagement import (
-    GetEmployeeUuidFromEngagementEngagementsObjects,
+    GetEmployeeUuidFromEngagementRegistrations,
 )
 from .get_employee_uuid_from_engagement import (
-    GetEmployeeUuidFromEngagementEngagementsObjectsValidities,
+    GetEmployeeUuidFromEngagementRegistrationsObjectsEngagementRegistration,
 )
 from .get_employee_uuid_from_engagement import (
-    GetEmployeeUuidFromEngagementEngagementsObjectsValiditiesPerson,
+    GetEmployeeUuidFromEngagementRegistrationsObjectsEngagementRegistrationValidities,
+)
+from .get_employee_uuid_from_engagement import (
+    GetEmployeeUuidFromEngagementRegistrationsObjectsEngagementRegistrationValiditiesPersonResponse,
+)
+from .get_employee_uuid_from_engagement import (
+    GetEmployeeUuidFromEngagementRegistrationsObjectsIRegistration,
 )
 from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuser
-from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserItusers
-from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserItusersObjects
+from .get_employee_uuid_from_ituser import GetEmployeeUuidFromItuserRegistrations
 from .get_employee_uuid_from_ituser import (
-    GetEmployeeUuidFromItuserItusersObjectsValidities,
+    GetEmployeeUuidFromItuserRegistrationsObjectsIRegistration,
 )
 from .get_employee_uuid_from_ituser import (
-    GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson,
+    GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistration,
+)
+from .get_employee_uuid_from_ituser import (
+    GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValidities,
+)
+from .get_employee_uuid_from_ituser import (
+    GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValiditiesPersonResponse,
 )
 from .get_it_systems import GetItSystems
 from .get_it_systems import GetItSystemsItsystems
@@ -451,15 +461,17 @@ __all__ = [
     "GetEmployeeUuidFromCprEmployees",
     "GetEmployeeUuidFromCprEmployeesObjects",
     "GetEmployeeUuidFromEngagement",
-    "GetEmployeeUuidFromEngagementEngagements",
-    "GetEmployeeUuidFromEngagementEngagementsObjects",
-    "GetEmployeeUuidFromEngagementEngagementsObjectsValidities",
-    "GetEmployeeUuidFromEngagementEngagementsObjectsValiditiesPerson",
+    "GetEmployeeUuidFromEngagementRegistrations",
+    "GetEmployeeUuidFromEngagementRegistrationsObjectsEngagementRegistration",
+    "GetEmployeeUuidFromEngagementRegistrationsObjectsEngagementRegistrationValidities",
+    "GetEmployeeUuidFromEngagementRegistrationsObjectsEngagementRegistrationValiditiesPersonResponse",
+    "GetEmployeeUuidFromEngagementRegistrationsObjectsIRegistration",
     "GetEmployeeUuidFromItuser",
-    "GetEmployeeUuidFromItuserItusers",
-    "GetEmployeeUuidFromItuserItusersObjects",
-    "GetEmployeeUuidFromItuserItusersObjectsValidities",
-    "GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson",
+    "GetEmployeeUuidFromItuserRegistrations",
+    "GetEmployeeUuidFromItuserRegistrationsObjectsIRegistration",
+    "GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistration",
+    "GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValidities",
+    "GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValiditiesPersonResponse",
     "GetItSystems",
     "GetItSystemsItsystems",
     "GetItSystemsItsystemsObjects",

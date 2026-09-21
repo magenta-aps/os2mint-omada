@@ -1,32 +1,75 @@
+from typing import Annotated
 from typing import List
+from typing import Literal
 from typing import Optional
+from typing import Union
 from uuid import UUID
+
+from pydantic import Field
 
 from .base_model import BaseModel
 
 
 class GetEmployeeUuidFromItuser(BaseModel):
-    itusers: "GetEmployeeUuidFromItuserItusers"
+    registrations: "GetEmployeeUuidFromItuserRegistrations"
 
 
-class GetEmployeeUuidFromItuserItusers(BaseModel):
-    objects: List["GetEmployeeUuidFromItuserItusersObjects"]
+class GetEmployeeUuidFromItuserRegistrations(BaseModel):
+    objects: List[
+        Annotated[
+            Union[
+                "GetEmployeeUuidFromItuserRegistrationsObjectsIRegistration",
+                "GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistration",
+            ],
+            Field(discriminator="typename__"),
+        ]
+    ]
 
 
-class GetEmployeeUuidFromItuserItusersObjects(BaseModel):
-    validities: List["GetEmployeeUuidFromItuserItusersObjectsValidities"]
+class GetEmployeeUuidFromItuserRegistrationsObjectsIRegistration(BaseModel):
+    typename__: Literal[
+        "AddressRegistration",
+        "AssociationRegistration",
+        "ClassRegistration",
+        "EngagementRegistration",
+        "FacetRegistration",
+        "IRegistration",
+        "ITSystemRegistration",
+        "KLERegistration",
+        "LeaveRegistration",
+        "ManagerRegistration",
+        "OrganisationUnitRegistration",
+        "OwnerRegistration",
+        "PersonRegistration",
+        "RelatedUnitRegistration",
+        "RoleBindingRegistration",
+    ] = Field(alias="__typename")
 
 
-class GetEmployeeUuidFromItuserItusersObjectsValidities(BaseModel):
-    person: Optional[List["GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson"]]
+class GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistration(BaseModel):
+    typename__: Literal["ITUserRegistration"] = Field(alias="__typename")
+    validities: List[
+        "GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValidities"
+    ]
 
 
-class GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson(BaseModel):
+class GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValidities(
+    BaseModel
+):
+    person_response: Optional[
+        "GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValiditiesPersonResponse"
+    ]
+
+
+class GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValiditiesPersonResponse(
+    BaseModel
+):
     uuid: UUID
 
 
 GetEmployeeUuidFromItuser.update_forward_refs()
-GetEmployeeUuidFromItuserItusers.update_forward_refs()
-GetEmployeeUuidFromItuserItusersObjects.update_forward_refs()
-GetEmployeeUuidFromItuserItusersObjectsValidities.update_forward_refs()
-GetEmployeeUuidFromItuserItusersObjectsValiditiesPerson.update_forward_refs()
+GetEmployeeUuidFromItuserRegistrations.update_forward_refs()
+GetEmployeeUuidFromItuserRegistrationsObjectsIRegistration.update_forward_refs()
+GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistration.update_forward_refs()
+GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValidities.update_forward_refs()
+GetEmployeeUuidFromItuserRegistrationsObjectsITUserRegistrationValiditiesPersonResponse.update_forward_refs()
