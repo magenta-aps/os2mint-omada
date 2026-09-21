@@ -35,12 +35,17 @@ query get_employee_uuid_from_cpr($cpr_numbers: [CPR!]) {
   }
 }
 
+# The employee is resolved from the object's registrations rather than the
+# object itself, so it also works when the object has been deleted (in which
+# case the `engagements`/`itusers` entrypoints return nothing).
 query get_employee_uuid_from_engagement($uuids: [UUID!]) {
-  engagements(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+  registrations(filter: { uuids: $uuids }) {
     objects {
-      validities(start: null, end: null) {
-        person(filter: { from_date: null, to_date: null }) {
-          uuid
+      ... on EngagementRegistration {
+        validities(start: null, end: null) {
+          person_response {
+            uuid
+          }
         }
       }
     }
@@ -48,11 +53,13 @@ query get_employee_uuid_from_engagement($uuids: [UUID!]) {
 }
 
 query get_employee_uuid_from_ituser($uuids: [UUID!]) {
-  itusers(filter: { uuids: $uuids, from_date: null, to_date: null }) {
+  registrations(filter: { uuids: $uuids }) {
     objects {
-      validities(start: null, end: null) {
-        person(filter: { from_date: null, to_date: null }) {
-          uuid
+      ... on ITUserRegistration {
+        validities(start: null, end: null) {
+          person_response {
+            uuid
+          }
         }
       }
     }
