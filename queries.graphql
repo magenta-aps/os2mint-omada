@@ -275,6 +275,10 @@ mutation delete_it_user($uuid: UUID!) {
   }
 }
 
+mutation send_event($input: EventSendInput!) {
+  event_send(input: $input)
+}
+
 # TODO(#59335): don't use _Testing_ prefix (due to pytest)
 query _Testing_GetEmployee($cpr_number: CPR!) {
   employees(
