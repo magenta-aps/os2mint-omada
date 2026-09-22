@@ -3,11 +3,9 @@
 from pathlib import Path
 
 import pytest
-from pydantic import AmqpDsn
 from pydantic import AnyHttpUrl
 from pydantic import parse_obj_as
 
-from os2mint_omada.config import OmadaAMQPConnectionSettings
 from os2mint_omada.config import OmadaSettings
 
 
@@ -17,7 +15,4 @@ def omada_settings(tmp_path: Path) -> OmadaSettings:
     return OmadaSettings(
         url=parse_obj_as(AnyHttpUrl, "https://omada.example.com/odata.json"),
         persistence_file=tmp_path.joinpath("omada.json"),
-        amqp=OmadaAMQPConnectionSettings(
-            url=parse_obj_as(AmqpDsn, "amqp://guest:guest@msg-broker:5672/"),
-        ),
     )
