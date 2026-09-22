@@ -68,8 +68,6 @@ Test:
 Integration-test:
   extends:
     - .integration-test:mo
-  variables:
-    OMADA__AMQP__URL: "amqp://guest:guest@msg-broker:5672/"
 
 
 # Release

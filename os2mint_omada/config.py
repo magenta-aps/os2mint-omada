@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Literal
 
 from fastramqpi.config import Settings as FastRAMQPISettings
-from fastramqpi.ramqp.config import AMQPConnectionSettings
 from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import BaseSettings
@@ -18,17 +17,11 @@ class OmadaOIDCSettings(BaseModel):
     scope: str
 
 
-class OmadaAMQPConnectionSettings(AMQPConnectionSettings):
-    exchange = "omada"
-    queue_prefix = "omada"
-
-
 class OmadaSettings(BaseModel):
     # OData view: http://omada.example.org/OData/DataObjects/Identity?viewid=xxxxx
     url: AnyHttpUrl
     oidc: OmadaOIDCSettings | None = None
 
-    amqp: OmadaAMQPConnectionSettings
     interval: int = 600
     persistence_file: Path = Path("/data/omada.json")
 
