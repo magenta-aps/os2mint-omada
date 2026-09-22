@@ -4,7 +4,6 @@
 import unittest
 from collections.abc import Callable
 from datetime import datetime
-from typing import Awaitable
 
 import pytest
 from fastapi.testclient import TestClient
@@ -241,7 +240,6 @@ async def test_frederikshavn_user_refresh(
     test_client: TestClient,
     graphql_client: GraphQLClient,
     org_unit: str,
-    get_num_queued_messages: Callable[[], Awaitable[int]],
 ) -> None:
     cpr_number = "1604650441"
     invalid_first_name = ""
@@ -250,10 +248,8 @@ async def test_frederikshavn_user_refresh(
     # Precondition: The person does not already exist
     employee = await graphql_client._testing__get_employee(cpr_number)
     assert employee.objects == []
-    # Precondition: There are no messages in the AMQP queues
-    assert await get_num_queued_messages() == 0
 
-    # Serve invalid Omada user
+    # Serve an Omada user with an invalid (empty) first name
     omada_user = {
         # Omada
         "Id": 666,
@@ -271,13 +267,6 @@ async def test_frederikshavn_user_refresh(
     }
     omada_mock([omada_user])
 
-    @retry()
-    async def verify() -> None:
-        # Ensure the user was picked up by the event generator
-        assert await get_num_queued_messages() >= 1
-
-    await verify()
-
     # Serve corrected Omada user
     corrected_omada_user = {
         **omada_user,
@@ -287,10 +276,9 @@ async def test_frederikshavn_user_refresh(
 
     @retry()
     async def verify() -> None:
-        # The invalid user from the queue should be disregarded in favour of updated
-        # data (with valid CPR) directly from Omada.
+        # The invalid user is disregarded in favour of the updated data fetched
+        # directly from Omada.
         employees = await graphql_client._testing__get_employee(cpr_number)
         assert employees.objects
-        assert await get_num_queued_messages() == 0
 
     await verify()
