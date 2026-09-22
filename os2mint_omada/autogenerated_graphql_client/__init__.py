@@ -342,6 +342,7 @@ from .input_types import UuidsBoundITUserFilter
 from .input_types import UuidsBoundLeaveFilter
 from .input_types import UuidsBoundOrganisationUnitFilter
 from .input_types import ValidityInput
+from .send_event import SendEvent
 
 __all__ = [
     "AccessLogFilter",
@@ -567,6 +568,7 @@ __all__ = [
     "RoleBindingTerminateInput",
     "RoleBindingUpdateInput",
     "RoleRegistrationFilter",
+    "SendEvent",
     "TestingCreateEmployee",
     "TestingCreateEmployeeEmployeeCreate",
     "TestingCreateOrgUnit",

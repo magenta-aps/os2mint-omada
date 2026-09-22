@@ -58,7 +58,9 @@ from .get_org_unit_with_user_key import GetOrgUnitWithUserKeyOrgUnits
 from .input_types import AddressCreateInput
 from .input_types import EmployeeCreateInput
 from .input_types import EngagementCreateInput
+from .input_types import EventSendInput
 from .input_types import ITUserCreateInput
+from .send_event import SendEvent
 
 
 def gql(q: str) -> str:
@@ -491,6 +493,17 @@ class GraphQLClient(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return DeleteItUser.parse_obj(data).ituser_delete
+
+    async def send_event(self, input: EventSendInput) -> bool:
+        query = gql("""
+            mutation send_event($input: EventSendInput!) {
+              event_send(input: $input)
+            }
+            """)
+        variables: dict[str, object] = {"input": input}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return SendEvent.parse_obj(data).event_send
 
     async def _testing__get_employee(
         self, cpr_number: Any
