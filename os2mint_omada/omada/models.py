@@ -53,3 +53,18 @@ class OmadaUser(BaseModel):
             start=self.valid_from,
             end=self.valid_to,
         )
+
+
+class OmadaEventSubject(BaseModel):
+    """
+    Identifiers sent as the subject of an Omada user event.
+
+    MO's event system requires the subject to be a small identifier rather than
+    the whole Omada object, so only the fields the handlers need are included: the
+    Omada `id` (to re-fetch the latest state of the user) and the CPR-number (to
+    resolve the affected MO employee, which is required even when the user has
+    been deleted from the Omada view).
+    """
+
+    id: int
+    cpr: str | None = None
