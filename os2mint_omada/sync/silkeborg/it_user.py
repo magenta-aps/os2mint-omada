@@ -79,6 +79,14 @@ async def sync_it_users(
     # Desired IT users from Omada
     desired = set()
     for omada_user in omada_users:
+        engagement = engagements.get(omada_user.engagement_user_key)
+        if engagement is None:
+            logger.info(
+                "Engagement not in MO: skipping IT users",
+                employee_uuid=employee_uuid,
+                engagement_user_key=omada_user.engagement_user_key,
+            )
+            continue
         for omada_attr, mo_it_system_user_key in it_user_map.items():
             omada_value = getattr(omada_user, omada_attr)
             if omada_value is None:
@@ -90,7 +98,7 @@ async def sync_it_users(
                 user_key=str(omada_value),
                 it_system=it_systems[mo_it_system_user_key],
                 person=employee_uuid,
-                engagement=engagements[omada_user.engagement_user_key].uuid,
+                engagement=engagement.uuid,
                 validity=omada_user.validity,
             )
             desired.add(c)
